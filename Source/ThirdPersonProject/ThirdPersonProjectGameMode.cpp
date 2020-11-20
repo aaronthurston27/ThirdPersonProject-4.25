@@ -1,0 +1,22 @@
+// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+
+#include "ThirdPersonProjectGameMode.h"
+#include "ThirdPersonProjectCharacter.h"
+#include "GameFramework/HUD.h"
+#include "UObject/ConstructorHelpers.h"
+
+AThirdPersonProjectGameMode::AThirdPersonProjectGameMode()
+{
+	// set default pawn class to our Blueprinted character
+	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPersonCPP/Blueprints/MyThirdPersonProjectCharacter"));
+	if (PlayerPawnBPClass.Class != NULL)
+	{
+		DefaultPawnClass = PlayerPawnBPClass.Class;
+	}
+
+	ConstructorHelpers::FClassFinder<AHUD> PlayerHUDClass(TEXT("/Game/UI_Assets/BP_ThirdPersonHUD"));
+	if (PlayerHUDClass.Class != NULL)
+	{
+		HUDClass = PlayerHUDClass.Class;
+	}
+}
