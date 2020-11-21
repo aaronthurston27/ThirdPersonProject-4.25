@@ -114,6 +114,8 @@ void UTPPMovementComponent::SlideStarted()
 		GroundFriction = 1.f;
 		BrakingDecelerationWalking = 0.0;
 
+		MovementState.bCanJump = false;
+
 		AThirdPersonProjectCharacter* TPPCharacter = Cast<AThirdPersonProjectCharacter>(CharacterOwner);
 		if (TPPCharacter)
 		{
@@ -128,6 +130,8 @@ void UTPPMovementComponent::SlideEnded()
 	BrakingFriction = 1.f;
 	BrakingFrictionFactor = 2.0f;
 	GroundFriction = CachedGroundFriction;
+
+	MovementState.bCanJump = true;
 
 	if (!bWantsToCrouch)
 	{
