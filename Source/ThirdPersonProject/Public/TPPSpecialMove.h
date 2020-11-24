@@ -22,9 +22,6 @@ public:
 
 public:
 
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* AnimMontage;
-
 	/** True if this move should end when the set duration expires. Otherwise, it should be ended manually */
 	UPROPERTY(EditDefaultsOnly)
 	bool bDurationBased = false;

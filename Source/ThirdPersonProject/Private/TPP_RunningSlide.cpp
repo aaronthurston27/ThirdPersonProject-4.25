@@ -18,7 +18,6 @@ void UTPP_RunningSlide::Tick(float DeltaTime)
 void UTPP_RunningSlide::BeginSpecialMove_Implementation()
 {
 	Super::BeginSpecialMove_Implementation();
-	PlayAnimMontage(AnimMontage);
 }
 
 void UTPP_RunningSlide::EndSpecialMove_Implementation()

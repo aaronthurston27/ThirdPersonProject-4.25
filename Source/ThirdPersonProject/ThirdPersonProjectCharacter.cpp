@@ -297,7 +297,7 @@ void AThirdPersonProjectCharacter::OnEndSlide()
 bool AThirdPersonProjectCharacter::CanJumpInternal_Implementation() const
 {
 	UTPPMovementComponent* MovementComponent = GetTPPMovementComponent();
-	return MovementComponent && !MovementComponent->IsSliding()&& Super::CanJumpInternal_Implementation();
+	return MovementComponent && !MovementComponent->IsSliding() && Super::CanJumpInternal_Implementation();
 }
 
 void AThirdPersonProjectCharacter::Landed(const FHitResult& HitResult)
