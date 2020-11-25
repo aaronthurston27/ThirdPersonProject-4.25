@@ -18,17 +18,18 @@ class UTPPMovementComponent;
 
 #pragma region Structs_And_Enums
 
-
-// Structs aren't handled by garbage collection. So encapsulate/instantiate as a part of a UObject.
-// UObject - Generic UE4 Container
-
-// Inherit from FTableRowBase to create Data Table entries.
-// Blueprint Type Decorator - Usable in UE4 Blueprint
-
 UENUM(BlueprintType)
-enum class EAttackType : uint8 {
-	MELEE_FIST			UMETA(DisplayName = "Melee - Fist"),
-	MELEE_KICK			UMETA(DisplayName = "Melee - Kick")
+enum class EAnimationBlendSlot : uint8
+{
+	/** No blending. Should use the default pose */
+	None = 0,
+	/** No blending in Anim Instance, but use defaut slot for full body anim */
+	FullBody = 1,
+	/** Blend lower body only */
+	LowerBody = 2,
+	/** Blend the upper body only */
+	UpperBody = 3,
+	/** Full body animation */
 };
 
 UENUM(BlueprintType)
@@ -68,7 +69,7 @@ class AThirdPersonProjectCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere)
 	UAudioComponent* CharacterAudioComponent;
 
-	bool bIsAnimationBlended;
+	EAnimationBlendSlot CurrentAnimationBlendSlot;
 
 	FVector LockOnTarget;
 		
@@ -248,12 +249,13 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsCharacterLockedOn();
 
-	void SetIsAnimationBlended(bool bIsAnimBlended);
+	UFUNCTION(BlueprintPure, Category = Animation)
+	bool ShouldBlendAnimation() const { return CurrentAnimationBlendSlot > EAnimationBlendSlot::FullBody;}
 
 	UFUNCTION(BlueprintPure, Category = Animation)
-	bool GetIsAnimationBlended() const {
-		return bIsAnimationBlended;
-	}
+	EAnimationBlendSlot GetCurrentAnimationBlendSlot() const { return CurrentAnimationBlendSlot;}
+
+	void SetAnimationBlendSlot(const EAnimationBlendSlot NewSlot);
 
 	UFUNCTION()
 	void OnLockOnCameraMoveFinished();
@@ -267,8 +269,6 @@ private:
 	void OnLockOnPressed();
 
 	void RotateToTargetEnemy();
-
-	void AttachSocketCollisionBoxes(EAttackType attackType);
 
 	UFUNCTION()
 	void MoveLockOnCamera();

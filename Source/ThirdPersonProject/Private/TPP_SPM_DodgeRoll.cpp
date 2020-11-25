@@ -5,6 +5,11 @@
 #include "TPPMovementComponent.h"
 #include "ThirdPersonProject/ThirdPersonProjectCharacter.h"
 
+UTPP_SPM_DodgeRoll::UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	bDisablesMovementInput = true;
+}
+
 void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 {
 	Super::BeginSpecialMove_Implementation();
@@ -16,6 +21,7 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 
 	if (AnimMontage)
 	{
+		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
 		PlayAnimMontage(AnimMontage);
 	}
 }
@@ -35,6 +41,7 @@ void UTPP_SPM_DodgeRoll::EndSpecialMove_Implementation()
 {
 	if (OwningCharacter)
 	{
+		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::None);
 		OwningCharacter->SetMovementInputEnabled(true);
 	}
 

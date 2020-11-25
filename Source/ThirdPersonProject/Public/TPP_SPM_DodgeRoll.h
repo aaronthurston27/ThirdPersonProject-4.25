@@ -21,6 +21,8 @@ public:
 
 public:
 
+	UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializer);
+
 	virtual void BeginSpecialMove_Implementation() override;
 
 	virtual void Tick(float DeltaTime) override;

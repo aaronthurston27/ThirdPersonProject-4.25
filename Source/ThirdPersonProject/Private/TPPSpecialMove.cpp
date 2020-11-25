@@ -30,7 +30,8 @@ void UTPPSpecialMove::BeginSpecialMove_Implementation()
 {
 	TimeRemaining = Duration;
 
-	UAnimInstance* AnimInstance = OwningCharacter->GetMesh()->GetAnimInstance();
+	USkeletalMeshComponent* SkeletalMesh = OwningCharacter->GetMesh();
+	UAnimInstance* AnimInstance = SkeletalMesh ? SkeletalMesh->GetAnimInstance() : nullptr;
 	if (AnimInstance)
 	{
 		AnimInstance->OnMontageEnded.AddDynamic(this, &UTPPSpecialMove::OnMontageEnded);
@@ -46,7 +47,8 @@ void UTPPSpecialMove::EndSpecialMove_Implementation()
 {
 	TimeRemaining = 0.f;
 
-	UAnimInstance* AnimInstance = OwningCharacter->GetMesh()->GetAnimInstance();
+	USkeletalMeshComponent* SkeletalMesh = OwningCharacter->GetMesh();
+	UAnimInstance* AnimInstance = SkeletalMesh ? SkeletalMesh->GetAnimInstance() : nullptr;
 	if (AnimInstance)
 	{
 		AnimInstance->OnMontageEnded.RemoveDynamic(this, &UTPPSpecialMove::OnMontageEnded);

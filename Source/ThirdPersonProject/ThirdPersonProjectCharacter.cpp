@@ -74,7 +74,7 @@ void AThirdPersonProjectCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	bIsAnimationBlended = false;
+	CurrentAnimationBlendSlot = EAnimationBlendSlot::None;
 	bIsMovementInputEnabled = true;
 }
 
@@ -366,9 +366,9 @@ void AThirdPersonProjectCharacter::OnSpecialMoveEnded(UTPPSpecialMove* SpecialMo
 	}
 }
 
-void AThirdPersonProjectCharacter::SetIsAnimationBlended(bool bIsAnimBlended)
+void AThirdPersonProjectCharacter::SetAnimationBlendSlot(const EAnimationBlendSlot NewSlot)
 {
-	bIsAnimationBlended = bIsAnimBlended;
+	CurrentAnimationBlendSlot = NewSlot;
 }
 
 bool AThirdPersonProjectCharacter::IsCharacterLockedOn()
@@ -407,11 +407,6 @@ void AThirdPersonProjectCharacter::MoveLockOnCamera()
 void AThirdPersonProjectCharacter::OnLockOnCameraMoveFinished()
 {
 	
-}
-
-void AThirdPersonProjectCharacter::AttachSocketCollisionBoxes(EAttackType attackType)
-{
-
 }
 
 void AThirdPersonProjectCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutput LogOutput)
