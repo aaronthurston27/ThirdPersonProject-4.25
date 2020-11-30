@@ -28,12 +28,6 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 
 void UTPP_SPM_DodgeRoll::Tick(float DeltaTime)
 {
-	UTPPMovementComponent* MovementComponent = OwningCharacter ? Cast<UTPPMovementComponent>(OwningCharacter->GetMovementComponent()) : nullptr;
-	if (MovementComponent)
-	{
-		MovementComponent->RequestDirectMove(FVector(50.f, 50.f, 50.f), true);
-	}
-
 	Super::Tick(DeltaTime);
 }
 
