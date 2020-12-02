@@ -317,6 +317,11 @@ UTPPMovementComponent* AThirdPersonProjectCharacter::GetTPPMovementComponent() c
 	return Cast<UTPPMovementComponent>(GetCharacterMovement());
 }
 
+FRotator AThirdPersonProjectCharacter::GetAimRotationDelta() const
+{
+	return (GetControlRotation() - GetActorRotation());
+}
+
 void AThirdPersonProjectCharacter::OnLockOnPressed()
 {
 		ResetCameraToPlayerRotation();
@@ -333,13 +338,13 @@ void AThirdPersonProjectCharacter::ResetCameraToPlayerRotation()
 
 void AThirdPersonProjectCharacter::BeginMovementAbility()
 {
-	if (MovementAbilityClass)
+	if (MovementAbilityClass && !CurrentSpecialMove) 
 	{
-		CurrentAbility = NewObject<UBaseAbility>(this, MovementAbilityClass);
-		if (CurrentAbility)
+		UBaseAbility * Ability = NewObject<UBaseAbility>(this, MovementAbilityClass);
+		if (Ability)
 		{
-			CurrentAbility->SetOwningCharacter(this);
-			CurrentAbility->ActivateAbility();
+			Ability->SetOwningCharacter(this);
+			Ability->ActivateAbility();
 		}
 	}
 }
@@ -348,12 +353,11 @@ void AThirdPersonProjectCharacter::ExecuteSpecialMove(TSubclassOf<UTPPSpecialMov
 {
 	if (SpecialMoveToExecute)
 	{
-		UTPPSpecialMove* SpecialMove = NewObject<UTPPSpecialMove>(this, SpecialMoveToExecute);
-		if (SpecialMove)
+		CurrentSpecialMove = NewObject<UTPPSpecialMove>(this, SpecialMoveToExecute);
+		if (CurrentSpecialMove)
 		{
-			CurrentSpecialMove = SpecialMove;
-			SpecialMove->OwningCharacter = this;
-			SpecialMove->BeginSpecialMove();
+			CurrentSpecialMove->OwningCharacter = this;
+			CurrentSpecialMove->BeginSpecialMove();
 		}
 	}
 }

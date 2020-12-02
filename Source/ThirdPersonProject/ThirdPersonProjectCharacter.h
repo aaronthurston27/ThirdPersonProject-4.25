@@ -207,6 +207,9 @@ public:
 	UFUNCTION(BlueprintPure)
 	UTPPMovementComponent* GetTPPMovementComponent() const;
 
+	UFUNCTION(BlueprintPure)
+	FRotator GetAimRotationDelta() const;
+
 protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowProtectedAccess = true), Category = "Lock-On")
@@ -233,12 +236,22 @@ protected:
 	UPROPERTY(Transient)
 	UTPPSpecialMove* CurrentSpecialMove;
 
+public:
+
+	/** Gets current special move */
+	UFUNCTION(BlueprintPure)
+	UTPPSpecialMove* GetCurrentSpecialMove() const { return CurrentSpecialMove; }
+
+	/** Gets current ability */
+	UFUNCTION(BlueprintPure)
+	UBaseAbility* GetCurrentAbility() const { return CurrentAbility;  }
+
+	void OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove);
+
 protected:
 
 	UFUNCTION(BlueprintCallable)
 	void ExecuteSpecialMove(TSubclassOf<UTPPSpecialMove> SpecialMove);
-
-	void OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove);
 
 public:
 	/** Returns CameraBoom subobject **/

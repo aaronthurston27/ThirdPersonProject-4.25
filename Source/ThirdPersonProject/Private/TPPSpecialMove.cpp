@@ -59,6 +59,7 @@ void UTPPSpecialMove::EndSpecialMove_Implementation()
 		OwningCharacter->SetMovementInputEnabled(true);
 	}
 
+	OwningCharacter->OnSpecialMoveEnded(this);
 	OwningCharacter = nullptr;
 }
 

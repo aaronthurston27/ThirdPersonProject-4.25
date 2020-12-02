@@ -19,6 +19,11 @@ bool UBaseAbility::ActivateAbility()
 	return true;
 }
 
+bool UBaseAbility::CanActivate_Implementation()
+{
+	return OwningCharacter && OwningCharacter->GetCurrentSpecialMove() == nullptr;
+}
+
 void UBaseAbility::SetOwningCharacter(AThirdPersonProjectCharacter* Character)
 {
 	OwningCharacter = Character;

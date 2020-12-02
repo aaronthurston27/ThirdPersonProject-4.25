@@ -30,6 +30,11 @@ public:
 	UFUNCTION()
 	void SetOwningCharacter(AThirdPersonProjectCharacter* Character);
 
+	UFUNCTION(BlueprintNativeEvent)
+	bool CanActivate();
+
+	virtual bool CanActivate_Implementation();
+
 protected:
 
 	/** Character that owns this ability */
