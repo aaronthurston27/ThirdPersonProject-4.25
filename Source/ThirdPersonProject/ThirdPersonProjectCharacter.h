@@ -14,6 +14,7 @@
 #include "TPPSpecialMove.h"
 #include "ThirdPersonProjectCharacter.generated.h"
 
+class ATPPPlayerController;
 class UTPPMovementComponent;
 
 #pragma region Structs_And_Enums
@@ -90,19 +91,8 @@ public:
 
 protected:
 
-	UPROPERTY(Transient)
-	bool bIsMovementInputEnabled = true;
-
-protected:
-
 	/** Resets HMD orientation in VR. */
 	void OnResetVR();
-
-	/** Called for forwards/backward input */
-	void MoveForward(float Value);
-
-	/** Called for side to side input */
-	void MoveRight(float Value);
 
 	/** 
 	 * Called via input to turn at a given rate. 
@@ -133,8 +123,6 @@ public:
 	/** Ability to activate for special movement key */
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UBaseAbility> MovementAbilityClass;
-
-	void SetMovementInputEnabled(bool bIsEnabled);
 	
 
 public:
@@ -206,6 +194,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	UTPPMovementComponent* GetTPPMovementComponent() const;
+
+	UFUNCTION(BlueprintPure)
+	ATPPPlayerController* GetTPPPlayerController() const;
 
 	UFUNCTION(BlueprintPure)
 	FRotator GetAimRotationDelta() const;

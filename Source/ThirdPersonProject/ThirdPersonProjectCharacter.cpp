@@ -16,6 +16,7 @@
 #include "BaseAbility.h"
 #include "TPPMovementComponent.h"
 #include "Engine.h"
+#include "TPPPlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -75,7 +76,6 @@ void AThirdPersonProjectCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentAnimationBlendSlot = EAnimationBlendSlot::None;
-	bIsMovementInputEnabled = true;
 }
 
 void AThirdPersonProjectCharacter::Tick(float DeltaTime)
@@ -97,9 +97,6 @@ void AThirdPersonProjectCharacter::SetupPlayerInputComponent(class UInputCompone
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	PlayerInputComponent->BindAxis("MoveForward", this, &AThirdPersonProjectCharacter::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AThirdPersonProjectCharacter::MoveRight);
 
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
@@ -156,35 +153,6 @@ void AThirdPersonProjectCharacter::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
-void AThirdPersonProjectCharacter::MoveForward(float Value) {
-
-	if ((Controller != NULL) && (Value != 0.0f) && bIsMovementInputEnabled)
-	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
-	}
-}
-
-void AThirdPersonProjectCharacter::MoveRight(float Value)
-{
-	if ((Controller != NULL) && (Value != 0.0f) && bIsMovementInputEnabled)
-	{
-		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-	
-		// get right vector 
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
-		AddMovementInput(Direction, Value);
-	}
-}
-
 void AThirdPersonProjectCharacter::RotateSideways(float value)
 {
 	AddControllerYawInput(value);
@@ -193,11 +161,6 @@ void AThirdPersonProjectCharacter::RotateSideways(float value)
 void AThirdPersonProjectCharacter::RotateUpwards(float value)
 {
 	AddControllerPitchInput(value);
-}
-
-void AThirdPersonProjectCharacter::SetMovementInputEnabled(bool bIsEnabled)
-{
-	bIsMovementInputEnabled = bIsEnabled;
 }
 
 void AThirdPersonProjectCharacter::OnSprintPressed()
@@ -286,12 +249,12 @@ bool AThirdPersonProjectCharacter::CanSlide() const
 
 void AThirdPersonProjectCharacter::OnStartSlide()
 {
-	bIsMovementInputEnabled = false;
+	GetTPPPlayerController()->SetMovementInputEnabled(false);
 }
 
 void AThirdPersonProjectCharacter::OnEndSlide()
 {
-	bIsMovementInputEnabled = true;
+	GetTPPPlayerController()->SetMovementInputEnabled(true);
 }
 
 bool AThirdPersonProjectCharacter::CanJumpInternal_Implementation() const
@@ -317,14 +280,20 @@ UTPPMovementComponent* AThirdPersonProjectCharacter::GetTPPMovementComponent() c
 	return Cast<UTPPMovementComponent>(GetCharacterMovement());
 }
 
+ATPPPlayerController* AThirdPersonProjectCharacter::GetTPPPlayerController() const
+{
+	return Cast<ATPPPlayerController>(GetController());
+}
+
 FRotator AThirdPersonProjectCharacter::GetAimRotationDelta() const
 {
-	return (GetControlRotation() - GetActorRotation());
+	const bool bSpecialMoveDisablesAiming = CurrentSpecialMove ? CurrentSpecialMove->bDisablesAiming : false;
+	return bSpecialMoveDisablesAiming ? FRotator::ZeroRotator :(GetControlRotation() - GetActorRotation());
 }
 
 void AThirdPersonProjectCharacter::OnLockOnPressed()
 {
-		ResetCameraToPlayerRotation();
+	ResetCameraToPlayerRotation();
 }
 
 void AThirdPersonProjectCharacter::ResetCameraToPlayerRotation()

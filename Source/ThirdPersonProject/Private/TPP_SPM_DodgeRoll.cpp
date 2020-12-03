@@ -3,20 +3,24 @@
 
 #include "TPP_SPM_DodgeRoll.h"
 #include "TPPMovementComponent.h"
+#include "TPPPlayerController.h"
 #include "ThirdPersonProject/ThirdPersonProjectCharacter.h"
 
 UTPP_SPM_DodgeRoll::UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	bDisablesMovementInput = true;
+	bDisablesAiming = true;
+	CachedRollDirection = FVector::ZeroVector;
 }
 
 void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 {
 	Super::BeginSpecialMove_Implementation();
 
-	if (OwningCharacter)
+	ATPPPlayerController* PlayerController = Cast<ATPPPlayerController>(OwningCharacter->GetController());
+	if (PlayerController)
 	{
-		OwningCharacter->SetMovementInputEnabled(false);
+		CachedRollDirection = PlayerController->GetDesiredMovementDirection();
 	}
 
 	if (AnimMontage)
@@ -36,7 +40,7 @@ void UTPP_SPM_DodgeRoll::EndSpecialMove_Implementation()
 	if (OwningCharacter)
 	{
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::None);
-		OwningCharacter->SetMovementInputEnabled(true);
+		
 	}
 
 	Super::EndSpecialMove_Implementation();

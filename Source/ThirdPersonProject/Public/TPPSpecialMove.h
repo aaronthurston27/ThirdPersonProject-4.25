@@ -32,6 +32,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	bool bDisablesMovementInput = false;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	bool bDisablesAiming = false;
+
 public:
 
 	UPROPERTY(Transient)

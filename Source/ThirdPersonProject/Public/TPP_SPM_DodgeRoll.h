@@ -31,5 +31,10 @@ public:
 
 protected:
 
+	UPROPERTY(Transient)
+	FVector CachedRollDirection;
+
+protected:
+
 	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted) override;
 };

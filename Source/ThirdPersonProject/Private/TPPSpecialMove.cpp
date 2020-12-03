@@ -2,6 +2,7 @@
 
 
 #include "TPPSpecialMove.h"
+#include "TPPPlayerController.h"
 #include "ThirdPersonProject/ThirdPersonProjectCharacter.h"
 
 UTPPSpecialMove::UTPPSpecialMove(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
@@ -39,7 +40,11 @@ void UTPPSpecialMove::BeginSpecialMove_Implementation()
 
 	if (bDisablesMovementInput)
 	{
-		OwningCharacter->SetMovementInputEnabled(false);
+		ATPPPlayerController* PlayerController = Cast<ATPPPlayerController>(OwningCharacter->Controller);
+		if (PlayerController)
+		{
+			PlayerController->SetMovementInputEnabled(false);
+		}
 	}
 }
 
@@ -56,7 +61,11 @@ void UTPPSpecialMove::EndSpecialMove_Implementation()
 
 	if (bDisablesMovementInput)
 	{
-		OwningCharacter->SetMovementInputEnabled(true);
+		ATPPPlayerController* PlayerController = Cast<ATPPPlayerController>(OwningCharacter->Controller);
+		if (PlayerController)
+		{
+			PlayerController->SetMovementInputEnabled(true);
+		}
 	}
 
 	OwningCharacter->OnSpecialMoveEnded(this);
