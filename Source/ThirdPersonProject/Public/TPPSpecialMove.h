@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Animation/AnimInstance.h"
 #include "TPPSpecialMove.generated.h"
 
 class AThirdPersonProjectCharacter;
@@ -64,6 +65,8 @@ protected:
 	void PlayAnimMontage(UAnimMontage* Montage);
 
 	void EndAnimMontage(UAnimMontage* MontageToEnd);
+
+	void SetAnimRootMotionMode(TEnumAsByte<ERootMotionMode::Type> NewMode);
 
 	UFUNCTION()
 	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);

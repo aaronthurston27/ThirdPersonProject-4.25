@@ -96,6 +96,16 @@ void UTPPSpecialMove::EndAnimMontage(UAnimMontage* MontageToEnd)
 	}
 }
 
+void UTPPSpecialMove::SetAnimRootMotionMode(TEnumAsByte<ERootMotionMode::Type> NewMode)
+{
+	USkeletalMeshComponent* SkeletalMesh = OwningCharacter ? OwningCharacter->GetMesh() : nullptr;
+	UAnimInstance* AnimInstance = SkeletalMesh ? SkeletalMesh->GetAnimInstance() : nullptr;
+	if (AnimInstance)
+	{
+		AnimInstance->SetRootMotionMode(NewMode);
+	}
+}
+
 void UTPPSpecialMove::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 

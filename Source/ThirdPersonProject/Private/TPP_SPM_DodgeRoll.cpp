@@ -10,7 +10,6 @@ UTPP_SPM_DodgeRoll::UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializ
 {
 	bDisablesMovementInput = true;
 	bDisablesAiming = true;
-	CachedRollDirection = FVector::ZeroVector;
 }
 
 void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
@@ -20,11 +19,15 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 	ATPPPlayerController* PlayerController = Cast<ATPPPlayerController>(OwningCharacter->GetController());
 	if (PlayerController)
 	{
-		CachedRollDirection = PlayerController->GetDesiredMovementDirection();
+		const FVector DesiredMovementDirection = PlayerController->GetDesiredMovementDirection();
+		const FRotator RollRotation = DesiredMovementDirection.IsNearlyZero() ? OwningCharacter->GetActorRotation() : DesiredMovementDirection.ToOrientationRotator();
+		OwningCharacter->SetActorRotation(RollRotation);
 	}
 
+	
 	if (AnimMontage)
 	{
+		SetAnimRootMotionMode(ERootMotionMode::IgnoreRootMotion);
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
 		PlayAnimMontage(AnimMontage);
 	}
@@ -40,7 +43,7 @@ void UTPP_SPM_DodgeRoll::EndSpecialMove_Implementation()
 	if (OwningCharacter)
 	{
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::None);
-		
+		SetAnimRootMotionMode(ERootMotionMode::RootMotionFromMontagesOnly);
 	}
 
 	Super::EndSpecialMove_Implementation();
