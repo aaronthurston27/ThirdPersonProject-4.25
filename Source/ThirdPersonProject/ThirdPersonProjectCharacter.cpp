@@ -76,6 +76,12 @@ void AThirdPersonProjectCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentAnimationBlendSlot = EAnimationBlendSlot::None;
+
+	CurrentAbility = MovementAbilityClass ? NewObject<UBaseAbility>(this, MovementAbilityClass) : nullptr;
+	if (CurrentAbility)
+	{
+		CurrentAbility->SetOwningCharacter(this);
+	}
 }
 
 void AThirdPersonProjectCharacter::Tick(float DeltaTime)
@@ -307,14 +313,9 @@ void AThirdPersonProjectCharacter::ResetCameraToPlayerRotation()
 
 void AThirdPersonProjectCharacter::BeginMovementAbility()
 {
-	if (MovementAbilityClass && !CurrentSpecialMove) 
+	if (CurrentAbility && CurrentAbility->CanActivate() && !CurrentSpecialMove)
 	{
-		UBaseAbility * Ability = NewObject<UBaseAbility>(this, MovementAbilityClass);
-		if (Ability)
-		{
-			Ability->SetOwningCharacter(this);
-			Ability->ActivateAbility();
-		}
+		CurrentAbility->ActivateAbility();
 	}
 }
 

@@ -78,7 +78,7 @@ void UTPP_SPM_DodgeRoll::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted
 			else
 			{
 				const float DesiredDirectionDiff = FVector::DotProduct(CurrentDesiredMovementDirection, CachedRollDirection);
-				EndVelocity = CurrentDesiredMovementDirection* CharacterMovementComponent->MaxWalkSpeed* DesiredDirectionDiff;
+				CurrentDesiredMovementDirection* CharacterMovementComponent->MaxWalkSpeed* DesiredDirectionDiff;
 				CharacterMovementComponent->Velocity = EndVelocity;
 			}
 		}

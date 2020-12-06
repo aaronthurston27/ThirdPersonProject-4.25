@@ -36,7 +36,11 @@ public:
 	void SetMovementInputEnabled(bool bIsEnabled);
 
 	UFUNCTION(BlueprintPure)
-	FVector GetDesiredMovementDirection() const { return DesiredMovementDirection; }
+	FVector GetDesiredMovementDirection() const { return DesiredMovementDirection.GetSafeNormal2D(); }
+
+	/** Gets the rotation of desired movement relative to the player controller */
+	UFUNCTION(BlueprintPure)
+	FRotator GetRelativeControllerMovementDirection() const;
 
 	virtual void SetupInputComponent() override;
 

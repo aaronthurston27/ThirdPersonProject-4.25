@@ -6,6 +6,8 @@
 #include "TPPSpecialMove.h"
 #include "TPP_SPM_DodgeRoll.generated.h"
 
+class UTPPMovementComponent;
+
 /**
  * 
  */
@@ -18,6 +20,21 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	UAnimMontage* AnimMontage;
+
+	UPROPERTY(EditDefaultsOnly)
+	float RollSpeed;
+
+	/** Speed when coming out of the roll. Might need to replace with curve */
+	UPROPERTY(EditDefaultsOnly)
+	float RollRampDownSpeed;
+
+protected:
+
+	UPROPERTY(Transient)
+	FVector CachedRollDirection;
+
+	UPROPERTY(Transient)
+	UTPPMovementComponent* CharacterMovementComponent;
 
 public:
 

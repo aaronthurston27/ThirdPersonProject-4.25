@@ -35,7 +35,7 @@ void ATPPPlayerController::MoveForward(float Value)
 	// get forward vector
 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
-	DesiredMovementDirection.X = Direction.X * Value;
+	DesiredMovementDirection.X = Value;
 	if (bIsMovementInputEnabled)
 	{
 		GetPawn()->AddMovementInput(Direction, Value);
@@ -50,7 +50,7 @@ void ATPPPlayerController::MoveRight(float Value)
 
 	// get right vector 
 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-	DesiredMovementDirection.Y = Direction.Y * Value;
+	DesiredMovementDirection.Y = Value;
 
 	// add movement in that direction
 	if (bIsMovementInputEnabled)
@@ -62,4 +62,13 @@ void ATPPPlayerController::MoveRight(float Value)
 void ATPPPlayerController::SetMovementInputEnabled(bool bIsEnabled)
 {
 	bIsMovementInputEnabled = bIsEnabled;
+}
+
+FRotator ATPPPlayerController::GetRelativeControllerMovementDirection() const
+{
+	const FRotator DesiredDirection = GetDesiredMovementDirection().ToOrientationRotator();
+	const FRotator ControlRot = GetControlRotation();
+
+	// Add the desired movement rotation to the player controller rotation instead of world space.
+	return FRotator(0.0f, DesiredDirection.Yaw + ControlRot.Yaw, 0.0f);
 }
