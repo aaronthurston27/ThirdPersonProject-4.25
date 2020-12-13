@@ -39,7 +39,7 @@ void UTPPMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovement
 			return;
 		}
 	default:
-		if (bWantsToSlide && PreviousMovementMode == EMovementMode::MOVE_Custom && PreviousCustomMode == (uint8)ECustomMovementMode::Sliding)
+		if (IsSliding() && PreviousMovementMode == EMovementMode::MOVE_Custom && PreviousCustomMode == (uint8)ECustomMovementMode::Sliding)
 		{
 			bWantsToSlide = false;
 			SlideEnded();

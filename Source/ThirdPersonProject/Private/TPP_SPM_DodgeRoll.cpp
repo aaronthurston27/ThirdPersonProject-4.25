@@ -30,6 +30,7 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 	}
 
 	CharacterMovementComponent = OwningCharacter->GetTPPMovementComponent();
+	CharacterMovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
 
 	
 	if (AnimMontage)
