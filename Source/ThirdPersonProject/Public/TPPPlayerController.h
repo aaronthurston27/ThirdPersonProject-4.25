@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "TPPPlayerController.generated.h"
 
+class AThirdPersonProjectCharacter;
+
 /**
  * 
  */
@@ -51,5 +53,39 @@ protected:
 
 	UFUNCTION()
 	void MoveRight(float value);
+
+	UFUNCTION()
+	void TurnRate(float value);
+
+	UFUNCTION()
+	void LookUpRate(float value);
+
+	UFUNCTION()
+	void OnLockOnPressed();
+
+	UFUNCTION()
+	void OnJumpPressed();
+	
+	UFUNCTION()
+	void OnJumpReleased();
+
+	UFUNCTION()
+	void OnSprintPressed();
+
+	UFUNCTION()
+	void OnSprintReleased();
+
+	UFUNCTION()
+	void OnCrouchPressed();
+
+	UFUNCTION()
+	void OnCrouchReleased();
+
+	UFUNCTION()
+	void OnMovementAbilityPressed();
+
+public:
+
+	AThirdPersonProjectCharacter* GetOwnerCharacter();
 	
 };

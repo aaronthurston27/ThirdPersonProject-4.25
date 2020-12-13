@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+#include "ThirdPersonProject/ThirdPersonProjectCharacter.h"
 #include "TPPPlayerController.h"
 
 ATPPPlayerController::ATPPPlayerController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -19,6 +20,22 @@ void ATPPPlayerController::SetupInputComponent()
 
 	InputComponent->BindAxis("MoveForward", this, &ATPPPlayerController::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &ATPPPlayerController::MoveRight);
+
+	InputComponent->BindAction("Jump", IE_Pressed, this, &ATPPPlayerController::OnJumpPressed);
+	InputComponent->BindAction("Jump", IE_Released, this, &ATPPPlayerController::OnJumpReleased);
+
+	InputComponent->BindAxis("Turn", this, &ATPPPlayerController::AddYawInput);
+	InputComponent->BindAxis("TurnRate", this, &ATPPPlayerController::TurnRate);
+	InputComponent->BindAxis("LookUp", this, &ATPPPlayerController::AddPitchInput);
+	InputComponent->BindAxis("LookUpRate", this, &ATPPPlayerController::LookUpRate);
+
+	InputComponent->BindAction("LockOn", IE_Pressed, this, &ATPPPlayerController::OnLockOnPressed);
+
+	InputComponent->BindAction("MovementAbility", IE_Pressed, this, &ATPPPlayerController::OnMovementAbilityPressed);
+	InputComponent->BindAction("Sprint", IE_Pressed, this, &ATPPPlayerController::OnSprintPressed);
+	InputComponent->BindAction("Sprint", IE_Released, this, &ATPPPlayerController::OnSprintReleased);
+	InputComponent->BindAction("Crouch", IE_Pressed, this, &ATPPPlayerController::OnCrouchPressed);
+	InputComponent->BindAction("Crouch", IE_Released, this, &ATPPPlayerController::OnCrouchReleased);
 }
 
 void ATPPPlayerController::Tick(float DeltaTime)
@@ -59,6 +76,64 @@ void ATPPPlayerController::MoveRight(float Value)
 	}
 }
 
+void ATPPPlayerController::LookUpRate(float value)
+{
+
+}
+
+void ATPPPlayerController::TurnRate(float value)
+{
+
+}
+
+void ATPPPlayerController::OnLockOnPressed()
+{
+	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	TPPCharacter->ResetCameraToPlayerRotation();
+}
+
+void ATPPPlayerController::OnJumpPressed()
+{
+	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	TPPCharacter->Jump();
+}
+
+void ATPPPlayerController::OnJumpReleased()
+{
+	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	TPPCharacter->StopJumping();
+}
+
+void ATPPPlayerController::OnSprintPressed()
+{
+	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	TPPCharacter->BeginSprint();
+}
+
+void ATPPPlayerController::OnSprintReleased()
+{
+	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	TPPCharacter->StopSprint();
+}
+
+void ATPPPlayerController::OnCrouchPressed()
+{
+	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	TPPCharacter->Crouch(false);
+}
+
+void ATPPPlayerController::OnCrouchReleased()
+{
+	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	TPPCharacter->UnCrouch(false);
+}
+
+void ATPPPlayerController::OnMovementAbilityPressed()
+{
+	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	TPPCharacter->BeginMovementAbility();
+}
+
 void ATPPPlayerController::SetMovementInputEnabled(bool bIsEnabled)
 {
 	bIsMovementInputEnabled = bIsEnabled;
@@ -71,4 +146,9 @@ FRotator ATPPPlayerController::GetRelativeControllerMovementDirection() const
 
 	// Add the desired movement rotation to the player controller rotation instead of world space.
 	return FRotator(0.0f, DesiredDirection.Yaw + ControlRot.Yaw, 0.0f);
+}
+
+AThirdPersonProjectCharacter* ATPPPlayerController::GetOwnerCharacter()
+{
+	return Cast<AThirdPersonProjectCharacter>(GetPawn());
 }

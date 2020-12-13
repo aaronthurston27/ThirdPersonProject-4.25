@@ -10,6 +10,8 @@ UTPP_SPM_DodgeRoll::UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializ
 {
 	bDisablesMovementInput = true;
 	bDisablesAiming = true;
+	bDisablesJump = true;
+	bDisablesSprint = true;
 
 	RollSpeed = 300.f;
 	RollRampDownSpeed = 150.f;
@@ -77,8 +79,7 @@ void UTPP_SPM_DodgeRoll::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted
 			}
 			else
 			{
-				const float DesiredDirectionDiff = FVector::DotProduct(CurrentDesiredMovementDirection, CachedRollDirection);
-				EndVelocity = CurrentDesiredMovementDirection* CharacterMovementComponent->MaxWalkSpeed* DesiredDirectionDiff;
+				EndVelocity = CurrentDesiredMovementDirection * CharacterMovementComponent->MaxWalkSpeed;
 				CharacterMovementComponent->Velocity = EndVelocity;
 			}
 		}

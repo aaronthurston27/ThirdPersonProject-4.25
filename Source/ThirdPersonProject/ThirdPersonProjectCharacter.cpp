@@ -28,10 +28,6 @@ AThirdPersonProjectCharacter::AThirdPersonProjectCharacter(const FObjectInitiali
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
-	// set our turn rates for input
-	BaseTurnRate = 45.f;
-	BaseLookUpRate = 45.f;
-
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -94,44 +90,6 @@ void AThirdPersonProjectCharacter::Tick(float DeltaTime)
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
-
-void AThirdPersonProjectCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
-{
-	// Set up gameplay key bindings
-	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn", this, &AThirdPersonProjectCharacter::RotateSideways);
-	PlayerInputComponent->BindAxis("TurnRate", this, &AThirdPersonProjectCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("LookUp", this, &AThirdPersonProjectCharacter::RotateUpwards);
-	PlayerInputComponent->BindAxis("LookUpRate", this, &AThirdPersonProjectCharacter::LookUpAtRate);
-
-	// handle touch devices
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &AThirdPersonProjectCharacter::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &AThirdPersonProjectCharacter::TouchStopped);
-
-	// VR headset functionality
-	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AThirdPersonProjectCharacter::OnResetVR);
-
-	// Lock-on methods
-	PlayerInputComponent->BindAction("LockOn", IE_Pressed, this, &AThirdPersonProjectCharacter::OnLockOnPressed);
-
-	// Movement methods
-	PlayerInputComponent->BindAction("MovementAbility", IE_Pressed, this, &AThirdPersonProjectCharacter::BeginMovementAbility);
-	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AThirdPersonProjectCharacter::OnSprintPressed);
-	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AThirdPersonProjectCharacter::OnSprintReleased);
-	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AThirdPersonProjectCharacter::OnCrouchPressed);
-	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &AThirdPersonProjectCharacter::OnCrouchReleased);
-
-}
-
-
 void AThirdPersonProjectCharacter::OnResetVR()
 {
 	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
@@ -147,18 +105,6 @@ void AThirdPersonProjectCharacter::TouchStopped(ETouchIndex::Type FingerIndex, F
 		StopJumping();
 }
 
-void AThirdPersonProjectCharacter::TurnAtRate(float Rate)
-{
-	// calculate delta for this frame from the rate information
-	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
-}
-
-void AThirdPersonProjectCharacter::LookUpAtRate(float Rate)
-{
-	// calculate delta for this frame from the rate information
-	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
-}
-
 void AThirdPersonProjectCharacter::RotateSideways(float value)
 {
 	AddControllerYawInput(value);
@@ -169,10 +115,9 @@ void AThirdPersonProjectCharacter::RotateUpwards(float value)
 	AddControllerPitchInput(value);
 }
 
-void AThirdPersonProjectCharacter::OnSprintPressed()
+void AThirdPersonProjectCharacter::BeginSprint()
 {
 	bWantsToSprint = true;
-
 	UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement();
 	if (CharacterMovementComponent)
 	{
@@ -181,7 +126,7 @@ void AThirdPersonProjectCharacter::OnSprintPressed()
 	}
 }
 
-void AThirdPersonProjectCharacter::OnSprintReleased()
+void AThirdPersonProjectCharacter::StopSprint()
 {
 	bWantsToSprint = false;
 	UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement();
@@ -192,14 +137,10 @@ void AThirdPersonProjectCharacter::OnSprintReleased()
 	}
 }
 
-void AThirdPersonProjectCharacter::OnCrouchPressed()
+bool AThirdPersonProjectCharacter::CanSprint() const
 {
-	Crouch(false);
-}
-
-void AThirdPersonProjectCharacter::OnCrouchReleased()
-{
-	UnCrouch(false);
+	const bool bBlockedBySpecialMove = CurrentSpecialMove && CurrentSpecialMove->bDisablesSprint;
+	return !bBlockedBySpecialMove;
 }
 
 void AThirdPersonProjectCharacter::Crouch(bool bIsClientSimulation)
@@ -266,7 +207,8 @@ void AThirdPersonProjectCharacter::OnEndSlide()
 bool AThirdPersonProjectCharacter::CanJumpInternal_Implementation() const
 {
 	UTPPMovementComponent* MovementComponent = GetTPPMovementComponent();
-	return MovementComponent && !MovementComponent->IsSliding() && Super::CanJumpInternal_Implementation();
+	const bool bBlockedBySpecialMove = CurrentSpecialMove && CurrentSpecialMove->bDisablesJump;
+	return MovementComponent && !MovementComponent->IsSliding() && !bBlockedBySpecialMove && Super::CanJumpInternal_Implementation();
 }
 
 void AThirdPersonProjectCharacter::Landed(const FHitResult& HitResult)

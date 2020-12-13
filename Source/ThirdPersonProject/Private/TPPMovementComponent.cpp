@@ -70,7 +70,6 @@ void UTPPMovementComponent::PhysSlide(float DeltaTime, int32 Iterations)
 	}
 
 	const float MaxSpeed = GetMaxSpeed();
-	UE_LOG(LogTemp, Warning, TEXT("Max Speed: %f"), MaxSpeed);
 
 	PhysWalking(DeltaTime, Iterations);
 }

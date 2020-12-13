@@ -77,14 +77,6 @@ class AThirdPersonProjectCharacter : public ACharacter
 public:
 	AThirdPersonProjectCharacter(const FObjectInitializer& ObjectInitializer);
 
-	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
-	float BaseTurnRate;
-
-	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
-	float BaseLookUpRate;
-
 	void Tick(float DeltaTime) override;
 
 	void BeginPlay() override;
@@ -94,29 +86,13 @@ protected:
 	/** Resets HMD orientation in VR. */
 	void OnResetVR();
 
-	/** 
-	 * Called via input to turn at a given rate. 
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void TurnAtRate(float Rate);
-
-	/**
-	 * Called via input to turn look up/down at a given rate. 
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void LookUpAtRate(float Rate);
-
 	/** Handler for when a touch input begins. */
 	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
 
 	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
-	// APawn interface
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	// End of APawn interface
 
-	UFUNCTION(BlueprintCallable)
-	void ResetCameraToPlayerRotation();
+	// End of APawn interface
 
 public:
 
@@ -150,27 +126,18 @@ protected:
 	UPROPERTY(Transient)
 	bool bWantsToSprint = false;
 
-	UFUNCTION()
-	void BeginMovementAbility();
-
-	UFUNCTION()
-	void OnSprintPressed();
-
-	UFUNCTION()
-	void OnSprintReleased();
+public:
 
 public:
 
-	UPROPERTY(Transient)
-	float CachedGroundFriction;
+	UFUNCTION(BlueprintPure)
+	bool CanSprint() const;
 
-	bool CanSlide() const;
+	void BeginSprint();
 
-	UFUNCTION()
-	void OnCrouchPressed();
+	void StopSprint();
 
-	UFUNCTION()
-	void OnCrouchReleased();
+public:
 
 	virtual void Crouch(bool bClientSimulation) override;
 
@@ -179,6 +146,11 @@ public:
 	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 
 	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+
+public:
+
+	UFUNCTION(BlueprintPure)
+	bool CanSlide() const;
 
 	virtual void OnStartSlide();
 
@@ -229,6 +201,8 @@ protected:
 
 public:
 
+	void BeginMovementAbility();
+
 	/** Gets current special move */
 	UFUNCTION(BlueprintPure)
 	UTPPSpecialMove* GetCurrentSpecialMove() const { return CurrentSpecialMove; }
@@ -263,6 +237,9 @@ public:
 
 	UFUNCTION()
 	void OnLockOnCameraMoveFinished();
+
+	UFUNCTION(BlueprintCallable)
+	void ResetCameraToPlayerRotation();
 
 private:
 
