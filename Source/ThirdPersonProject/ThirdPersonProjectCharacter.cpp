@@ -143,6 +143,11 @@ bool AThirdPersonProjectCharacter::CanSprint() const
 	return !bBlockedBySpecialMove;
 }
 
+bool AThirdPersonProjectCharacter::CanCrouch() const
+{
+	return !(CurrentSpecialMove && CurrentSpecialMove->bDisablesCrouch) && Super::CanCrouch();
+}
+
 void AThirdPersonProjectCharacter::Crouch(bool bIsClientSimulation)
 {
 	UTPPMovementComponent* MovementComponent = Cast<UTPPMovementComponent>(GetCharacterMovement());
@@ -186,9 +191,11 @@ void AThirdPersonProjectCharacter::OnEndCrouch(float HalfHeightAdjust, float Sca
 bool AThirdPersonProjectCharacter::CanSlide() const
 {
 	UTPPMovementComponent* MovementComponent = Cast<UTPPMovementComponent>(GetCharacterMovement());
-	if (MovementComponent)
+	ATPPPlayerController* PlayerController = GetTPPPlayerController();
+	if (MovementComponent && PlayerController)
 	{		
-		return MovementComponent->CanSlide();
+		return MovementComponent->CanSlide() && !PlayerController->GetDesiredMovementDirection().IsNearlyZero() &&
+			!(CurrentSpecialMove && CurrentSpecialMove->bDisablesCrouch);
 	}
 
 	return false;

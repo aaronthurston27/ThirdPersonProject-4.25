@@ -139,6 +139,8 @@ public:
 
 public:
 
+	virtual bool CanCrouch() const override;
+
 	virtual void Crouch(bool bClientSimulation) override;
 
 	virtual void UnCrouch(bool bClientSimulation) override;

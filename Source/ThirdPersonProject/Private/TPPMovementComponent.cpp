@@ -106,7 +106,7 @@ bool UTPPMovementComponent::CanSlide() const
 
 void UTPPMovementComponent::SlideStarted()
 {
-	if (!IsCrouching())
+	if (!IsCrouching() && bWantsToSlide)
 	{
 		Crouch();
 		// Set wants to crouch to true since we want to move to crouching when finished.

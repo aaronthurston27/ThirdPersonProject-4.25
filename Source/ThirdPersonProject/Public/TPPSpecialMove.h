@@ -42,6 +42,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	bool bDisablesJump = false;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	bool bDisablesCrouch = false;
+
 public:
 
 	UPROPERTY(Transient)

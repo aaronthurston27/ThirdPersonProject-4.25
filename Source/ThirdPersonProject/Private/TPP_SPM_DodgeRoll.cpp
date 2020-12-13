@@ -12,6 +12,7 @@ UTPP_SPM_DodgeRoll::UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializ
 	bDisablesAiming = true;
 	bDisablesJump = true;
 	bDisablesSprint = true;
+	bDisablesCrouch = true;
 
 	RollSpeed = 300.f;
 	RollRampDownSpeed = 150.f;
@@ -31,6 +32,7 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 
 	CharacterMovementComponent = OwningCharacter->GetTPPMovementComponent();
 	CharacterMovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
+	OwningCharacter->UnCrouch(false);
 
 	
 	if (AnimMontage)
