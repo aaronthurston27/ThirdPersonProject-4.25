@@ -2,7 +2,7 @@
 
 
 #include "AttackStartNotifyState.h"
-#include "ThirdPersonProject/ThirdPersonProjectCharacter.h"
+#include "ThirdPersonProject/TPPPlayerCharacter.h"
 #include "Engine.h"
 
 void UAttackStartNotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration)

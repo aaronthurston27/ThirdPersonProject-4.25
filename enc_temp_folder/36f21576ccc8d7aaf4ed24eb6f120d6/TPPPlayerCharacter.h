@@ -12,7 +12,7 @@
 #include "Engine/DataTable.h"
 #include "BaseAbility.h"
 #include "TPPSpecialMove.h"
-#include "ThirdPersonProjectCharacter.generated.h"
+#include "TPPPlayerCharacter.generated.h"
 
 class ATPPPlayerController;
 class UTPPMovementComponent;
@@ -51,8 +51,8 @@ enum class ELogOutput : uint8 {
 
 #pragma endregion Structs_And_Enums
 
-UCLASS(config=Game)
-class AThirdPersonProjectCharacter : public ACharacter
+UCLASS(config=Game,Blueprintable)
+class ATPPPlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -75,7 +75,7 @@ class AThirdPersonProjectCharacter : public ACharacter
 	FVector LockOnTarget;
 		
 public:
-	AThirdPersonProjectCharacter(const FObjectInitializer& ObjectInitializer);
+	ATPPPlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
 	void Tick(float DeltaTime) override;
 

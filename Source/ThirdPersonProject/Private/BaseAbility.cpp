@@ -2,7 +2,7 @@
 
 
 #include "BaseAbility.h"
-#include "ThirdPersonProject/ThirdPersonProjectCharacter.h"
+#include "ThirdPersonProject/TPPPlayerCharacter.h"
 
 UBaseAbility::UBaseAbility()
 {
@@ -24,7 +24,7 @@ bool UBaseAbility::CanActivate_Implementation()
 	return OwningCharacter && OwningCharacter->GetCurrentSpecialMove() == nullptr;
 }
 
-void UBaseAbility::SetOwningCharacter(AThirdPersonProjectCharacter* Character)
+void UBaseAbility::SetOwningCharacter(ATPPPlayerCharacter* Character)
 {
 	OwningCharacter = Character;
 }

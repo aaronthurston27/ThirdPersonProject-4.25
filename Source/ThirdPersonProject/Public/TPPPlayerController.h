@@ -6,7 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "TPPPlayerController.generated.h"
 
-class AThirdPersonProjectCharacter;
+class ATPPPlayerCharacter;
 
 /**
  * 
@@ -86,6 +86,6 @@ protected:
 
 public:
 
-	AThirdPersonProjectCharacter* GetOwnerCharacter();
+	ATPPPlayerCharacter* GetOwnerCharacter();
 	
 };

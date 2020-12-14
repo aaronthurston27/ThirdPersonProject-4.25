@@ -9,7 +9,8 @@ UTPPMovementComponent::UTPPMovementComponent(const FObjectInitializer& ObjectIni
 {
 	MinimumSlidingSpeed = MaxWalkSpeed + 150.0f;
 	EndSlideSpeed = 200.f;
-	SlidingFriction = .8f;
+	SlidingFriction = 30.f;
+	EndSlideSpeed = 0.0f;
 	bUseSeparateBrakingFriction = true;
 }
 

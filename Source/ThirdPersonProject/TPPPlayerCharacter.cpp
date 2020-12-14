@@ -2,7 +2,7 @@
 
 // Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
-#include "ThirdPersonProjectCharacter.h"
+#include "TPPPlayerCharacter.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -19,10 +19,7 @@
 #include "TPPPlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 
-//////////////////////////////////////////////////////////////////////////
-// AThirdPersonProjectCharacter
-
-AThirdPersonProjectCharacter::AThirdPersonProjectCharacter(const FObjectInitializer& ObjectInitialzer) :
+ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitialzer) :
 	Super(ObjectInitialzer.SetDefaultSubobjectClass<UTPPMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	// Set size for collision capsule
@@ -67,7 +64,7 @@ AThirdPersonProjectCharacter::AThirdPersonProjectCharacter(const FObjectInitiali
 	SprintRotationRate = 220.f;
 }
 
-void AThirdPersonProjectCharacter::BeginPlay()
+void ATPPPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -80,7 +77,7 @@ void AThirdPersonProjectCharacter::BeginPlay()
 	}
 }
 
-void AThirdPersonProjectCharacter::Tick(float DeltaTime)
+void ATPPPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
@@ -90,32 +87,32 @@ void AThirdPersonProjectCharacter::Tick(float DeltaTime)
 	}
 }
 
-void AThirdPersonProjectCharacter::OnResetVR()
+void ATPPPlayerCharacter::OnResetVR()
 {
 	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
 }
 
-void AThirdPersonProjectCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
+void ATPPPlayerCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
 		Jump();
 }
 
-void AThirdPersonProjectCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
+void ATPPPlayerCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
 {
 		StopJumping();
 }
 
-void AThirdPersonProjectCharacter::RotateSideways(float value)
+void ATPPPlayerCharacter::RotateSideways(float value)
 {
 	AddControllerYawInput(value);
 }
 
-void AThirdPersonProjectCharacter::RotateUpwards(float value)
+void ATPPPlayerCharacter::RotateUpwards(float value)
 {
 	AddControllerPitchInput(value);
 }
 
-void AThirdPersonProjectCharacter::BeginSprint()
+void ATPPPlayerCharacter::BeginSprint()
 {
 	bWantsToSprint = true;
 	UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement();
@@ -126,7 +123,7 @@ void AThirdPersonProjectCharacter::BeginSprint()
 	}
 }
 
-void AThirdPersonProjectCharacter::StopSprint()
+void ATPPPlayerCharacter::StopSprint()
 {
 	bWantsToSprint = false;
 	UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement();
@@ -137,18 +134,18 @@ void AThirdPersonProjectCharacter::StopSprint()
 	}
 }
 
-bool AThirdPersonProjectCharacter::CanSprint() const
+bool ATPPPlayerCharacter::CanSprint() const
 {
 	const bool bBlockedBySpecialMove = CurrentSpecialMove && CurrentSpecialMove->bDisablesSprint;
 	return !bBlockedBySpecialMove;
 }
 
-bool AThirdPersonProjectCharacter::CanCrouch() const
+bool ATPPPlayerCharacter::CanCrouch() const
 {
 	return !(CurrentSpecialMove && CurrentSpecialMove->bDisablesCrouch) && Super::CanCrouch();
 }
 
-void AThirdPersonProjectCharacter::Crouch(bool bIsClientSimulation)
+void ATPPPlayerCharacter::Crouch(bool bIsClientSimulation)
 {
 	UTPPMovementComponent* MovementComponent = Cast<UTPPMovementComponent>(GetCharacterMovement());
 	if (MovementComponent)
@@ -168,7 +165,7 @@ void AThirdPersonProjectCharacter::Crouch(bool bIsClientSimulation)
 	}
 }
 
-void AThirdPersonProjectCharacter::UnCrouch(bool bIsClientSimulation)
+void ATPPPlayerCharacter::UnCrouch(bool bIsClientSimulation)
 {
 	UTPPMovementComponent* MovementComponent = Cast<UTPPMovementComponent>(GetCharacterMovement());
 	if (MovementComponent)
@@ -178,17 +175,17 @@ void AThirdPersonProjectCharacter::UnCrouch(bool bIsClientSimulation)
 	}
 }
 
-void AThirdPersonProjectCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+void ATPPPlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
 {
 	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
 }
 
-void AThirdPersonProjectCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+void ATPPPlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
 {
 	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
 }
 
-bool AThirdPersonProjectCharacter::CanSlide() const
+bool ATPPPlayerCharacter::CanSlide() const
 {
 	UTPPMovementComponent* MovementComponent = Cast<UTPPMovementComponent>(GetCharacterMovement());
 	ATPPPlayerController* PlayerController = GetTPPPlayerController();
@@ -201,24 +198,24 @@ bool AThirdPersonProjectCharacter::CanSlide() const
 	return false;
 }
 
-void AThirdPersonProjectCharacter::OnStartSlide()
+void ATPPPlayerCharacter::OnStartSlide()
 {
 	GetTPPPlayerController()->SetMovementInputEnabled(false);
 }
 
-void AThirdPersonProjectCharacter::OnEndSlide()
+void ATPPPlayerCharacter::OnEndSlide()
 {
 	GetTPPPlayerController()->SetMovementInputEnabled(true);
 }
 
-bool AThirdPersonProjectCharacter::CanJumpInternal_Implementation() const
+bool ATPPPlayerCharacter::CanJumpInternal_Implementation() const
 {
 	UTPPMovementComponent* MovementComponent = GetTPPMovementComponent();
 	const bool bBlockedBySpecialMove = CurrentSpecialMove && CurrentSpecialMove->bDisablesJump;
 	return MovementComponent && !MovementComponent->IsSliding() && !bBlockedBySpecialMove && Super::CanJumpInternal_Implementation();
 }
 
-void AThirdPersonProjectCharacter::Landed(const FHitResult& HitResult)
+void ATPPPlayerCharacter::Landed(const FHitResult& HitResult)
 {
 	UTPPMovementComponent* MovementComponent = GetTPPMovementComponent();
 	if (MovementComponent && MovementComponent->bWantsToCrouch && CanSlide())
@@ -230,28 +227,28 @@ void AThirdPersonProjectCharacter::Landed(const FHitResult& HitResult)
 	Super::Landed(HitResult);
 }
 
-UTPPMovementComponent* AThirdPersonProjectCharacter::GetTPPMovementComponent() const
+UTPPMovementComponent* ATPPPlayerCharacter::GetTPPMovementComponent() const
 {
 	return Cast<UTPPMovementComponent>(GetCharacterMovement());
 }
 
-ATPPPlayerController* AThirdPersonProjectCharacter::GetTPPPlayerController() const
+ATPPPlayerController* ATPPPlayerCharacter::GetTPPPlayerController() const
 {
 	return Cast<ATPPPlayerController>(GetController());
 }
 
-FRotator AThirdPersonProjectCharacter::GetAimRotationDelta() const
+FRotator ATPPPlayerCharacter::GetAimRotationDelta() const
 {
 	const bool bSpecialMoveDisablesAiming = CurrentSpecialMove ? CurrentSpecialMove->bDisablesAiming : false;
 	return bSpecialMoveDisablesAiming ? FRotator::ZeroRotator :(GetControlRotation() - GetActorRotation());
 }
 
-void AThirdPersonProjectCharacter::OnLockOnPressed()
+void ATPPPlayerCharacter::OnLockOnPressed()
 {
 	ResetCameraToPlayerRotation();
 }
 
-void AThirdPersonProjectCharacter::ResetCameraToPlayerRotation()
+void ATPPPlayerCharacter::ResetCameraToPlayerRotation()
 {
 	FRotator IntendedRotation = GetActorRotation();
 	IntendedRotation.Pitch = 0.f;
@@ -260,7 +257,7 @@ void AThirdPersonProjectCharacter::ResetCameraToPlayerRotation()
 	Controller->SetControlRotation(IntendedRotation);
 }
 
-void AThirdPersonProjectCharacter::BeginMovementAbility()
+void ATPPPlayerCharacter::BeginMovementAbility()
 {
 	if (CurrentAbility && CurrentAbility->CanActivate() && !CurrentSpecialMove)
 	{
@@ -268,7 +265,7 @@ void AThirdPersonProjectCharacter::BeginMovementAbility()
 	}
 }
 
-void AThirdPersonProjectCharacter::ExecuteSpecialMove(TSubclassOf<UTPPSpecialMove> SpecialMoveToExecute)
+void ATPPPlayerCharacter::ExecuteSpecialMove(TSubclassOf<UTPPSpecialMove> SpecialMoveToExecute)
 {
 	if (SpecialMoveToExecute)
 	{
@@ -281,7 +278,7 @@ void AThirdPersonProjectCharacter::ExecuteSpecialMove(TSubclassOf<UTPPSpecialMov
 	}
 }
 
-void AThirdPersonProjectCharacter::OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove)
+void ATPPPlayerCharacter::OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove)
 {
 	if (SpecialMove == CurrentSpecialMove)
 	{
@@ -289,17 +286,17 @@ void AThirdPersonProjectCharacter::OnSpecialMoveEnded(UTPPSpecialMove* SpecialMo
 	}
 }
 
-void AThirdPersonProjectCharacter::SetAnimationBlendSlot(const EAnimationBlendSlot NewSlot)
+void ATPPPlayerCharacter::SetAnimationBlendSlot(const EAnimationBlendSlot NewSlot)
 {
 	CurrentAnimationBlendSlot = NewSlot;
 }
 
-bool AThirdPersonProjectCharacter::IsCharacterLockedOn()
+bool ATPPPlayerCharacter::IsCharacterLockedOn()
 {
 	return EnemyLockedOnTo != NULL;
 }
 
-void AThirdPersonProjectCharacter::RotateToTargetEnemy()
+void ATPPPlayerCharacter::RotateToTargetEnemy()
 {
 	if (EnemyLockedOnTo)
 	{
@@ -320,19 +317,19 @@ void AThirdPersonProjectCharacter::RotateToTargetEnemy()
 	}
 }
 
-void AThirdPersonProjectCharacter::MoveLockOnCamera()
+void ATPPPlayerCharacter::MoveLockOnCamera()
 {
 	float timelinePlaybackPosition = CameraLockOnTimeline.GetPlaybackPosition() / CameraLockOnTimeline.GetTimelineLength();
 	FVector targetCameraPosition = UKismetMathLibrary::VLerp(FVector::ZeroVector, LockOnTarget, timelinePlaybackPosition);
 	CameraBoom->SetRelativeLocation(targetCameraPosition);
 }
 
-void AThirdPersonProjectCharacter::OnLockOnCameraMoveFinished()
+void ATPPPlayerCharacter::OnLockOnCameraMoveFinished()
 {
 	
 }
 
-void AThirdPersonProjectCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutput LogOutput)
+void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutput LogOutput)
 {
 	// only print when screen is selected and the GEngine object is available
 	if ((LogOutput == ELogOutput::ALL || LogOutput == ELogOutput::SCREEN) && GEngine)

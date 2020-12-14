@@ -4,7 +4,7 @@
 #include "TPP_SPM_DodgeRoll.h"
 #include "TPPMovementComponent.h"
 #include "TPPPlayerController.h"
-#include "ThirdPersonProject/ThirdPersonProjectCharacter.h"
+#include "ThirdPersonProject/TPPPlayerCharacter.h"
 
 UTPP_SPM_DodgeRoll::UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {

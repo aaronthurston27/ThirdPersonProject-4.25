@@ -3,7 +3,7 @@
 
 #include "TPPSpecialMove.h"
 #include "TPPPlayerController.h"
-#include "ThirdPersonProject/ThirdPersonProjectCharacter.h"
+#include "ThirdPersonProject/TPPPlayerCharacter.h"
 
 UTPPSpecialMove::UTPPSpecialMove(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
 

@@ -6,7 +6,7 @@
 #include "Animation/AnimInstance.h"
 #include "TPPSpecialMove.generated.h"
 
-class AThirdPersonProjectCharacter;
+class ATPPPlayerCharacter;
 
 /**
 *
@@ -48,7 +48,7 @@ public:
 public:
 
 	UPROPERTY(Transient)
-	AThirdPersonProjectCharacter* OwningCharacter = nullptr;
+	ATPPPlayerCharacter* OwningCharacter = nullptr;
 
 protected:
 

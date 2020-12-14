@@ -2,7 +2,7 @@
 
 
 #include "TPP_RunningSlide.h"
-#include "ThirdPersonProject/ThirdPersonProjectCharacter.h"
+#include "ThirdPersonProject/TPPPlayerCharacter.h"
 #include "TPPMovementComponent.h"
 
 UTPP_RunningSlide::UTPP_RunningSlide(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)

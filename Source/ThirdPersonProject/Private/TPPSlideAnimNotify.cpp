@@ -2,12 +2,12 @@
 
 
 #include "TPPSlideAnimNotify.h"
-#include "ThirdPersonProject/ThirdPersonProjectCharacter.h"
+#include "ThirdPersonProject/TPPPlayerCharacter.h"
 #include "TPPMovementComponent.h"
 
 void UTPPSlideAnimNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
-	AThirdPersonProjectCharacter* OwnerCharacter = Cast<AThirdPersonProjectCharacter>(MeshComp->GetOwner());
+	ATPPPlayerCharacter* OwnerCharacter = Cast<ATPPPlayerCharacter>(MeshComp->GetOwner());
 	UTPPMovementComponent* TPPMovementComponent = OwnerCharacter ? OwnerCharacter->GetTPPMovementComponent() : nullptr;
 	if (TPPMovementComponent)
 	{

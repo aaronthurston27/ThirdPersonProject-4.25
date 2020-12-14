@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ThirdPersonProject/ThirdPersonProjectCharacter.h"
+#include "ThirdPersonProject/TPPPlayerCharacter.h"
 #include "TPPPlayerController.h"
 
 ATPPPlayerController::ATPPPlayerController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -88,49 +88,49 @@ void ATPPPlayerController::TurnRate(float value)
 
 void ATPPPlayerController::OnLockOnPressed()
 {
-	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
 	TPPCharacter->ResetCameraToPlayerRotation();
 }
 
 void ATPPPlayerController::OnJumpPressed()
 {
-	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
 	TPPCharacter->Jump();
 }
 
 void ATPPPlayerController::OnJumpReleased()
 {
-	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
 	TPPCharacter->StopJumping();
 }
 
 void ATPPPlayerController::OnSprintPressed()
 {
-	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
 	TPPCharacter->BeginSprint();
 }
 
 void ATPPPlayerController::OnSprintReleased()
 {
-	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
 	TPPCharacter->StopSprint();
 }
 
 void ATPPPlayerController::OnCrouchPressed()
 {
-	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
 	TPPCharacter->Crouch(false);
 }
 
 void ATPPPlayerController::OnCrouchReleased()
 {
-	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
 	TPPCharacter->UnCrouch(false);
 }
 
 void ATPPPlayerController::OnMovementAbilityPressed()
 {
-	AThirdPersonProjectCharacter* TPPCharacter = GetOwnerCharacter();
+	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
 	TPPCharacter->BeginMovementAbility();
 }
 
@@ -148,7 +148,7 @@ FRotator ATPPPlayerController::GetRelativeControllerMovementDirection() const
 	return FRotator(0.0f, DesiredDirection.Yaw + ControlRot.Yaw, 0.0f);
 }
 
-AThirdPersonProjectCharacter* ATPPPlayerController::GetOwnerCharacter()
+ATPPPlayerCharacter* ATPPPlayerController::GetOwnerCharacter()
 {
-	return Cast<AThirdPersonProjectCharacter>(GetPawn());
+	return Cast<ATPPPlayerCharacter>(GetPawn());
 }
