@@ -205,6 +205,7 @@ void ATPPPlayerCharacter::OnStartSlide()
 
 void ATPPPlayerCharacter::OnEndSlide()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Ending slide"));
 	GetTPPPlayerController()->SetMovementInputEnabled(true);
 }
 

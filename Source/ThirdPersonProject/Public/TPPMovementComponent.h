@@ -58,6 +58,15 @@ public:
 	UPROPERTY(Transient)
 	bool bWantsToSlide = false;
 
+	UPROPERTY(Transient)
+	bool bHasCharacterStartedSlide = false;
+
+	UFUNCTION(BlueprintPure)
+	bool DoesCharacterWantToSlide() const { return bWantsToSlide; }
+
+	UFUNCTION(BlueprintPure)
+	bool HasCharacterStartedSlide() const { return bHasCharacterStartedSlide; }
+
 	bool CanSlide() const;
 
 	UFUNCTION(BlueprintPure)

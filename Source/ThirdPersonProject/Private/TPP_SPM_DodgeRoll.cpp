@@ -4,6 +4,7 @@
 #include "TPP_SPM_DodgeRoll.h"
 #include "TPPMovementComponent.h"
 #include "TPPPlayerController.h"
+#include "DrawDebugHelpers.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 
 UTPP_SPM_DodgeRoll::UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -22,6 +23,12 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 {
 	Super::BeginSpecialMove_Implementation();
 
+	CharacterMovementComponent = OwningCharacter->GetTPPMovementComponent();
+	CharacterMovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
+	CharacterMovementComponent->bOrientRotationToMovement = false;
+
+	OwningCharacter->UnCrouch(false);
+
 	ATPPPlayerController* PlayerController = Cast<ATPPPlayerController>(OwningCharacter->GetController());
 	if (PlayerController)
 	{
@@ -30,11 +37,6 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 		OwningCharacter->SetActorRelativeRotation(RollRotation);
 	}
 
-	CharacterMovementComponent = OwningCharacter->GetTPPMovementComponent();
-	CharacterMovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
-	OwningCharacter->UnCrouch(false);
-
-	
 	if (AnimMontage)
 	{
 		SetAnimRootMotionMode(ERootMotionMode::IgnoreRootMotion);
@@ -62,6 +64,7 @@ void UTPP_SPM_DodgeRoll::EndSpecialMove_Implementation()
 		SetAnimRootMotionMode(ERootMotionMode::RootMotionFromMontagesOnly);
 	}
 
+	CharacterMovementComponent->bOrientRotationToMovement = true;
 	CharacterMovementComponent = nullptr;
 
 	Super::EndSpecialMove_Implementation();

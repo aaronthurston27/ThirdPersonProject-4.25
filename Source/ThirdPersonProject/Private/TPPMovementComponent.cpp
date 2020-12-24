@@ -19,8 +19,13 @@ void UTPPMovementComponent::BeginPlay()
 
 	Cached2DMinimumSlidingSpeed = MinimumSlidingSpeed * MinimumSlidingSpeed;
 	CachedEndSlideSpeed = EndSlideSpeed * EndSlideSpeed;
+	CachedBrakingDeceleration = BrakingDecelerationWalking;
+	CachedGroundFriction = GroundFriction;
 	MaxCustomMovementSpeed = 1000.f;
 	EndSlideSpeed = 300.0f;
+
+	bWantsToSlide = false;
+	bHasCharacterStartedSlide = false;
 }
 
 void UTPPMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -38,7 +43,7 @@ void UTPPMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovement
 			return;
 		}
 	default:
-		if (bWantsToSlide && PreviousMovementMode == EMovementMode::MOVE_Custom && PreviousCustomMode == (uint8)ECustomMovementMode::Sliding)
+		if (PreviousMovementMode == EMovementMode::MOVE_Custom && PreviousCustomMode == (uint8)ECustomMovementMode::Sliding)
 		{
 			bWantsToSlide = false;
 			SlideEnded();
@@ -98,7 +103,6 @@ bool UTPPMovementComponent::CanSlide() const
 {
 	const float Velocity2D = Velocity.SizeSquared2D();
 	const bool bIsSliding = IsSliding();
-	UE_LOG(LogTemp, Warning, TEXT("Slide Speed: %f, Is: %d"), Velocity2D, (int)bIsSliding);
 	// If currently sliding, end slide when threshold speed reached
 	return (IsMovingOnGround() || IsInCustomMovementMode(ECustomMovementMode::Sliding)) && Velocity2D >= (!bIsSliding ? Cached2DMinimumSlidingSpeed : CachedEndSlideSpeed);
 }
@@ -110,8 +114,6 @@ void UTPPMovementComponent::SlideStarted()
 		Crouch();
 		// Set wants to crouch to true since we want to move to crouching when finished.
 		bWantsToCrouch = true;
-		CachedBrakingDeceleration = BrakingDecelerationWalking;
-		CachedGroundFriction = GroundFriction;
 
 		BrakingFrictionFactor = 1.0f;
 		BrakingFriction = SlidingFriction;
@@ -125,6 +127,8 @@ void UTPPMovementComponent::SlideStarted()
 		{
 			TPPCharacter->OnStartSlide();
 		}
+
+		bHasCharacterStartedSlide = true;
 	}
 }
 
@@ -147,6 +151,8 @@ void UTPPMovementComponent::SlideEnded()
 	{
 		TPPCharacter->OnEndSlide();
 	}
+
+	bHasCharacterStartedSlide = false;
 }
 
 bool UTPPMovementComponent::IsSliding() const
