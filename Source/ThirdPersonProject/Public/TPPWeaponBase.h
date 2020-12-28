@@ -19,7 +19,7 @@ class THIRDPERSONPROJECT_API ATPPWeaponBase : public AActor
 public:
 
 	/** Mesh associated with this weapon */
-	UPROPERTY(VisibleAnywhere, Category = "Mesh")
+	UPROPERTY(VisibleAnywhere, Category = "Mesh", BlueprintReadOnly)
 	USkeletalMeshComponent* WeaponMesh;
 	
 public:	
@@ -37,5 +37,6 @@ protected:
 public:
 
 	/** Sets the owner of this weapon */
+	UFUNCTION(BlueprintCallable)
 	void SetWeaponOwner(ATPPPlayerCharacter* NewOwner);
 };

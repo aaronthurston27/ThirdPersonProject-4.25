@@ -16,6 +16,7 @@
 
 class ATPPPlayerController;
 class UTPPMovementComponent;
+class ATPPWeaponBase;
 
 #pragma region Structs_And_Enums
 
@@ -64,15 +65,7 @@ class ATPPPlayerCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
 
-	UPROPERTY()
-	AThirdPersonHUD* TargetingHud;
-
-	UPROPERTY(VisibleAnywhere)
-	UAudioComponent* CharacterAudioComponent;
-
 	EAnimationBlendSlot CurrentAnimationBlendSlot;
-
-	FVector LockOnTarget;
 		
 public:
 	ATPPPlayerCharacter(const FObjectInitializer& ObjectInitializer);
@@ -174,22 +167,6 @@ public:
 
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowProtectedAccess = true), Category = "Lock-On")
-	FVector LockOnOffset;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Lock-On", meta=(ClampMin="0.001", ClampMax = "1.0"))
-	float LockOnRotationLerp;
-
-	ABaseEnemy* EnemyLockedOnTo;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Lock-On")
-	FTimeline CameraLockOnTimeline;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Lock-On")
-	UCurveFloat* LockOnCurve;
-
-protected:
-
 	/** Ability being used */
 	UPROPERTY(Transient)
 	UBaseAbility* CurrentAbility;
@@ -223,9 +200,6 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-	UFUNCTION(BlueprintPure)
-	bool IsCharacterLockedOn();
-
 	UFUNCTION(BlueprintPure, Category = Animation)
 	bool ShouldBlendAnimation() const { return CurrentAnimationBlendSlot > EAnimationBlendSlot::FullBody;}
 
@@ -234,24 +208,12 @@ public:
 
 	void SetAnimationBlendSlot(const EAnimationBlendSlot NewSlot);
 
-	UFUNCTION()
-	void OnLockOnCameraMoveFinished();
-
 	UFUNCTION(BlueprintCallable)
 	void ResetCameraToPlayerRotation();
 
 private:
 
-	void RotateSideways(float value);
-
-	void RotateUpwards(float value);
-
 	void OnLockOnPressed();
-
-	void RotateToTargetEnemy();
-
-	UFUNCTION()
-	void MoveLockOnCamera();
 
 	/**
 	* Log - prints a message to all the log outputs with a specific color
@@ -260,5 +222,17 @@ private:
 	* @param ELogOutput - All, Output Log or Screen
 	*/
 	void Log(ELogLevel LogLevel, FString Message, ELogOutput LogOutput = ELogOutput::ALL);
+
+protected:
+
+	ATPPWeaponBase* CurrentWeapon = nullptr;
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentEquippedWeapon(ATPPWeaponBase* WeaponEquipped);
+
+	UFUNCTION(BlueprintPure)
+	ATPPWeaponBase* GetCurrentEquippedWeapon() const { return CurrentWeapon; }
 };
 

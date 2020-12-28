@@ -17,6 +17,7 @@
 #include "TPPMovementComponent.h"
 #include "Engine.h"
 #include "TPPPlayerController.h"
+#include "TPPWeaponBase.h"
 #include "GameFramework/SpringArmComponent.h"
 
 ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitialzer) :
@@ -51,11 +52,6 @@ ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitial
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 	
 	PrimaryActorTick.bCanEverTick = true;
-
-	CharacterAudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("PunchAudioComponent"));
-	
-	FAttachmentTransformRules Rules(EAttachmentRule::KeepRelative, false);
-	CharacterAudioComponent->AttachToComponent(RootComponent, Rules);
 
 	DefaultSpeed = 400.f;
 	CrouchingSpeed = 250.f;
@@ -100,16 +96,6 @@ void ATPPPlayerCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Lo
 void ATPPPlayerCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
 {
 		StopJumping();
-}
-
-void ATPPPlayerCharacter::RotateSideways(float value)
-{
-	AddControllerYawInput(value);
-}
-
-void ATPPPlayerCharacter::RotateUpwards(float value)
-{
-	AddControllerPitchInput(value);
 }
 
 void ATPPPlayerCharacter::BeginSprint()
@@ -292,42 +278,9 @@ void ATPPPlayerCharacter::SetAnimationBlendSlot(const EAnimationBlendSlot NewSlo
 	CurrentAnimationBlendSlot = NewSlot;
 }
 
-bool ATPPPlayerCharacter::IsCharacterLockedOn()
+void ATPPPlayerCharacter::SetCurrentEquippedWeapon(ATPPWeaponBase* NewEquippedWeapon)
 {
-	return EnemyLockedOnTo != NULL;
-}
-
-void ATPPPlayerCharacter::RotateToTargetEnemy()
-{
-	if (EnemyLockedOnTo)
-	{
-		const FVector VectorToEnemy = (EnemyLockedOnTo->GetLockOnLocation() - GetActorLocation()).GetSafeNormal();
-
-		FRotator TargetRotation = VectorToEnemy.Rotation();
-		FRotator NewRotation = GetControlRotation();
-		NewRotation = UKismetMathLibrary::RLerp(NewRotation, TargetRotation, LockOnRotationLerp, true);
-		NewRotation.Roll = 0;
-		Controller->SetControlRotation(NewRotation);
-		NewRotation.Pitch = 0;
-		SetActorRotation(NewRotation);
-
-		if (TargetingHud)
-		{
-			TargetingHud->UpdateTargetLocation(EnemyLockedOnTo->GetLockOnLocation());
-		}
-	}
-}
-
-void ATPPPlayerCharacter::MoveLockOnCamera()
-{
-	float timelinePlaybackPosition = CameraLockOnTimeline.GetPlaybackPosition() / CameraLockOnTimeline.GetTimelineLength();
-	FVector targetCameraPosition = UKismetMathLibrary::VLerp(FVector::ZeroVector, LockOnTarget, timelinePlaybackPosition);
-	CameraBoom->SetRelativeLocation(targetCameraPosition);
-}
-
-void ATPPPlayerCharacter::OnLockOnCameraMoveFinished()
-{
-	
+	CurrentWeapon = NewEquippedWeapon;
 }
 
 void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutput LogOutput)
