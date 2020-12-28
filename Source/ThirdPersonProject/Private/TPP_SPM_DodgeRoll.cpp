@@ -77,7 +77,7 @@ void UTPP_SPM_DodgeRoll::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted
 		ATPPPlayerController* PlayerController = OwningCharacter->GetTPPPlayerController();
 		if (PlayerController)
 		{
-			const FVector CurrentDesiredMovementDirection = PlayerController->GetRelativeControllerMovementDirection().Vector();
+			const FVector CurrentDesiredMovementDirection = PlayerController->GetDesiredMovementDirection();
 			FVector EndVelocity = FVector::ZeroVector;
 			if (CurrentDesiredMovementDirection.IsNearlyZero())
 			{
