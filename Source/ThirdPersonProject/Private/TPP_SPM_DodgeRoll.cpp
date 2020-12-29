@@ -32,7 +32,7 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 	ATPPPlayerController* PlayerController = Cast<ATPPPlayerController>(OwningCharacter->GetController());
 	if (PlayerController)
 	{
-		const FRotator RollRotation = PlayerController->GetRelativeControllerMovementDirection();
+		const FRotator RollRotation = PlayerController->GetRelativeControllerMovementRotation();
 		CachedRollDirection = RollRotation.Vector();
 		OwningCharacter->SetActorRelativeRotation(RollRotation);
 	}
@@ -78,16 +78,20 @@ void UTPP_SPM_DodgeRoll::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted
 		if (PlayerController)
 		{
 			const FVector CurrentDesiredMovementDirection = PlayerController->GetDesiredMovementDirection();
+
 			FVector EndVelocity = FVector::ZeroVector;
+			// If no input detected, decelerate the roll in its current direction.
 			if (CurrentDesiredMovementDirection.IsNearlyZero())
 			{
 				EndVelocity = CachedRollDirection * RollRampDownSpeed;
 			}
+			// If the player desires to move in a direction coming out of the roll, accelerate in that direction.
 			else
 			{
-				EndVelocity = CurrentDesiredMovementDirection * CharacterMovementComponent->MaxWalkSpeed;
-				CharacterMovementComponent->Velocity = EndVelocity;
+				const FVector RelativeControllerDesiredDirection = PlayerController->GetRelativeControllerMovementRotation().Vector();
+				EndVelocity = RelativeControllerDesiredDirection * CharacterMovementComponent->MaxWalkSpeed;
 			}
+			CharacterMovementComponent->Velocity = EndVelocity;
 		}
 		EndSpecialMove();
 	}

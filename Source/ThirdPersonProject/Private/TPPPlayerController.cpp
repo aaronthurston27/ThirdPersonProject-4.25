@@ -138,7 +138,7 @@ void ATPPPlayerController::SetMovementInputEnabled(bool bIsEnabled)
 	bIsMovementInputEnabled = bIsEnabled;
 }
 
-FRotator ATPPPlayerController::GetRelativeControllerMovementDirection() const
+FRotator ATPPPlayerController::GetRelativeControllerMovementRotation() const
 {
 	const FRotator DesiredDirection = GetDesiredMovementDirection().ToOrientationRotator();
 	const FRotator ControlRot = GetControlRotation();

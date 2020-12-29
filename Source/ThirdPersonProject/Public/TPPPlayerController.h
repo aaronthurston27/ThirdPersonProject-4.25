@@ -42,7 +42,7 @@ public:
 
 	/** Gets the rotation of desired movement relative to the player controller */
 	UFUNCTION(BlueprintPure)
-	FRotator GetRelativeControllerMovementDirection() const;
+	FRotator GetRelativeControllerMovementRotation() const;
 
 	virtual void SetupInputComponent() override;
 
