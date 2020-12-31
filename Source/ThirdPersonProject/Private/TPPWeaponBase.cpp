@@ -53,7 +53,6 @@ void ATPPWeaponBase::FireWeapon_Implementation()
 
 	World->LineTraceMultiByChannel(TraceResults, StartingLocation, EndLocation, ECollisionChannel::ECC_GameTraceChannel1, QueryParams);
 	const FVector EndDebugDrawLocation = TraceResults.Num() > 0 ? TraceResults[0].Location : EndLocation;
-	DrawDebugLine(World, StartingLocation, EndDebugDrawLocation, FColor::Red, false, 1.5f, 0, 1.5f);
 	DrawDebugLine(World, WeaponMesh->GetSocketLocation("Muzzle"), EndDebugDrawLocation, FColor::Blue, false, 1.5f, 0, 1.5f);
 	if (TraceResults.Num() > 0)
 	{
