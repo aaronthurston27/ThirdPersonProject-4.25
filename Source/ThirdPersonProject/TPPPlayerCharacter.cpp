@@ -12,7 +12,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
-#include "ThirdPersonHUD.h"
 #include "BaseAbility.h"
 #include "TPPMovementComponent.h"
 #include "Engine.h"
@@ -71,6 +70,8 @@ void ATPPPlayerCharacter::BeginPlay()
 	{
 		CurrentAbility->SetOwningCharacter(this);
 	}
+
+	FollowCamera->AddLocalOffset(FreeLookCameraOffset);
 }
 
 void ATPPPlayerCharacter::Tick(float DeltaTime)

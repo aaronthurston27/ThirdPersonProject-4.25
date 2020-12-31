@@ -13,10 +13,4 @@ AThirdPersonProjectGameMode::AThirdPersonProjectGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
-
-	ConstructorHelpers::FClassFinder<AHUD> PlayerHUDClass(TEXT("/Game/UI_Assets/BP_ThirdPersonHUD"));
-	if (PlayerHUDClass.Class != NULL)
-	{
-		HUDClass = PlayerHUDClass.Class;
-	}
 }

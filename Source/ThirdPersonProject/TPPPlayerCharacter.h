@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "BaseEnemy.h"
-#include "ThirdPersonHUD.h"
 #include "Components/BoxComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/TimelineComponent.h"
@@ -110,6 +109,12 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	float SprintRotationRate;
+
+public:
+
+	/** Offset of the camera when not zooming in. Should be adjusted so camera is not directly behind player character and obstructs view. */
+	UPROPERTY(EditDefaultsOnly, Category = Camera)
+	FVector FreeLookCameraOffset = FVector(0.0f, 50.f, 0.0f);
 
 protected:
 
