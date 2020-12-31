@@ -71,7 +71,7 @@ void ATPPPlayerCharacter::BeginPlay()
 		CurrentAbility->SetOwningCharacter(this);
 	}
 
-	FollowCamera->AddLocalOffset(FreeLookCameraOffset);
+	FollowCamera->AddLocalOffset(HipAimCameraOffset);
 }
 
 void ATPPPlayerCharacter::Tick(float DeltaTime)
@@ -297,6 +297,11 @@ void ATPPPlayerCharacter::TryToFireWeapon()
 	}
 
 	CurrentWeapon->FireWeapon();
+}
+
+void ATPPPlayerCharacter::SetPlayerWantsToAim(bool bIsTryingToAim)
+{
+	bWantsToAim = bIsTryingToAim;
 }
 
 void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutput LogOutput)

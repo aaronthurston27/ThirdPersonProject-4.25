@@ -38,6 +38,8 @@ void ATPPPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Crouch", IE_Released, this, &ATPPPlayerController::OnCrouchReleased);
 
 	InputComponent->BindAxis("FireWeapon", this, &ATPPPlayerController::HandleWeaponFireAxis);
+	InputComponent->BindAction("ADS", IE_Pressed, this, &ATPPPlayerController::OnAimWeaponPressed);
+	InputComponent->BindAction("ADS", IE_Released, this, &ATPPPlayerController::OnAimWeaponReleased);
 }
 
 void ATPPPlayerController::Tick(float DeltaTime)
@@ -90,50 +92,42 @@ void ATPPPlayerController::TurnRate(float value)
 
 void ATPPPlayerController::OnLockOnPressed()
 {
-	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
-	TPPCharacter->ResetCameraToPlayerRotation();
+	CachedOwnerCharacter->ResetCameraToPlayerRotation();
 }
 
 void ATPPPlayerController::OnJumpPressed()
 {
-	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
-	TPPCharacter->Jump();
+	CachedOwnerCharacter->Jump();
 }
 
 void ATPPPlayerController::OnJumpReleased()
 {
-	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
-	TPPCharacter->StopJumping();
+	CachedOwnerCharacter->StopJumping();
 }
 
 void ATPPPlayerController::OnSprintPressed()
 {
-	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
-	TPPCharacter->BeginSprint();
+	CachedOwnerCharacter->BeginSprint();
 }
 
 void ATPPPlayerController::OnSprintReleased()
 {
-	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
-	TPPCharacter->StopSprint();
+	CachedOwnerCharacter->StopSprint();
 }
 
 void ATPPPlayerController::OnCrouchPressed()
 {
-	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
-	TPPCharacter->Crouch(false);
+	CachedOwnerCharacter->Crouch(false);
 }
 
 void ATPPPlayerController::OnCrouchReleased()
 {
-	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
-	TPPCharacter->UnCrouch(false);
+	CachedOwnerCharacter->UnCrouch(false);
 }
 
 void ATPPPlayerController::OnMovementAbilityPressed()
 {
-	ATPPPlayerCharacter* TPPCharacter = GetOwnerCharacter();
-	TPPCharacter->BeginMovementAbility();
+	CachedOwnerCharacter->BeginMovementAbility();
 }
 
 void ATPPPlayerController::SetMovementInputEnabled(bool bIsEnabled)
@@ -147,6 +141,16 @@ void ATPPPlayerController::HandleWeaponFireAxis(float Value)
 	{
 		CachedOwnerCharacter->TryToFireWeapon();
 	}
+}
+
+void ATPPPlayerController::OnAimWeaponPressed()
+{
+	CachedOwnerCharacter->SetPlayerWantsToAim(true);
+}
+
+void ATPPPlayerController::OnAimWeaponReleased()
+{
+	CachedOwnerCharacter->SetPlayerWantsToAim(false);
 }
 
 FRotator ATPPPlayerController::GetRelativeControllerMovementRotation() const

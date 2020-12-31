@@ -68,6 +68,10 @@ class ATPPPlayerCharacter : public ACharacter
 	UPROPERTY(EditDefaultsOnly, Category = Camera)
 	FVector HipAimCameraOffset = FVector(0.0f, 50.f, 0.0f);
 
+	/** Offset of the camera when the player aims down the sights. */
+	UPROPERTY(EditDefaultsOnly, Category = Camera)
+	FVector ADSCameraOffset;
+
 	UPROPERTY(Transient)
 	EAnimationBlendSlot CurrentAnimationBlendSlot;
 		
@@ -229,7 +233,17 @@ private:
 
 protected:
 
+	/** Currently equipped weapon */
+	UPROPERTY(Transient)
 	ATPPWeaponBase* CurrentWeapon = nullptr;
+
+	/** True if the player intends to aim down the sights when able */
+	UPROPERTY(Transient)
+	bool bWantsToAim = false;
+
+	/** True if the player has begun aiming down the sights. Can be delayed by special moves */
+	UPROPERTY(Transient)
+	bool bIsPlayerAiming = false;
 
 public:
 
@@ -241,5 +255,8 @@ public:
 
 	/** Tries to fire the currently equipped weapon */
 	void TryToFireWeapon();
+
+	/** Set player's intent to begin aiming */
+	void SetPlayerWantsToAim(bool bIsTryingToAim);
 };
 

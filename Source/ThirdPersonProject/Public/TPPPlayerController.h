@@ -91,6 +91,12 @@ protected:
 	UFUNCTION()
 	void HandleWeaponFireAxis(float value);
 
+	UFUNCTION()
+	void OnAimWeaponPressed();
+
+	UFUNCTION()
+	void OnAimWeaponReleased();
+
 public:
 
 	ATPPPlayerCharacter* GetOwnerCharacter();
