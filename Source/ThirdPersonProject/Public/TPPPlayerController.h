@@ -24,6 +24,10 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	/** Threshold of axis value to begin weapon fire */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMax = "1.0", UIMax = "1.0", ClampMin = "0.0", UIMin = "0.0"))
+	float FireWeaponThreshold = .8f;
+
 protected:
 
 	// Direction the player intends to move based on keys held.
@@ -84,8 +88,15 @@ protected:
 	UFUNCTION()
 	void OnMovementAbilityPressed();
 
+	UFUNCTION()
+	void HandleWeaponFireAxis(float value);
+
 public:
 
 	ATPPPlayerCharacter* GetOwnerCharacter();
-	
+
+protected:
+
+	UPROPERTY(Transient)
+	ATPPPlayerCharacter* CachedOwnerCharacter = nullptr;
 };

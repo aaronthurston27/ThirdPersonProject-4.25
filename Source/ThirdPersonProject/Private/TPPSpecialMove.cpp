@@ -46,6 +46,8 @@ void UTPPSpecialMove::BeginSpecialMove_Implementation()
 			PlayerController->SetMovementInputEnabled(false);
 		}
 	}
+
+	bIsWeaponFiringDisabled = bDisablesWeaponFireOnStart;
 }
 
 void UTPPSpecialMove::EndSpecialMove_Implementation()

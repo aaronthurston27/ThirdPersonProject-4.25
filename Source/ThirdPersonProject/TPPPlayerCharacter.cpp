@@ -283,6 +283,21 @@ void ATPPPlayerCharacter::SetCurrentEquippedWeapon(ATPPWeaponBase* NewEquippedWe
 	CurrentWeapon = NewEquippedWeapon;
 }
 
+void ATPPPlayerCharacter::TryToFireWeapon()
+{
+	if (!CurrentWeapon || !CurrentWeapon->CanFireWeapon())
+	{
+		return;
+	}
+
+	if (CurrentSpecialMove && CurrentSpecialMove->IsMoveBlockingWeaponFire())
+	{
+		return;
+	}
+
+	CurrentWeapon->FireWeapon();
+}
+
 void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutput LogOutput)
 {
 	// only print when screen is selected and the GEngine object is available

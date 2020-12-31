@@ -45,6 +45,19 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	bool bDisablesCrouch = false;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	bool bDisablesWeaponFireOnStart = true;
+
+protected:
+
+	UPROPERTY(Transient)
+	bool bIsWeaponFiringDisabled = false;
+
+public:
+
+	UFUNCTION(BlueprintPure)
+	bool IsMoveBlockingWeaponFire() const { return bIsWeaponFiringDisabled; }
+
 public:
 
 	UPROPERTY(Transient)

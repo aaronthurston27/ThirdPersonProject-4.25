@@ -10,6 +10,7 @@ ATPPPlayerController::ATPPPlayerController(const FObjectInitializer& ObjectIniti
 
 void ATPPPlayerController::BeginPlay()
 {
+	CachedOwnerCharacter = GetOwnerCharacter();
 	bIsMovementInputEnabled = true;
 }
 
@@ -35,6 +36,8 @@ void ATPPPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Sprint", IE_Released, this, &ATPPPlayerController::OnSprintReleased);
 	InputComponent->BindAction("Crouch", IE_Pressed, this, &ATPPPlayerController::OnCrouchPressed);
 	InputComponent->BindAction("Crouch", IE_Released, this, &ATPPPlayerController::OnCrouchReleased);
+
+	InputComponent->BindAxis("FireWeapon", this, &ATPPPlayerController::HandleWeaponFireAxis);
 }
 
 void ATPPPlayerController::Tick(float DeltaTime)
@@ -136,6 +139,14 @@ void ATPPPlayerController::OnMovementAbilityPressed()
 void ATPPPlayerController::SetMovementInputEnabled(bool bIsEnabled)
 {
 	bIsMovementInputEnabled = bIsEnabled;
+}
+
+void ATPPPlayerController::HandleWeaponFireAxis(float Value)
+{
+	if (Value >= FireWeaponThreshold && CachedOwnerCharacter)
+	{
+		CachedOwnerCharacter->TryToFireWeapon();
+	}
 }
 
 FRotator ATPPPlayerController::GetRelativeControllerMovementRotation() const

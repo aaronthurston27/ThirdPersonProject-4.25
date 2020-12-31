@@ -234,5 +234,8 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	ATPPWeaponBase* GetCurrentEquippedWeapon() const { return CurrentWeapon; }
+
+	/** Tries to fire the currently equipped weapon */
+	void TryToFireWeapon();
 };
 

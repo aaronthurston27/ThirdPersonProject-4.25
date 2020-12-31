@@ -2,6 +2,9 @@
 
 
 #include "TPPWeaponBase.h"
+#include "TPPSpecialMove.h"
+#include "Camera/CameraComponent.h"
+#include "DrawDebugHelpers.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 
 // Sets default values
@@ -20,5 +23,40 @@ void ATPPWeaponBase::BeginPlay()
 void ATPPWeaponBase::SetWeaponOwner(ATPPPlayerCharacter* NewWeaponOwner)
 {
 	CharacterOwner = NewWeaponOwner;
+}
+
+bool ATPPWeaponBase::CanFireWeapon_Implementation()
+{
+	return CharacterOwner != nullptr;
+}
+
+void ATPPWeaponBase::FireWeapon_Implementation()
+{
+	// TODO: Move hitscan/projectile fire logic into different class
+	static const float HitScanLength = 2000.f;
+
+	UWorld* World = GetWorld();
+	const UCameraComponent* PlayerCamera = CharacterOwner->GetFollowCamera();
+	if (!World || !PlayerCamera)
+	{
+		return;
+	}
+
+	const FVector StartingLocation = WeaponMesh->GetSocketLocation("Muzzle");
+	const FVector FireDirection = PlayerCamera->GetForwardVector();
+	const FVector EndLocation = StartingLocation + (FireDirection * HitScanLength);
+
+	TArray<FHitResult> TraceResults;
+	FCollisionQueryParams QueryParams(FName(TEXT("Weapon")));
+	QueryParams.AddIgnoredActor(CharacterOwner);
+	QueryParams.AddIgnoredActor(this);
+
+	World->LineTraceMultiByChannel(TraceResults, StartingLocation, EndLocation, ECollisionChannel::ECC_GameTraceChannel1, QueryParams);
+	const FVector EndDebugDrawLocation = TraceResults.Num() > 0 ? TraceResults[0].Location : EndLocation;
+	DrawDebugLine(World, StartingLocation, EndDebugDrawLocation, FColor::Red, false, 1.5f, 0, 1.5f);
+	if (TraceResults.Num() > 0)
+	{
+		DrawDebugSphere(World, TraceResults[0].Location, 25.f, 2, FColor::Green, false, 1.5f, 0, 1.5f);
+	}
 }
 

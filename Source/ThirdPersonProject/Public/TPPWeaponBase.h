@@ -39,4 +39,16 @@ public:
 	/** Sets the owner of this weapon */
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponOwner(ATPPPlayerCharacter* NewOwner);
+
+public:
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	bool CanFireWeapon();
+
+	virtual bool CanFireWeapon_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void FireWeapon();
+
+	virtual void FireWeapon_Implementation();
 };
