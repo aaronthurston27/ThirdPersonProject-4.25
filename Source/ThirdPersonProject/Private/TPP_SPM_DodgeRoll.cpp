@@ -49,10 +49,10 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 void UTPP_SPM_DodgeRoll::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	const FVector RollVelocity = CachedRollDirection * RollSpeed;
+	const FVector RollVelocity = FVector(CachedRollDirection * RollSpeed);
 	if (CharacterMovementComponent)
 	{
-		CharacterMovementComponent->Velocity = RollVelocity;
+		CharacterMovementComponent->Velocity = FVector(RollVelocity.X, RollVelocity.Y, CharacterMovementComponent->Velocity.Z);
 	}
 
 }

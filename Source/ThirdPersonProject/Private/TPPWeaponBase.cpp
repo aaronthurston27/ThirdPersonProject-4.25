@@ -42,9 +42,9 @@ void ATPPWeaponBase::FireWeapon_Implementation()
 		return;
 	}
 
-	const FVector StartingLocation = WeaponMesh->GetSocketLocation("Muzzle");
+	const FVector StartingLocation = PlayerCamera->GetComponentLocation();
 	const FVector FireDirection = PlayerCamera->GetForwardVector();
-	const FVector EndLocation = StartingLocation + (FireDirection * HitScanLength);
+	const FVector EndLocation = PlayerCamera->GetComponentLocation() + (FireDirection * HitScanLength);
 
 	TArray<FHitResult> TraceResults;
 	FCollisionQueryParams QueryParams(FName(TEXT("Weapon")));
@@ -54,6 +54,7 @@ void ATPPWeaponBase::FireWeapon_Implementation()
 	World->LineTraceMultiByChannel(TraceResults, StartingLocation, EndLocation, ECollisionChannel::ECC_GameTraceChannel1, QueryParams);
 	const FVector EndDebugDrawLocation = TraceResults.Num() > 0 ? TraceResults[0].Location : EndLocation;
 	DrawDebugLine(World, StartingLocation, EndDebugDrawLocation, FColor::Red, false, 1.5f, 0, 1.5f);
+	DrawDebugLine(World, WeaponMesh->GetSocketLocation("Muzzle"), EndDebugDrawLocation, FColor::Blue, false, 1.5f, 0, 1.5f);
 	if (TraceResults.Num() > 0)
 	{
 		DrawDebugSphere(World, TraceResults[0].Location, 25.f, 2, FColor::Green, false, 1.5f, 0, 1.5f);
