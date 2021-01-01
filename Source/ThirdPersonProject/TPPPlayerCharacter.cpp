@@ -52,7 +52,8 @@ ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitial
 	
 	PrimaryActorTick.bCanEverTick = true;
 
-	DefaultSpeed = 400.f;
+	DefaultWalkSpeed = 400.f;
+	ADSWalkSpeed = 250.f;
 	CrouchingSpeed = 250.f;
 	SprintingSpeed = 1150.f;
 	DefaultRotationRate = 540.f;
@@ -71,7 +72,7 @@ void ATPPPlayerCharacter::BeginPlay()
 		CurrentAbility->SetOwningCharacter(this);
 	}
 
-	FollowCamera->AddLocalOffset(HipAimCameraOffset);
+	FollowCamera->SetRelativeLocation(HipAimCameraOffset);
 }
 
 void ATPPPlayerCharacter::Tick(float DeltaTime)
@@ -81,6 +82,15 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 	if (CurrentSpecialMove)
 	{
 		CurrentSpecialMove->Tick(DeltaTime);
+	}
+
+	if (bWantsToAim && !bIsAiming && CanPlayerBeginAiming())
+	{
+		StartAiming();
+	}
+	else if (!bWantsToAim && bIsAiming)
+	{
+		StopAiming();
 	}
 }
 
@@ -116,7 +126,7 @@ void ATPPPlayerCharacter::StopSprint()
 	UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement();
 	if (CharacterMovementComponent)
 	{
-		CharacterMovementComponent->MaxWalkSpeed = DefaultSpeed;
+		CharacterMovementComponent->MaxWalkSpeed = DefaultWalkSpeed;
 		CharacterMovementComponent->RotationRate = FRotator(0.f, DefaultRotationRate, 0.f);
 	}
 }
@@ -124,7 +134,7 @@ void ATPPPlayerCharacter::StopSprint()
 bool ATPPPlayerCharacter::CanSprint() const
 {
 	const bool bBlockedBySpecialMove = CurrentSpecialMove && CurrentSpecialMove->bDisablesSprint;
-	return !bBlockedBySpecialMove;
+	return !bBlockedBySpecialMove && !bIsAiming;
 }
 
 bool ATPPPlayerCharacter::CanCrouch() const
@@ -231,11 +241,6 @@ FRotator ATPPPlayerCharacter::GetAimRotationDelta() const
 	return bSpecialMoveDisablesAiming ? FRotator::ZeroRotator :(GetControlRotation() - GetActorRotation());
 }
 
-void ATPPPlayerCharacter::OnLockOnPressed()
-{
-	ResetCameraToPlayerRotation();
-}
-
 void ATPPPlayerCharacter::ResetCameraToPlayerRotation()
 {
 	FRotator IntendedRotation = GetActorRotation();
@@ -302,6 +307,28 @@ void ATPPPlayerCharacter::TryToFireWeapon()
 void ATPPPlayerCharacter::SetPlayerWantsToAim(bool bIsTryingToAim)
 {
 	bWantsToAim = bIsTryingToAim;
+}
+
+bool ATPPPlayerCharacter::CanPlayerBeginAiming() const
+{
+	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+	return CurrentWeapon && (MovementComp && !MovementComp->IsSliding()) && (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesAiming);
+}
+
+void ATPPPlayerCharacter::StartAiming()
+{
+	bIsAiming = true;
+	FollowCamera->SetRelativeLocation(ADSCameraOffset);
+	bUseControllerRotationYaw = true;
+	GetTPPMovementComponent()->MaxWalkSpeed = ADSWalkSpeed;
+}
+
+void ATPPPlayerCharacter::StopAiming()
+{
+	bIsAiming = false;
+	FollowCamera->SetRelativeLocation(HipAimCameraOffset);
+	bUseControllerRotationYaw = false;
+	GetTPPMovementComponent()->MaxWalkSpeed = DefaultWalkSpeed;
 }
 
 void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutput LogOutput)

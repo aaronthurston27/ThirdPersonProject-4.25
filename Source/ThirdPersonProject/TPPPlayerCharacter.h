@@ -104,19 +104,22 @@ public:
 
 public:
 
-	UPROPERTY(EditDefaultsOnly)
-	float DefaultSpeed;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	float DefaultWalkSpeed;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 	float SprintingSpeed;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 	float CrouchingSpeed;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	float ADSWalkSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 	float DefaultRotationRate;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 	float SprintRotationRate;
 
 protected:
@@ -221,8 +224,6 @@ public:
 
 private:
 
-	void OnLockOnPressed();
-
 	/**
 	* Log - prints a message to all the log outputs with a specific color
 	* @param LogLevel {@see ELogLevel} affects color of log
@@ -243,13 +244,15 @@ protected:
 
 	/** True if the player has begun aiming down the sights. Can be delayed by special moves */
 	UPROPERTY(Transient)
-	bool bIsPlayerAiming = false;
+	bool bIsAiming = false;
 
 public:
 
+	/** Sets the currently equipped weapon of the player */
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentEquippedWeapon(ATPPWeaponBase* WeaponEquipped);
 
+	/** Returns the currently equipped weapon */
 	UFUNCTION(BlueprintPure)
 	ATPPWeaponBase* GetCurrentEquippedWeapon() const { return CurrentWeapon; }
 
@@ -258,5 +261,25 @@ public:
 
 	/** Set player's intent to begin aiming */
 	void SetPlayerWantsToAim(bool bIsTryingToAim);
+
+	/** Returns true if the player is trying to aim */
+	UFUNCTION(BlueprintPure)
+	bool DoesPlayerWantToAim() const { return bWantsToAim; }
+
+	/** Returns true if the player is currently aiming */
+	UFUNCTION(BlueprintPure)
+	bool IsPlayerAiming() const { return bIsAiming; }
+
+	/** Returns true if the player is not inhibited by any mechanics/moves that block aiming */
+	UFUNCTION(BlueprintPure)
+	bool CanPlayerBeginAiming() const;
+
+protected:
+
+	/** Have the player start aiming down the sights */
+	void StartAiming();
+
+	/** Stops the player from aiming down the sights */
+	void StopAiming();
 };
 

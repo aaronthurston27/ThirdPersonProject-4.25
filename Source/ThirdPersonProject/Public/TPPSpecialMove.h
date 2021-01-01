@@ -34,6 +34,9 @@ public:
 	bool bDisablesMovementInput = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	bool bDisablesCameraMovementInput = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	bool bDisablesAiming = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")

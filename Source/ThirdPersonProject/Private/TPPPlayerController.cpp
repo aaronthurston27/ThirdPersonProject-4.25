@@ -29,8 +29,6 @@ void ATPPPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("LookUp", this, &ATPPPlayerController::AddPitchInput);
 	InputComponent->BindAxis("LookUpRate", this, &ATPPPlayerController::LookUpRate);
 
-	InputComponent->BindAction("LockOn", IE_Pressed, this, &ATPPPlayerController::OnLockOnPressed);
-
 	InputComponent->BindAction("MovementAbility", IE_Pressed, this, &ATPPPlayerController::OnMovementAbilityPressed);
 	InputComponent->BindAction("Sprint", IE_Pressed, this, &ATPPPlayerController::OnSprintPressed);
 	InputComponent->BindAction("Sprint", IE_Released, this, &ATPPPlayerController::OnSprintReleased);
@@ -88,11 +86,6 @@ void ATPPPlayerController::LookUpRate(float value)
 void ATPPPlayerController::TurnRate(float value)
 {
 
-}
-
-void ATPPPlayerController::OnLockOnPressed()
-{
-	CachedOwnerCharacter->ResetCameraToPlayerRotation();
 }
 
 void ATPPPlayerController::OnJumpPressed()

@@ -65,9 +65,6 @@ protected:
 	void LookUpRate(float value);
 
 	UFUNCTION()
-	void OnLockOnPressed();
-
-	UFUNCTION()
 	void OnJumpPressed();
 	
 	UFUNCTION()
