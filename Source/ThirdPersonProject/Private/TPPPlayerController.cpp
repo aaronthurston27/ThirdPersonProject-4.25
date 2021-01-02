@@ -100,12 +100,12 @@ void ATPPPlayerController::OnJumpReleased()
 
 void ATPPPlayerController::OnSprintPressed()
 {
-	CachedOwnerCharacter->BeginSprint();
+	CachedOwnerCharacter->SetWantsToSprint(true);
 }
 
 void ATPPPlayerController::OnSprintReleased()
 {
-	CachedOwnerCharacter->StopSprint();
+	CachedOwnerCharacter->SetWantsToSprint(false);
 }
 
 void ATPPPlayerController::OnCrouchPressed()

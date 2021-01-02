@@ -127,12 +127,15 @@ protected:
 	UPROPERTY(Transient)
 	bool bWantsToSprint = false;
 
-public:
+	UPROPERTY(Transient)
+	bool bIsSprinting = false;
 
 public:
 
 	UFUNCTION(BlueprintPure)
 	bool CanSprint() const;
+
+	void SetWantsToSprint(bool bPlayerWantsToSprint);
 
 	void BeginSprint();
 

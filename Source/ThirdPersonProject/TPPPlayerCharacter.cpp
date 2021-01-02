@@ -92,6 +92,16 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 	{
 		StopAiming();
 	}
+
+	if (bWantsToSprint && !bIsSprinting && CanSprint())
+	{
+		BeginSprint();
+	}
+	else if (bIsSprinting && !bWantsToSprint)
+	{
+		StopSprint();
+	}
+
 }
 
 void ATPPPlayerCharacter::OnResetVR()
@@ -101,17 +111,22 @@ void ATPPPlayerCharacter::OnResetVR()
 
 void ATPPPlayerCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
 {
-		Jump();
+	Jump();
 }
 
 void ATPPPlayerCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
 {
-		StopJumping();
+	StopJumping();
+}
+
+void ATPPPlayerCharacter::SetWantsToSprint(bool bPlayerWantsToSprint)
+{
+	bWantsToSprint = bPlayerWantsToSprint;
 }
 
 void ATPPPlayerCharacter::BeginSprint()
 {
-	bWantsToSprint = true;
+	bIsSprinting = true;
 	UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement();
 	if (CharacterMovementComponent)
 	{
@@ -122,7 +137,7 @@ void ATPPPlayerCharacter::BeginSprint()
 
 void ATPPPlayerCharacter::StopSprint()
 {
-	bWantsToSprint = false;
+	bIsSprinting = false;
 	UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement();
 	if (CharacterMovementComponent)
 	{
@@ -320,6 +335,7 @@ void ATPPPlayerCharacter::StartAiming()
 	bIsAiming = true;
 	FollowCamera->SetRelativeLocation(ADSCameraOffset);
 	bUseControllerRotationYaw = true;
+	StopSprint();
 	GetTPPMovementComponent()->MaxWalkSpeed = ADSWalkSpeed;
 }
 
