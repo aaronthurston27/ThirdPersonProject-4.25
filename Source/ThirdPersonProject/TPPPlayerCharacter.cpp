@@ -101,7 +101,6 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 	{
 		StopSprint();
 	}
-
 }
 
 void ATPPPlayerCharacter::OnResetVR()
@@ -358,6 +357,16 @@ void ATPPPlayerCharacter::StopAiming()
 		MovementComp->MaxWalkSpeed = DefaultWalkSpeed;
 	}
 	CameraBoom->TargetArmLength = HipAimCameraArmLength;
+}
+
+FVector ATPPPlayerCharacter::GetControllerRelativeMovementSpeed() const
+{
+	const FRotator YawRotation(0, GetControlRotation().Yaw, 0);
+	const FVector Velocity = GetVelocity();
+
+	const float ForwardSpeed = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X) | Velocity;
+	const float RightSpeed = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y) | Velocity;
+	return FVector(ForwardSpeed, RightSpeed, 0.0f);
 }
 
 void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutput LogOutput)

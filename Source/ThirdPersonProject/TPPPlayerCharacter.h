@@ -285,6 +285,10 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool CanPlayerBeginAiming() const;
 
+	/** Gets the speed of the character relative to the controller's rotation*/
+	UFUNCTION(BlueprintPure)
+	FVector GetControllerRelativeMovementSpeed() const;
+
 protected:
 
 	/** Have the player start aiming down the sights */
