@@ -72,7 +72,7 @@ void ATPPPlayerCharacter::BeginPlay()
 		CurrentAbility->SetOwningCharacter(this);
 	}
 
-	FollowCamera->SetRelativeLocation(HipAimCameraOffset);
+	StopAiming();
 }
 
 void ATPPPlayerCharacter::Tick(float DeltaTime)
@@ -337,6 +337,7 @@ void ATPPPlayerCharacter::StartAiming()
 	bUseControllerRotationYaw = true;
 	StopSprint();
 	GetTPPMovementComponent()->MaxWalkSpeed = ADSWalkSpeed;
+	CameraBoom->TargetArmLength = ADSCameraArmLength;
 }
 
 void ATPPPlayerCharacter::StopAiming()
@@ -345,6 +346,7 @@ void ATPPPlayerCharacter::StopAiming()
 	FollowCamera->SetRelativeLocation(HipAimCameraOffset);
 	bUseControllerRotationYaw = false;
 	GetTPPMovementComponent()->MaxWalkSpeed = DefaultWalkSpeed;
+	CameraBoom->TargetArmLength = HipAimCameraArmLength;
 }
 
 void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutput LogOutput)

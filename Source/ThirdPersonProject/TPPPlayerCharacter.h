@@ -66,11 +66,19 @@ class ATPPPlayerCharacter : public ACharacter
 
 	/** Offset of the camera when not zooming in. Should be adjusted so camera is not directly behind player character and obstructs view. */
 	UPROPERTY(EditDefaultsOnly, Category = Camera)
-	FVector HipAimCameraOffset = FVector(0.0f, 50.f, 0.0f);
+	FVector HipAimCameraOffset = FVector(0.0f, 50.f, 20.0f);
+
+	/** Length of camera boom when aiming from the hip. Use this instead of changing X value of camera offset to prevent collision issues. */
+	UPROPERTY(EditDefaultsOnly, Category = Camera)
+	float HipAimCameraArmLength = 293.0f;
 
 	/** Offset of the camera when the player aims down the sights. */
 	UPROPERTY(EditDefaultsOnly, Category = Camera)
-	FVector ADSCameraOffset;
+	FVector ADSCameraOffset = FVector(0.0f, 60.0f, 47.0f);
+
+	/** Length of camera boom when aiming down the sights. Use this instead of changing X value of camera offset to prevent collision issues. */
+	UPROPERTY(EditDefaultsOnly, Category = Camera)
+	float ADSCameraArmLength = 100.f;
 
 	UPROPERTY(Transient)
 	EAnimationBlendSlot CurrentAnimationBlendSlot;
