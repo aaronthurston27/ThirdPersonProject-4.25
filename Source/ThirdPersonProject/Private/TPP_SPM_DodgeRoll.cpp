@@ -10,7 +10,6 @@
 UTPP_SPM_DodgeRoll::UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	bDisablesMovementInput = true;
-	bDisablesAiming = true;
 	bDisablesJump = true;
 	bDisablesSprint = true;
 	bDisablesCrouch = true;
@@ -27,6 +26,7 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 	CharacterMovementComponent = OwningCharacter->GetTPPMovementComponent();
 	CharacterMovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
 	CharacterMovementComponent->bOrientRotationToMovement = false;
+	OwningCharacter->bUseControllerRotationYaw = false;
 
 	OwningCharacter->UnCrouch(false);
 
@@ -63,6 +63,11 @@ void UTPP_SPM_DodgeRoll::EndSpecialMove_Implementation()
 	{
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::None);
 		SetAnimRootMotionMode(ERootMotionMode::RootMotionFromMontagesOnly);
+	}
+
+	if (OwningCharacter->DoesPlayerWantToAim() && OwningCharacter->CanPlayerBeginAiming())
+	{
+		OwningCharacter->bUseControllerRotationYaw = true;
 	}
 
 	CharacterMovementComponent->bOrientRotationToMovement = true;

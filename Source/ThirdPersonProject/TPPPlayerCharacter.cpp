@@ -149,7 +149,8 @@ void ATPPPlayerCharacter::StopSprint()
 bool ATPPPlayerCharacter::CanSprint() const
 {
 	const bool bBlockedBySpecialMove = CurrentSpecialMove && CurrentSpecialMove->bDisablesSprint;
-	return !bBlockedBySpecialMove && !bIsAiming;
+	const UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+	return !bBlockedBySpecialMove && !bIsAiming && MovementComp->IsMovingOnGround();
 }
 
 bool ATPPPlayerCharacter::CanCrouch() const
@@ -336,7 +337,12 @@ void ATPPPlayerCharacter::StartAiming()
 	FollowCamera->SetRelativeLocation(ADSCameraOffset);
 	bUseControllerRotationYaw = true;
 	StopSprint();
-	GetTPPMovementComponent()->MaxWalkSpeed = ADSWalkSpeed;
+	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+	if (MovementComp)
+	{
+		MovementComp->bOrientRotationToMovement = false;
+		MovementComp->MaxWalkSpeed = ADSWalkSpeed;
+	}
 	CameraBoom->TargetArmLength = ADSCameraArmLength;
 }
 
@@ -345,7 +351,12 @@ void ATPPPlayerCharacter::StopAiming()
 	bIsAiming = false;
 	FollowCamera->SetRelativeLocation(HipAimCameraOffset);
 	bUseControllerRotationYaw = false;
-	GetTPPMovementComponent()->MaxWalkSpeed = DefaultWalkSpeed;
+	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+	if (MovementComp)
+	{
+		MovementComp->bOrientRotationToMovement = true;
+		MovementComp->MaxWalkSpeed = DefaultWalkSpeed;
+	}
 	CameraBoom->TargetArmLength = HipAimCameraArmLength;
 }
 
