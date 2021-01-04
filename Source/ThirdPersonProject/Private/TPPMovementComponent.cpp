@@ -11,6 +11,12 @@ UTPPMovementComponent::UTPPMovementComponent(const FObjectInitializer& ObjectIni
 	EndSlideSpeed = 200.f;
 	SlidingFriction = .8f;
 	bUseSeparateBrakingFriction = true;
+
+	DefaultWalkSpeed = 400.f;
+	ADSWalkSpeed = 250.f;
+	SprintingSpeed = 1150.f;
+	MaxWalkSpeedCrouched = 250.f;
+	CrouchingADSSpeed = 200.f;
 }
 
 void UTPPMovementComponent::BeginPlay()
@@ -21,6 +27,7 @@ void UTPPMovementComponent::BeginPlay()
 	CachedEndSlideSpeed = EndSlideSpeed * EndSlideSpeed;
 	CachedBrakingDeceleration = BrakingDecelerationWalking;
 	CachedGroundFriction = GroundFriction;
+	MaxWalkSpeed = DefaultWalkSpeed;
 	MaxCustomMovementSpeed = 1000.f;
 	EndSlideSpeed = 300.0f;
 
@@ -171,6 +178,26 @@ void UTPPMovementComponent::UnCrouch(bool bClientSimulation)
 bool UTPPMovementComponent::IsMovingOnGround() const
 {
 	return Super::IsMovingOnGround() || IsSliding();
+}
+
+float UTPPMovementComponent::GetMaxSpeed() const
+{
+	ATPPPlayerCharacter* TPPCharacter = Cast<ATPPPlayerCharacter>(CharacterOwner);
+	if (!TPPCharacter)
+	{
+		return 0.0f;
+	}
+
+	if (TPPCharacter->IsPlayerAiming())
+	{
+		return IsCrouching() ? CrouchingADSSpeed : ADSWalkSpeed;
+	}
+	else if (TPPCharacter->IsSprinting())
+	{
+		return SprintingSpeed;
+	}
+	return Super::GetMaxSpeed();
+
 }
 
 float UTPPMovementComponent::GetMaxBrakingDeceleration() const

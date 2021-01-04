@@ -23,6 +23,20 @@ class THIRDPERSONPROJECT_API UTPPMovementComponent : public UCharacterMovementCo
 
 public:
 
+	UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
+	float DefaultWalkSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
+	float SprintingSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
+	float ADSWalkSpeed;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
+	float CrouchingADSSpeed;
+
+public:
+
 	UPROPERTY(EditDefaultsOnly, Category = "CustomMovement|Sliding")
 	float MinimumSlidingSpeed;
 
@@ -83,6 +97,8 @@ public:
 	virtual bool IsMovingOnGround() const override;
 
 	virtual float GetMaxBrakingDeceleration() const override;
+
+	virtual float GetMaxSpeed() const override;
 
 protected:
 

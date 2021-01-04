@@ -101,34 +101,22 @@ protected:
 	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
-	// End of APawn interface
+public:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character Rotation")
+	float DefaultRotationRate;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character Rotation")
+	float SprintRotationRate;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character Rotation")
+	float ADSRotationRate;
 
 public:
 
 	/** Ability to activate for special movement key */
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UBaseAbility> MovementAbilityClass;
-	
-
-public:
-
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	float DefaultWalkSpeed;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	float SprintingSpeed;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	float CrouchingSpeed;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	float ADSWalkSpeed;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	float DefaultRotationRate;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	float SprintRotationRate;
 
 protected:
 
@@ -142,6 +130,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	bool CanSprint() const;
+
+	UFUNCTION(BlueprintPure)
+	bool IsSprinting() const { return bIsSprinting; }
 
 	void SetWantsToSprint(bool bPlayerWantsToSprint);
 
@@ -242,11 +233,6 @@ private:
 	* @param ELogOutput - All, Output Log or Screen
 	*/
 	void Log(ELogLevel LogLevel, FString Message, ELogOutput LogOutput = ELogOutput::ALL);
-
-public:
-
-	UPROPERTY(EditDefaultsOnly, Category = "Aiming")
-	float ADSRotationRate;
 
 protected:
 

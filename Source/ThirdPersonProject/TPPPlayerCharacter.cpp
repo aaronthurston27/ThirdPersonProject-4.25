@@ -47,18 +47,11 @@ ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitial
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
-	
-	PrimaryActorTick.bCanEverTick = true;
-
-	DefaultWalkSpeed = 400.f;
-	ADSWalkSpeed = 250.f;
-	CrouchingSpeed = 250.f;
-	SprintingSpeed = 1150.f;
 	DefaultRotationRate = 540.f;
 	SprintRotationRate = 220.f;
 	ADSRotationRate = 200.0f;
+	
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ATPPPlayerCharacter::BeginPlay()
@@ -135,7 +128,6 @@ void ATPPPlayerCharacter::BeginSprint()
 	if (CharacterMovementComponent)
 	{
 		CharacterMovementComponent->RotationRate = FRotator(0.f, SprintRotationRate, 0.f);
-		CharacterMovementComponent->MaxWalkSpeed = SprintingSpeed;
 	}
 }
 
@@ -145,7 +137,6 @@ void ATPPPlayerCharacter::StopSprint()
 	UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement();
 	if (CharacterMovementComponent)
 	{
-		CharacterMovementComponent->MaxWalkSpeed = DefaultWalkSpeed;
 		CharacterMovementComponent->RotationRate = FRotator(0.f, DefaultRotationRate, 0.f);
 	}
 }
@@ -348,7 +339,6 @@ void ATPPPlayerCharacter::StartAiming()
 	if (MovementComp)
 	{
 		MovementComp->bOrientRotationToMovement = false;
-		MovementComp->MaxWalkSpeed = ADSWalkSpeed;
 		if (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesCharacterRotation)
 		{
 			MovementComp->bUseControllerDesiredRotation = true;
@@ -368,7 +358,6 @@ void ATPPPlayerCharacter::StopAiming()
 	if (MovementComp)
 	{
 		MovementComp->bOrientRotationToMovement = true;
-		MovementComp->MaxWalkSpeed = DefaultWalkSpeed;
 		MovementComp->RotationRate = FRotator(0.0f, DefaultRotationRate, 0.0f);
 	}
 	CameraBoom->TargetArmLength = HipAimCameraArmLength;
