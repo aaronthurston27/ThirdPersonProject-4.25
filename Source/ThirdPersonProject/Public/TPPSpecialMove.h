@@ -51,6 +51,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	bool bDisablesWeaponFireOnStart = true;
 
+public:
+
+	/** If true, disables character rotation forced by the player controller or movement component */
+	UPROPERTY(EditDefaultsOnly, Category = "Character")
+	bool bDisablesCharacterRotation = false;
+
 protected:
 
 	UPROPERTY(Transient)

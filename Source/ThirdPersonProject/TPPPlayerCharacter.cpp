@@ -58,6 +58,7 @@ ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitial
 	SprintingSpeed = 1150.f;
 	DefaultRotationRate = 540.f;
 	SprintRotationRate = 220.f;
+	ADSRotationRate = 200.0f;
 }
 
 void ATPPPlayerCharacter::BeginPlay()
@@ -72,7 +73,11 @@ void ATPPPlayerCharacter::BeginPlay()
 		CurrentAbility->SetOwningCharacter(this);
 	}
 
-	StopAiming();
+	UCharacterMovementComponent* MovementComp = GetTPPMovementComponent();
+	if (MovementComp)
+	{
+		MovementComp->RotationRate = FRotator(0.f, DefaultRotationRate, 0.f);
+	}
 }
 
 void ATPPPlayerCharacter::Tick(float DeltaTime)
@@ -291,6 +296,10 @@ void ATPPPlayerCharacter::OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove)
 	if (SpecialMove == CurrentSpecialMove)
 	{
 		CurrentSpecialMove = nullptr;
+		if (DoesPlayerWantToAim() && CanPlayerBeginAiming())
+		{
+			StartAiming();
+		}
 	}
 }
 
@@ -334,13 +343,18 @@ void ATPPPlayerCharacter::StartAiming()
 {
 	bIsAiming = true;
 	FollowCamera->SetRelativeLocation(ADSCameraOffset);
-	bUseControllerRotationYaw = true;
 	StopSprint();
 	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
 	if (MovementComp)
 	{
 		MovementComp->bOrientRotationToMovement = false;
 		MovementComp->MaxWalkSpeed = ADSWalkSpeed;
+		if (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesCharacterRotation)
+		{
+			MovementComp->bUseControllerDesiredRotation = true;
+		}
+		MovementComp->RotationRate = FRotator(0.0f, ADSRotationRate, 0.0f);
+		
 	}
 	CameraBoom->TargetArmLength = ADSCameraArmLength;
 }
@@ -355,6 +369,7 @@ void ATPPPlayerCharacter::StopAiming()
 	{
 		MovementComp->bOrientRotationToMovement = true;
 		MovementComp->MaxWalkSpeed = DefaultWalkSpeed;
+		MovementComp->RotationRate = FRotator(0.0f, DefaultRotationRate, 0.0f);
 	}
 	CameraBoom->TargetArmLength = HipAimCameraArmLength;
 }

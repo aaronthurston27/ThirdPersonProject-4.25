@@ -243,6 +243,11 @@ private:
 	*/
 	void Log(ELogLevel LogLevel, FString Message, ELogOutput LogOutput = ELogOutput::ALL);
 
+public:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Aiming")
+	float ADSRotationRate;
+
 protected:
 
 	/** Currently equipped weapon */
