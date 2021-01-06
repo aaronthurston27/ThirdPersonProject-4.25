@@ -4,9 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/AudioComponent.h"
 #include "TPPWeaponBase.generated.h"
 
 class ATPPPlayerCharacter;
+
+UENUM(BlueprintType)
+enum class EWeaponAmmoType : uint8
+{
+	Rifle,
+	Melee,
+	MAX UMETA(Hidden)
+};
 
 /**
 * Base class that all weapons (or items that can hurt people) should derive from
@@ -21,6 +30,31 @@ public:
 	/** Mesh associated with this weapon */
 	UPROPERTY(VisibleAnywhere, Category = "Mesh", BlueprintReadOnly)
 	USkeletalMeshComponent* WeaponMesh;
+
+	/** Audio component for playing weapon related sounds */
+	UPROPERTY(VisibleAnywhere, Category = "Audio", BlueprintReadOnly)
+	UAudioComponent* AudioComponent;
+
+public:
+
+	/** Ammo type to consume for this weapon */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Ammo", BlueprintReadOnly)
+	EWeaponAmmoType AmmoType;
+
+	/** Maximum ammo to store in the chamber */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Ammo", BlueprintReadOnly)
+	int32 MaxLoadedAmmo;
+
+protected:
+
+	/** Ammo loaded and ready to be fired. */
+	UPROPERTY(Transient)
+	int32 LoadedAmmoCount = 100;
+
+protected:
+
+	/** Consumes ammo store in the chamber */
+	void ConsumeLoadedAmmo(int32 AmmoToConsume);
 	
 public:	
 

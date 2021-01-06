@@ -7,7 +7,8 @@
 #include "TPPMovementComponent.generated.h"
 
 UENUM()
-enum class ECustomMovementMode : uint8 {
+enum class ECustomMovementMode : uint8 
+{
 	Sliding = 0,
 };
 
