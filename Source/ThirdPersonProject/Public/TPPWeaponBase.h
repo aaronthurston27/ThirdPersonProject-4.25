@@ -41,20 +41,41 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Ammo", BlueprintReadOnly)
 	EWeaponAmmoType AmmoType;
 
-	/** Maximum ammo to store in the chamber */
+	/** Maximum ammo storable in the chamber */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Ammo", BlueprintReadOnly)
 	int32 MaxLoadedAmmo;
+
+	/** If true, ammo can be stored in the pool for reloading */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Ammo", BlueprintReadOnly)
+	bool bHasAmmoPool = false;
+
+	/** Maximum ammo to store in the pool */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Ammo", BlueprintReadOnly, meta = (EditCondition = "bHasAmmoPool", UIMin = "0", ClampMin = "0"))
+	int32 MaxAmmoInPool = 0;
+
+	/** Ammo to consume per shot */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Ammo", BlueprintReadOnly)
+	int32 AmmoConsumedPerShot = 1;
 
 protected:
 
 	/** Ammo loaded and ready to be fired. */
 	UPROPERTY(Transient)
-	int32 LoadedAmmoCount = 100;
+	int32 LoadedAmmo = 100;
+
+	/** Ammo held in the pool reserve. Added to current ammo when reloading */
+	UPROPERTY(Transient)
+	int32 CurrentAmmoPool = 0;
+
+	/** True if this weapon is ready to be fired */
+	UPROPERTY(Transient)
+	bool bIsWeaponReady = true;
 
 protected:
 
-	/** Consumes ammo store in the chamber */
-	void ConsumeLoadedAmmo(int32 AmmoToConsume);
+	/** Modifes ammo count of weapon */
+	UFUNCTION(BlueprintCallable)
+	virtual void ModifyWeaponAmmo(const int32 ChamberAmmoChange = 0, const int32 PooledAmmoChange = 0);
 	
 public:	
 
@@ -76,6 +97,9 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintCallable)
+	void SetWeaponReady(bool bWeaponReady);
+
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	bool CanFireWeapon();
 
@@ -85,4 +109,12 @@ public:
 	void FireWeapon();
 
 	virtual void FireWeapon_Implementation();
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetPooledAmmoCount() const { return CurrentAmmoPool; }
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetLoadedAmmoCount() const { return LoadedAmmo; }
 };

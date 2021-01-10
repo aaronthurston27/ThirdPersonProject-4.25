@@ -47,7 +47,7 @@ void UTPPSpecialMove::BeginSpecialMove_Implementation()
 		}
 	}
 
-	bIsWeaponFiringDisabled = bDisablesWeaponFireOnStart;
+	bIsWeaponUseDisabled = bDisablesWeaponUseOnStart;
 }
 
 void UTPPSpecialMove::EndSpecialMove_Implementation()

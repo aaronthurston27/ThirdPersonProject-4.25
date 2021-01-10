@@ -49,7 +49,7 @@ public:
 	bool bDisablesCrouch = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	bool bDisablesWeaponFireOnStart = true;
+	bool bDisablesWeaponUseOnStart = true;
 
 public:
 
@@ -60,12 +60,12 @@ public:
 protected:
 
 	UPROPERTY(Transient)
-	bool bIsWeaponFiringDisabled = false;
+	bool bIsWeaponUseDisabled = false;
 
 public:
 
 	UFUNCTION(BlueprintPure)
-	bool IsMoveBlockingWeaponFire() const { return bIsWeaponFiringDisabled; }
+	bool IsMoveBlockingWeaponUse() const { return bIsWeaponUseDisabled; }
 
 public:
 

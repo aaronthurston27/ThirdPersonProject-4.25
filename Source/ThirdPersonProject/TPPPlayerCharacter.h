@@ -261,6 +261,9 @@ public:
 	/** Tries to fire the currently equipped weapon */
 	void TryToFireWeapon();
 
+	/** Try to reload weapon */
+	void TryToReloadWeapon();
+
 	/** Set player's intent to begin aiming */
 	void SetPlayerWantsToAim(bool bIsTryingToAim);
 

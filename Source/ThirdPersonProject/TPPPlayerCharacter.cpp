@@ -17,6 +17,7 @@
 #include "Engine.h"
 #include "TPPPlayerController.h"
 #include "TPPWeaponBase.h"
+#include "TPPWeaponFirearm.h"
 #include "GameFramework/SpringArmComponent.h"
 
 ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitialzer) :
@@ -308,12 +309,12 @@ void ATPPPlayerCharacter::SetCurrentEquippedWeapon(ATPPWeaponBase* NewEquippedWe
 
 void ATPPPlayerCharacter::TryToFireWeapon()
 {
-	if (!CurrentWeapon || !CurrentWeapon->CanFireWeapon())
+	if (!CurrentWeapon)
 	{
 		return;
 	}
 
-	if (CurrentSpecialMove && CurrentSpecialMove->IsMoveBlockingWeaponFire())
+	if (CurrentSpecialMove && CurrentSpecialMove->IsMoveBlockingWeaponUse())
 	{
 		return;
 	}
@@ -363,6 +364,25 @@ void ATPPPlayerCharacter::StopAiming()
 		MovementComp->RotationRate = FRotator(0.0f, DefaultRotationRate, 0.0f);
 	}
 	CameraBoom->TargetArmLength = HipAimCameraArmLength;
+}
+
+void ATPPPlayerCharacter::TryToReloadWeapon()
+{
+	ATPPWeaponFirearm* WeaponFirearm = Cast<ATPPWeaponFirearm>(CurrentWeapon);
+	if (!WeaponFirearm)
+	{
+		return;
+	}
+
+	if (CurrentSpecialMove && CurrentSpecialMove->IsMoveBlockingWeaponUse())
+	{
+		return;
+	}
+
+	if (WeaponFirearm->CanReloadWeapon())
+	{
+		WeaponFirearm->StartWeaponReload();
+	}
 }
 
 FVector ATPPPlayerCharacter::GetControllerRelativeMovementSpeed() const

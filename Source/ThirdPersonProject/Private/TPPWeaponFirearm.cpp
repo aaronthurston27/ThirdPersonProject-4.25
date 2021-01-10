@@ -10,28 +10,39 @@
 ATPPWeaponFirearm::ATPPWeaponFirearm()
 {
 	AudioComponent->SetWorldLocation(WeaponMesh ? WeaponMesh->GetSocketLocation(TEXT("Muzzle")) : FVector::ZeroVector);
+	bHasAmmoPool = true;
 }
 
 void ATPPWeaponFirearm::BeginPlay()
 {
 	Super::BeginPlay();
+	LoadedAmmo = MaxLoadedAmmo;
+	CurrentAmmoPool = MaxAmmoInPool;
 }
 
 bool ATPPWeaponFirearm::CanFireWeapon_Implementation()
 {
 	const UWorld* World = GetWorld();
 	const float GameTimeInSeconds = World ? World->GetTimeSeconds() : 0.0f;
-	return GameTimeInSeconds - TimeSinceLastShot >= WeaponFireRate && Super::CanFireWeapon_Implementation();
+	return GameTimeInSeconds - TimeSinceLastShot >= WeaponFireRate && !bIsReloading &&
+		Super::CanFireWeapon_Implementation();
 }
 
 void ATPPWeaponFirearm::FireWeapon_Implementation()
 {
-	switch (WeaponFireType)
+	if (CanFireWeapon())
 	{
-	case EWeaponFireType::Hitscan:
-		HitscanFire();
-	case EWeaponFireType::Projectile:
-		ProjectileFire();
+		switch (WeaponFireType)
+		{
+		case EWeaponHitType::Hitscan:
+			HitscanFire();
+		case EWeaponHitType::Projectile:
+			ProjectileFire();
+		}
+	}
+	else if (LoadedAmmo <= 0 && CanReloadWeapon())
+	{
+		StartWeaponReload();
 	}
 }
 
@@ -63,17 +74,31 @@ void ATPPWeaponFirearm::HitscanFire()
 		DrawDebugSphere(World, TraceResults[0].Location, 25.f, 2, FColor::Green, false, 1.5f, 0, 1.5f);
 	}
 
-	if (AudioComponent && FiringSound)
-	{
-		AudioComponent->SetSound(FiringSound);
-		AudioComponent->Play();
-	}
-
 	TimeSinceLastShot = World->GetTimeSeconds();
+
+	const int32 AmmoToConsume = FMath::Min(AmmoConsumedPerShot, LoadedAmmo);
+	ModifyWeaponAmmo(-AmmoConsumedPerShot, 0);
 }
 
 void ATPPWeaponFirearm::ProjectileFire()
 {
 
+}
+
+bool ATPPWeaponFirearm::CanReloadWeapon_Implementation()
+{
+	return !bIsReloading && LoadedAmmo < MaxLoadedAmmo && 
+		CurrentAmmoPool > 0;
+}
+
+void ATPPWeaponFirearm::StartWeaponReload()
+{
+	ReloadActual();
+}
+
+void ATPPWeaponFirearm::ReloadActual()
+{
+	const int32 AmmoToChamber = FMath::Min(CurrentAmmoPool, MaxLoadedAmmo);
+	ModifyWeaponAmmo(AmmoToChamber, -AmmoToChamber);
 }
 

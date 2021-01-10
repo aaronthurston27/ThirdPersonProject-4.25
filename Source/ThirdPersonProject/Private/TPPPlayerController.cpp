@@ -38,6 +38,7 @@ void ATPPPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("FireWeapon", this, &ATPPPlayerController::HandleWeaponFireAxis);
 	InputComponent->BindAction("ADS", IE_Pressed, this, &ATPPPlayerController::OnAimWeaponPressed);
 	InputComponent->BindAction("ADS", IE_Released, this, &ATPPPlayerController::OnAimWeaponReleased);
+	InputComponent->BindAction("Reload", IE_Pressed, this, &ATPPPlayerController::OnReloadPressed);
 }
 
 void ATPPPlayerController::Tick(float DeltaTime)
@@ -144,6 +145,11 @@ void ATPPPlayerController::OnAimWeaponPressed()
 void ATPPPlayerController::OnAimWeaponReleased()
 {
 	CachedOwnerCharacter->SetPlayerWantsToAim(false);
+}
+
+void ATPPPlayerController::OnReloadPressed()
+{
+	CachedOwnerCharacter->TryToReloadWeapon();
 }
 
 FRotator ATPPPlayerController::GetRelativeControllerMovementRotation() const

@@ -6,12 +6,22 @@
 #include "TPPWeaponBase.h"
 #include "TPPWeaponFirearm.generated.h"
 
+/** Hit logic to use for this weapon */
 UENUM(BlueprintType)
-enum class EWeaponFireType : uint8
+enum class EWeaponHitType : uint8
 {
 	Hitscan,
 	Projectile,
 	MAX
+};
+
+/** Firing mode to use for this weapon */
+UENUM(BlueprintType)
+enum class EWeaponFireMode : uint8
+{
+	FullAuto,
+	SemiAuto,
+	Burst
 };
 
 /**
@@ -32,35 +42,25 @@ public:
 
 	/** Weapon firing mode */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing", BlueprintReadOnly)
-	EWeaponFireType WeaponFireType = EWeaponFireType::Hitscan;
+	EWeaponHitType WeaponFireType = EWeaponHitType::Hitscan;
 
 	/** Cooldown time between consective shots of this weapon */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing", BlueprintReadOnly)
 	float WeaponFireRate = .1f;
 
-	/** Maximum ammo to store in the pool */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Ammo", BlueprintReadOnly)
-	int32 MaxAmmoInPool;
-
-public:
-
-	/** Weapon firing sound */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Audio")
-	USoundWave* FiringSound;
-
-	/** Weapon reload sound */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Audio")
-	USoundWave* ReloadSound;
-
 protected:
 
-	/** Ammo held in the pool reserve. Added to current ammo when reloading */
+	/** Current firing mode */
 	UPROPERTY(Transient)
-	uint32 CurrentAmmoPool = 0;
+	EWeaponFireMode CurrentFiringMode;
 
 	/** Time since weapon was last fired * */
 	UPROPERTY(Transient)
 	float TimeSinceLastShot = 0.0f;
+
+	/** True if this weapon is being reloaded */
+	UPROPERTY(Transient)
+	bool bIsReloading = false;
 
 public:
 
@@ -75,4 +75,20 @@ protected:
 
 	/** Spawn a projectile from the weapon. */
 	void ProjectileFire();
+
+public:
+
+	/** Evaluate whether or not this weapon can be reloaded */
+	UFUNCTION(BlueprintNativeEvent)
+	bool CanReloadWeapon();
+
+	virtual bool CanReloadWeapon_Implementation();
+
+	/** Starts the reload process and animation */
+	virtual void StartWeaponReload();
+
+protected:
+
+	/** Actual reload process of adding ammo to chamber */
+	void ReloadActual();
 };

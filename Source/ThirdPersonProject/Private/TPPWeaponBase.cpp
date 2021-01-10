@@ -10,7 +10,6 @@ ATPPWeaponBase::ATPPWeaponBase()
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	AudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
 	SetRootComponent(WeaponMesh);
-	PrimaryActorTick.bCanEverTick = false;
 }
 
 void ATPPWeaponBase::BeginPlay()
@@ -23,14 +22,20 @@ void ATPPWeaponBase::SetWeaponOwner(ATPPPlayerCharacter* NewWeaponOwner)
 	CharacterOwner = NewWeaponOwner;
 }
 
-void ATPPWeaponBase::ConsumeLoadedAmmo(int32 AmmoToConsume)
+void ATPPWeaponBase::ModifyWeaponAmmo(const int32 ChamberAmmoChange, const int32 PooledAmmoChange)
 {
-	LoadedAmmoCount = FMath::Max(0, LoadedAmmoCount - AmmoToConsume);
+	LoadedAmmo = FMath::Clamp(LoadedAmmo + ChamberAmmoChange, 0, MaxLoadedAmmo);
+	CurrentAmmoPool = FMath::Clamp(CurrentAmmoPool + PooledAmmoChange, 0, MaxAmmoInPool);
+}
+
+void ATPPWeaponBase::SetWeaponReady(bool bWeaponReady)
+{
+	bIsWeaponReady = bWeaponReady;
 }
 
 bool ATPPWeaponBase::CanFireWeapon_Implementation()
 {
-	return LoadedAmmoCount > 0 && CharacterOwner != nullptr;
+	return bIsWeaponReady && LoadedAmmo > 0 && CharacterOwner != nullptr;
 }
 
 void ATPPWeaponBase::FireWeapon_Implementation()

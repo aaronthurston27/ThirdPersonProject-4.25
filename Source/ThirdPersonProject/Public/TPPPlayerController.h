@@ -94,6 +94,9 @@ protected:
 	UFUNCTION()
 	void OnAimWeaponReleased();
 
+	UFUNCTION()
+	void OnReloadPressed();
+
 public:
 
 	ATPPPlayerCharacter* GetOwnerCharacter();
