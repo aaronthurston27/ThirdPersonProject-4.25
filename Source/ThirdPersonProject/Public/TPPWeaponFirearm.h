@@ -31,8 +31,12 @@ public:
 public:
 
 	/** Weapon firing mode */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon", BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing", BlueprintReadOnly)
 	EWeaponFireType WeaponFireType = EWeaponFireType::Hitscan;
+
+	/** Cooldown time between consective shots of this weapon */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing", BlueprintReadOnly)
+	float WeaponFireRate = .1f;
 
 	/** Maximum ammo to store in the pool */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Ammo", BlueprintReadOnly)
@@ -54,9 +58,21 @@ protected:
 	UPROPERTY(Transient)
 	uint32 CurrentAmmoPool = 0;
 
+	/** Time since weapon was last fired * */
+	UPROPERTY(Transient)
+	float TimeSinceLastShot = 0.0f;
+
 public:
 
 	virtual bool CanFireWeapon_Implementation() override;
 
 	virtual void FireWeapon_Implementation() override;
+
+protected:
+
+	/** Line trace towards the player's camera and check for a hit. */
+	void HitscanFire();
+
+	/** Spawn a projectile from the weapon. */
+	void ProjectileFire();
 };

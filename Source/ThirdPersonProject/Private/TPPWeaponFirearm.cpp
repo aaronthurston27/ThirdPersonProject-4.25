@@ -19,12 +19,24 @@ void ATPPWeaponFirearm::BeginPlay()
 
 bool ATPPWeaponFirearm::CanFireWeapon_Implementation()
 {
-	return Super::CanFireWeapon_Implementation();
+	const UWorld* World = GetWorld();
+	const float GameTimeInSeconds = World ? World->GetTimeSeconds() : 0.0f;
+	return GameTimeInSeconds - TimeSinceLastShot >= WeaponFireRate && Super::CanFireWeapon_Implementation();
 }
 
 void ATPPWeaponFirearm::FireWeapon_Implementation()
 {
-	// TODO: Move hitscan/projectile fire logic into different class
+	switch (WeaponFireType)
+	{
+	case EWeaponFireType::Hitscan:
+		HitscanFire();
+	case EWeaponFireType::Projectile:
+		ProjectileFire();
+	}
+}
+
+void ATPPWeaponFirearm::HitscanFire()
+{
 	static const float HitScanLength = 2000.f;
 
 	UWorld* World = GetWorld();
@@ -53,7 +65,15 @@ void ATPPWeaponFirearm::FireWeapon_Implementation()
 
 	if (AudioComponent && FiringSound)
 	{
-		
+		AudioComponent->SetSound(FiringSound);
+		AudioComponent->Play();
 	}
+
+	TimeSinceLastShot = World->GetTimeSeconds();
+}
+
+void ATPPWeaponFirearm::ProjectileFire()
+{
+
 }
 

@@ -71,6 +71,8 @@ void ATPPPlayerCharacter::BeginPlay()
 	{
 		MovementComp->RotationRate = FRotator(0.f, DefaultRotationRate, 0.f);
 	}
+
+	StopAiming();
 }
 
 void ATPPPlayerCharacter::Tick(float DeltaTime)
