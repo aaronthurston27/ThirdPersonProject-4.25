@@ -39,6 +39,8 @@ void ATPPWeaponFirearm::FireWeapon_Implementation()
 		case EWeaponHitType::Projectile:
 			ProjectileFire();
 		}
+
+		Super::FireWeapon_Implementation();
 	}
 	else if (LoadedAmmo <= 0 && CanReloadWeapon())
 	{
@@ -76,6 +78,12 @@ void ATPPWeaponFirearm::HitscanFire()
 
 	TimeSinceLastShot = World->GetTimeSeconds();
 
+	if (WeaponFireCharacterMontage)
+	{
+		CharacterOwner->SetAnimationBlendSlot(EAnimationBlendSlot::UpperBody);
+		CharacterOwner->PlayAnimMontage(WeaponFireCharacterMontage);
+	}
+
 	const int32 AmmoToConsume = FMath::Min(AmmoConsumedPerShot, LoadedAmmo);
 	ModifyWeaponAmmo(-AmmoConsumedPerShot, 0);
 }
@@ -91,14 +99,29 @@ bool ATPPWeaponFirearm::CanReloadWeapon_Implementation()
 		CurrentAmmoPool > 0;
 }
 
+void ATPPWeaponFirearm::SetIsReloading(bool bReloading)
+{
+	bIsReloading = bReloading;
+}
+
 void ATPPWeaponFirearm::StartWeaponReload()
 {
-	ReloadActual();
+	if (CharacterOwner && WeaponReloadCharacterMontage)
+	{
+		SetIsReloading(true);
+		CharacterOwner->SetAnimationBlendSlot(EAnimationBlendSlot::UpperBody);
+		CharacterOwner->PlayAnimMontage(WeaponReloadCharacterMontage);
+	}
 }
 
 void ATPPWeaponFirearm::ReloadActual()
 {
 	const int32 AmmoToChamber = FMath::Min(CurrentAmmoPool, MaxLoadedAmmo);
 	ModifyWeaponAmmo(AmmoToChamber, -AmmoToChamber);
+	
+	if (OnWeaponReloaded.IsBound())
+	{
+		OnWeaponReloaded.Broadcast();
+	}
 }
 

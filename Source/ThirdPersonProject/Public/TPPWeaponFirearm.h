@@ -6,6 +6,8 @@
 #include "TPPWeaponBase.h"
 #include "TPPWeaponFirearm.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloaded);
+
 /** Hit logic to use for this weapon */
 UENUM(BlueprintType)
 enum class EWeaponHitType : uint8
@@ -48,6 +50,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing", BlueprintReadOnly)
 	float WeaponFireRate = .1f;
 
+	/** Weapon fire montage to be played by owning character */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation", BlueprintReadOnly)
+	UAnimMontage* WeaponFireCharacterMontage;
+
+	/** Weapon reload montage to be played by owning character */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
+	UAnimMontage* WeaponReloadCharacterMontage;
+
 protected:
 
 	/** Current firing mode */
@@ -63,6 +73,9 @@ protected:
 	bool bIsReloading = false;
 
 public:
+
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponReloaded OnWeaponReloaded;
 
 	virtual bool CanFireWeapon_Implementation() override;
 
@@ -86,6 +99,8 @@ public:
 
 	/** Starts the reload process and animation */
 	virtual void StartWeaponReload();
+
+	void SetIsReloading(bool bReloading);
 
 protected:
 

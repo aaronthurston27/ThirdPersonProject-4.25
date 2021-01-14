@@ -5,7 +5,10 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/AudioComponent.h"
+#include "Components/Image.h"
 #include "TPPWeaponBase.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFired);
 
 class ATPPPlayerCharacter;
 
@@ -57,6 +60,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Ammo", BlueprintReadOnly)
 	int32 AmmoConsumedPerShot = 1;
 
+	/** Weapon image to display on HUD */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|HUD", BlueprintReadOnly)
+	UTexture2D* HUDImage;
+
 protected:
 
 	/** Ammo loaded and ready to be fired. */
@@ -94,8 +101,11 @@ public:
 	/** Sets the owner of this weapon */
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponOwner(ATPPPlayerCharacter* NewOwner);
-
+	
 public:
+
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponFired OnWeaponFired;
 
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponReady(bool bWeaponReady);

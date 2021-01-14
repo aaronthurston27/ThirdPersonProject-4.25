@@ -18,6 +18,7 @@
 #include "TPPPlayerController.h"
 #include "TPPWeaponBase.h"
 #include "TPPWeaponFirearm.h"
+#include "TPPHUD.h"
 #include "GameFramework/SpringArmComponent.h"
 
 ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitialzer) :
@@ -57,8 +58,6 @@ ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitial
 
 void ATPPPlayerCharacter::BeginPlay()
 {
-	Super::BeginPlay();
-
 	CurrentAnimationBlendSlot = EAnimationBlendSlot::None;
 
 	CurrentAbility = MovementAbilityClass ? NewObject<UBaseAbility>(this, MovementAbilityClass) : nullptr;
@@ -74,6 +73,18 @@ void ATPPPlayerCharacter::BeginPlay()
 	}
 
 	StopAiming();
+
+	ATPPPlayerController* PlayerController = GetTPPPlayerController();
+	if (PlayerController)
+	{
+		ATPPHUD* HUD = Cast<ATPPHUD>(PlayerController->GetHUD());
+		if (HUD)
+		{
+			HUD->InitializeHUD(this);
+		}
+	}
+
+	Super::BeginPlay();
 }
 
 void ATPPPlayerCharacter::Tick(float DeltaTime)
@@ -148,7 +159,7 @@ bool ATPPPlayerCharacter::CanSprint() const
 {
 	const bool bBlockedBySpecialMove = CurrentSpecialMove && CurrentSpecialMove->bDisablesSprint;
 	const UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
-	return !bBlockedBySpecialMove && !bIsAiming && MovementComp->IsMovingOnGround();
+	return !bBlockedBySpecialMove && !bIsAiming && MovementComp->IsMovingOnGround() && !bIsCrouched;
 }
 
 bool ATPPPlayerCharacter::CanCrouch() const
@@ -302,9 +313,20 @@ void ATPPPlayerCharacter::SetAnimationBlendSlot(const EAnimationBlendSlot NewSlo
 	CurrentAnimationBlendSlot = NewSlot;
 }
 
-void ATPPPlayerCharacter::SetCurrentEquippedWeapon(ATPPWeaponBase* NewEquippedWeapon)
+void ATPPPlayerCharacter::EquipWeapon(ATPPWeaponBase* NewEquippedWeapon)
 {
+	if (NewEquippedWeapon)
+	{
+		NewEquippedWeapon->SetWeaponOwner(this);
+
+		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, false);
+
+		NewEquippedWeapon->WeaponMesh->AttachToComponent(GetMesh(), AttachmentRules, WeaponAttachmentSocketName);
+		NewEquippedWeapon->AddActorWorldRotation(FRotator(0.0f, 90.0f, 0.0f));
+	}
+
 	CurrentWeapon = NewEquippedWeapon;
+	OnWeaponEquipped.Broadcast(CurrentWeapon);
 }
 
 void ATPPPlayerCharacter::TryToFireWeapon()
@@ -375,6 +397,12 @@ void ATPPPlayerCharacter::TryToReloadWeapon()
 	}
 
 	if (CurrentSpecialMove && CurrentSpecialMove->IsMoveBlockingWeaponUse())
+	{
+		return;
+	}
+
+	UTPPMovementComponent* MoveComp = GetTPPMovementComponent();
+	if (MoveComp->HasCharacterStartedSlide())
 	{
 		return;
 	}

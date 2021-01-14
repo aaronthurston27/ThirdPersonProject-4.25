@@ -10,12 +10,14 @@
 #include "Components/TimelineComponent.h"
 #include "Engine/DataTable.h"
 #include "BaseAbility.h"
+#include "TPPWeaponBase.h"
 #include "TPPSpecialMove.h"
 #include "TPPPlayerCharacter.generated.h"
 
 class ATPPPlayerController;
 class UTPPMovementComponent;
-class ATPPWeaponBase;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ATPPWeaponBase*, WeaponEquipped);
 
 #pragma region Structs_And_Enums
 
@@ -234,6 +236,12 @@ private:
 	*/
 	void Log(ELogLevel LogLevel, FString Message, ELogOutput LogOutput = ELogOutput::ALL);
 
+public:
+
+	/** Name of the socket to attach weapons. Should usually be the name of the hand socket */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapons")
+	FName WeaponAttachmentSocketName = TEXT("hand_rSocket");
+
 protected:
 
 	/** Currently equipped weapon */
@@ -250,9 +258,12 @@ protected:
 
 public:
 
-	/** Sets the currently equipped weapon of the player */
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponEquipped OnWeaponEquipped;
+
+	/** Equips a weapon to the player. */
 	UFUNCTION(BlueprintCallable)
-	void SetCurrentEquippedWeapon(ATPPWeaponBase* WeaponEquipped);
+	void EquipWeapon(ATPPWeaponBase* WeaponEquipped);
 
 	/** Returns the currently equipped weapon */
 	UFUNCTION(BlueprintPure)

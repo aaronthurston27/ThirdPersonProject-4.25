@@ -3,3 +3,40 @@
 
 #include "TPPCrosshairWidget.h"
 
+void UTPPCrosshairWidget::SetObservedWeapon(ATPPWeaponBase* WeaponToObserve)
+{
+	if (WeaponToObserve && WeaponToObserve != ObservedWeapon)
+	{
+		RemoveWeaponDelegates(ObservedWeapon);
+	}
+
+	ObservedWeapon = WeaponToObserve;
+	AssignWeaponDelegates(ObservedWeapon);
+
+	OnWeaponChanged();
+}
+
+void UTPPCrosshairWidget::OnWeaponFired_Implementation()
+{
+}
+
+void UTPPCrosshairWidget::OnWeaponReloaded_Implementation()
+{
+
+}
+
+void UTPPCrosshairWidget::AssignWeaponDelegates(ATPPWeaponBase* Weapon)
+{
+	if (Weapon)
+	{
+		Weapon->OnWeaponFired.AddDynamic(this, &UTPPCrosshairWidget::OnWeaponFired);
+	}
+}
+
+void UTPPCrosshairWidget::RemoveWeaponDelegates(ATPPWeaponBase* Weapon)
+{
+	if (Weapon)
+	{
+		Weapon->OnWeaponFired.RemoveDynamic(this, &UTPPCrosshairWidget::OnWeaponFired);
+	}
+}

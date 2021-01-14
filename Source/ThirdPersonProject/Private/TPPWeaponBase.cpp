@@ -40,6 +40,7 @@ bool ATPPWeaponBase::CanFireWeapon_Implementation()
 
 void ATPPWeaponBase::FireWeapon_Implementation()
 {
-
+	OnWeaponFired.Broadcast();
 }
+
 
