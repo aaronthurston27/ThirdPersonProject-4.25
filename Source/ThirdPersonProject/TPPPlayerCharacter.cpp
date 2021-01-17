@@ -200,6 +200,7 @@ void ATPPPlayerCharacter::UnCrouch(bool bIsClientSimulation)
 void ATPPPlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
 {
 	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	StopSprint();
 }
 
 void ATPPPlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)

@@ -62,7 +62,7 @@ public:
 
 	/** Weapon image to display on HUD */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|HUD", BlueprintReadOnly)
-	UTexture2D* HUDImage;
+	TSoftObjectPtr<UTexture2D> HUDImage;
 
 protected:
 

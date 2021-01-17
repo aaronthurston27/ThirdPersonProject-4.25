@@ -106,11 +106,11 @@ void ATPPWeaponFirearm::SetIsReloading(bool bReloading)
 
 void ATPPWeaponFirearm::StartWeaponReload()
 {
-	if (CharacterOwner && WeaponReloadCharacterMontage)
+	if (CharacterOwner)
 	{
 		SetIsReloading(true);
-		CharacterOwner->SetAnimationBlendSlot(EAnimationBlendSlot::UpperBody);
-		CharacterOwner->PlayAnimMontage(WeaponReloadCharacterMontage);
+		ReloadActual();
+		SetIsReloading(false);
 	}
 }
 
