@@ -54,6 +54,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation", BlueprintReadOnly)
 	UAnimMontage* WeaponFireCharacterMontage;
 
+	/** Weapon fire montage to be played when aiming. */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation", BlueprintReadOnly)
+	UAnimMontage* WeaponFireADSCharacterMontage;
+
 	/** Weapon reload montage to be played by owning character */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	UAnimMontage* WeaponReloadCharacterMontage;

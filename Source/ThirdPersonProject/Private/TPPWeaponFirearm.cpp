@@ -59,6 +59,7 @@ void ATPPWeaponFirearm::HitscanFire()
 		return;
 	}
 
+	const bool bIsAiming = CharacterOwner->IsPlayerAiming();
 	const FVector StartingLocation = PlayerCamera->GetComponentLocation();
 	const FVector FireDirection = PlayerCamera->GetForwardVector();
 	const FVector EndLocation = PlayerCamera->GetComponentLocation() + (FireDirection * HitScanLength);
@@ -78,10 +79,11 @@ void ATPPWeaponFirearm::HitscanFire()
 
 	TimeSinceLastShot = World->GetTimeSeconds();
 
-	if (WeaponFireCharacterMontage)
+	UAnimMontage* MontageToPlay = bIsAiming ? WeaponFireADSCharacterMontage : WeaponFireCharacterMontage;
+	if (MontageToPlay)
 	{
 		CharacterOwner->SetAnimationBlendSlot(EAnimationBlendSlot::UpperBody);
-		CharacterOwner->PlayAnimMontage(WeaponFireCharacterMontage);
+		CharacterOwner->PlayAnimMontage(MontageToPlay);
 	}
 
 	const int32 AmmoToConsume = FMath::Min(AmmoConsumedPerShot, LoadedAmmo);
@@ -106,9 +108,14 @@ void ATPPWeaponFirearm::SetIsReloading(bool bReloading)
 
 void ATPPWeaponFirearm::StartWeaponReload()
 {
-	if (CharacterOwner)
+	if (CharacterOwner && WeaponFireCharacterMontage)
 	{
 		SetIsReloading(true);
+		if (WeaponReloadCharacterMontage)
+		{
+			CharacterOwner->SetAnimationBlendSlot(EAnimationBlendSlot::UpperBody);
+			CharacterOwner->PlayAnimMontage(WeaponReloadCharacterMontage);
+		}
 		ReloadActual();
 		SetIsReloading(false);
 	}
