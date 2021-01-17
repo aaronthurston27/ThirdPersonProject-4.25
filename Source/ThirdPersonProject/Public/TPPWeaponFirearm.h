@@ -62,6 +62,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	UAnimMontage* WeaponReloadCharacterMontage;
 
+	/** Sound to play when firing */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Audio")
+	USoundWave* WeaponFireSound;
+
 protected:
 
 	/** Current firing mode */
@@ -72,7 +76,7 @@ protected:
 	UPROPERTY(Transient)
 	float TimeSinceLastShot = 0.0f;
 
-	/** True if this weapon is being reloaded */
+	/** True if weapon is being reloaded */
 	UPROPERTY(Transient)
 	bool bIsReloading = false;
 
@@ -101,12 +105,10 @@ public:
 
 	virtual bool CanReloadWeapon_Implementation();
 
+	void SetIsReloading(bool bIsWeaponReloading);
+
 	/** Starts the reload process and animation */
 	virtual void StartWeaponReload();
-
-	void SetIsReloading(bool bReloading);
-
-protected:
 
 	/** Actual reload process of adding ammo to chamber */
 	void ReloadActual();

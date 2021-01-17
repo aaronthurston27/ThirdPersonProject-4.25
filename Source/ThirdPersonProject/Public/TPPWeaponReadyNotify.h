@@ -7,11 +7,21 @@
 #include "TPPWeaponReadyNotify.generated.h"
 
 /**
- * 
+ * Anim notify for changing weapon ready state.
  */
 UCLASS()
 class THIRDPERSONPROJECT_API UTPPWeaponReadyNotify : public UAnimNotify
 {
 	GENERATED_BODY()
+
+public:
+
+	/** State to set the weapon when this notify is hit */
+	UPROPERTY(EditDefaultsOnly)
+	bool bShouldWeaponBeReady = true;
+
+private:
+
+	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) override;
 	
 };

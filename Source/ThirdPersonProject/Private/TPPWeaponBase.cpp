@@ -15,6 +15,7 @@ ATPPWeaponBase::ATPPWeaponBase()
 void ATPPWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
+	SetWeaponReady(true);
 }
 
 void ATPPWeaponBase::SetWeaponOwner(ATPPPlayerCharacter* NewWeaponOwner)

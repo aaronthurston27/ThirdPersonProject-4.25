@@ -18,14 +18,14 @@ void ATPPWeaponFirearm::BeginPlay()
 	Super::BeginPlay();
 	LoadedAmmo = MaxLoadedAmmo;
 	CurrentAmmoPool = MaxAmmoInPool;
+	SetIsReloading(false);
 }
 
 bool ATPPWeaponFirearm::CanFireWeapon_Implementation()
 {
 	const UWorld* World = GetWorld();
 	const float GameTimeInSeconds = World ? World->GetTimeSeconds() : 0.0f;
-	return GameTimeInSeconds - TimeSinceLastShot >= WeaponFireRate && !bIsReloading &&
-		Super::CanFireWeapon_Implementation();
+	return GameTimeInSeconds - TimeSinceLastShot >= WeaponFireRate && !bIsReloading && Super::CanFireWeapon_Implementation();
 }
 
 void ATPPWeaponFirearm::FireWeapon_Implementation()
@@ -86,6 +86,12 @@ void ATPPWeaponFirearm::HitscanFire()
 		CharacterOwner->PlayAnimMontage(MontageToPlay);
 	}
 
+	if (WeaponFireSound)
+	{
+		AudioComponent->SetSound(WeaponFireSound);
+		AudioComponent->Play();
+	}
+
 	const int32 AmmoToConsume = FMath::Min(AmmoConsumedPerShot, LoadedAmmo);
 	ModifyWeaponAmmo(-AmmoConsumedPerShot, 0);
 }
@@ -97,28 +103,26 @@ void ATPPWeaponFirearm::ProjectileFire()
 
 bool ATPPWeaponFirearm::CanReloadWeapon_Implementation()
 {
-	return !bIsReloading && LoadedAmmo < MaxLoadedAmmo && 
+	return bIsWeaponReady && !bIsReloading && LoadedAmmo < MaxLoadedAmmo && 
 		CurrentAmmoPool > 0;
-}
-
-void ATPPWeaponFirearm::SetIsReloading(bool bReloading)
-{
-	bIsReloading = bReloading;
 }
 
 void ATPPWeaponFirearm::StartWeaponReload()
 {
 	if (CharacterOwner && WeaponFireCharacterMontage)
 	{
-		SetIsReloading(true);
-		if (WeaponReloadCharacterMontage)
+		const UAnimInstance* AnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
+		if (WeaponReloadCharacterMontage && !AnimInstance->Montage_IsPlaying(WeaponReloadCharacterMontage))
 		{
 			CharacterOwner->SetAnimationBlendSlot(EAnimationBlendSlot::UpperBody);
 			CharacterOwner->PlayAnimMontage(WeaponReloadCharacterMontage);
 		}
-		ReloadActual();
-		SetIsReloading(false);
 	}
+}
+
+void ATPPWeaponFirearm::SetIsReloading(bool bIsWeaponReloading)
+{
+	bIsReloading = bIsWeaponReloading;
 }
 
 void ATPPWeaponFirearm::ReloadActual()
