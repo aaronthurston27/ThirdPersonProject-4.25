@@ -4,6 +4,9 @@
 #include "TPPWeaponFirearm.h"
 #include "TPPSpecialMove.h"
 #include "Camera/CameraComponent.h"
+#include "TPPMovementComponent.h"
+#include "TPPGameInstance.h"
+#include "TPPAimProperties.h"
 #include "DrawDebugHelpers.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 
@@ -11,6 +14,9 @@ ATPPWeaponFirearm::ATPPWeaponFirearm()
 {
 	AudioComponent->SetWorldLocation(WeaponMesh ? WeaponMesh->GetSocketLocation(TEXT("Muzzle")) : FVector::ZeroVector);
 	bHasAmmoPool = true;
+
+	// Tick to update weapon spread;
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ATPPWeaponFirearm::BeginPlay()
@@ -19,6 +25,62 @@ void ATPPWeaponFirearm::BeginPlay()
 	LoadedAmmo = MaxLoadedAmmo;
 	CurrentAmmoPool = MaxAmmoInPool;
 	SetIsReloading(false);
+}
+
+void ATPPWeaponFirearm::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	UpdateWeaponSpreadRadius();
+}
+
+void ATPPWeaponFirearm::UpdateWeaponSpreadRadius()
+{
+	UTPPMovementComponent* MovementComponent = CharacterOwner ? CharacterOwner->GetTPPMovementComponent() : nullptr;
+	UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
+	UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
+	if (!MovementComponent || !AimProperties)
+	{
+		return;
+	}
+
+	float SpreadRadius = AimProperties->InaccuracySpreadMaxRadius;
+
+	const bool bIsMovingOnGround = MovementComponent->IsMovingOnGround();
+	if (bIsMovingOnGround)
+	{
+		const bool bIsCrouching = MovementComponent->IsCrouching();
+		SpreadRadius = bIsCrouching ? AimProperties->CrouchingAimSpreadRadius : AimProperties->StandingAimSpreadRadius;
+
+		const float Speed2DSquared = MovementComponent->Velocity.Size2D();
+		const float MovementPenalty = Speed2DSquared * AimProperties->MovementSpeedToWeaponSpreadRatio;
+
+		SpreadRadius += MovementPenalty;
+	}
+
+	const bool bIsAiming = CharacterOwner->IsPlayerAiming();
+	if (bIsAiming)
+	{
+		SpreadRadius *= AimProperties->ADSAimMultiplier;
+	}
+
+	CurrentWeaponSpreadRadius = FMath::Min(SpreadRadius, AimProperties->InaccuracySpreadMaxRadius);
+}
+
+FVector ATPPWeaponFirearm::GetWeaponInnacuracyFromSpread() const
+{
+	float HorizontalSpread = 0.0f;
+	float VerticalSpread = 0.0f;
+
+	// Calculate a random point in a circle. Radius is defined by the current weapon spread.
+	float RandAngleRad = FMath::DegreesToRadians(FMath::RandRange(0.0f, 360.f));
+	float HorizontalRadius = FMath::RandRange(0.0f, CurrentWeaponSpreadRadius);
+	float VerticalRadius = FMath::RandRange(0.0f, CurrentWeaponSpreadRadius);
+
+	HorizontalSpread = HorizontalRadius * FMath::Cos(RandAngleRad);
+	VerticalSpread = VerticalRadius * FMath::Sin(RandAngleRad);
+
+	return FVector(0.0f, HorizontalSpread, VerticalSpread);
 }
 
 bool ATPPWeaponFirearm::CanFireWeapon_Implementation()
@@ -59,19 +121,24 @@ void ATPPWeaponFirearm::HitscanFire()
 		return;
 	}
 
-	const bool bIsAiming = CharacterOwner->IsPlayerAiming();
 	const FVector StartingLocation = PlayerCamera->GetComponentLocation();
+	const FVector WeaponInaccuracyVector = GetWeaponInnacuracyFromSpread();
 	const FVector FireDirection = PlayerCamera->GetForwardVector();
-	const FVector EndLocation = PlayerCamera->GetComponentLocation() + (FireDirection * HitScanLength);
+
+	const FVector CameraEndLocation = PlayerCamera->GetComponentLocation() + (FireDirection * HitScanLength);
+	const FVector ActualEndLocation = CameraEndLocation + WeaponInaccuracyVector;
+
+	DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), CameraEndLocation, FColor::Blue, false, 31.5f, 0, 1.5f);
+	DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), ActualEndLocation, FColor::Red, false, 31.5f, 0, 1.5f);
 
 	TArray<FHitResult> TraceResults;
 	FCollisionQueryParams QueryParams(FName(TEXT("Weapon")));
 	QueryParams.AddIgnoredActor(CharacterOwner);
 	QueryParams.AddIgnoredActor(this);
 
-	World->LineTraceMultiByChannel(TraceResults, StartingLocation, EndLocation, ECollisionChannel::ECC_GameTraceChannel1, QueryParams);
-	const FVector EndDebugDrawLocation = TraceResults.Num() > 0 ? TraceResults[0].Location : EndLocation;
-	DrawDebugLine(World, WeaponMesh->GetSocketLocation("Muzzle"), EndDebugDrawLocation, FColor::Blue, false, 1.5f, 0, 1.5f);
+	World->LineTraceMultiByChannel(TraceResults, StartingLocation, ActualEndLocation, ECollisionChannel::ECC_GameTraceChannel1, QueryParams);
+	const FVector EndDebugDrawLocation = TraceResults.Num() > 0 ? TraceResults[0].Location : ActualEndLocation;
+	DrawDebugLine(World, WeaponMesh->GetSocketLocation("Muzzle"), EndDebugDrawLocation, FColor::Yellow, false, 1.5f, 0, 1.5f);
 	if (TraceResults.Num() > 0)
 	{
 		DrawDebugSphere(World, TraceResults[0].Location, 25.f, 2, FColor::Green, false, 1.5f, 0, 1.5f);
@@ -79,6 +146,7 @@ void ATPPWeaponFirearm::HitscanFire()
 
 	TimeSinceLastShot = World->GetTimeSeconds();
 
+	const bool bIsAiming = CharacterOwner->IsPlayerAiming();
 	UAnimMontage* MontageToPlay = bIsAiming ? WeaponFireADSCharacterMontage : WeaponFireCharacterMontage;
 	if (MontageToPlay)
 	{

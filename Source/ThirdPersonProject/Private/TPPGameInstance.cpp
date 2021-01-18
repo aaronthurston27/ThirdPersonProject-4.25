@@ -9,6 +9,8 @@
 void UTPPGameInstance::Init()
 {
 	Super::Init();
+
+	AimProperties = NewObject<UTPPAimProperties>(this, AimPropertiesClass);
 }
 
 ATPPPlayerCharacter* UTPPGameInstance::GetPlayerCharacter() const

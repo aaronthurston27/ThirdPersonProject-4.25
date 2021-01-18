@@ -40,6 +40,8 @@ public:
 
 	virtual void BeginPlay() override;
 
+	virtual void Tick(float DeltaTime) override;
+
 public:
 
 	/** Weapon firing mode */
@@ -82,9 +84,6 @@ protected:
 
 public:
 
-	UPROPERTY(BlueprintAssignable)
-	FOnWeaponReloaded OnWeaponReloaded;
-
 	virtual bool CanFireWeapon_Implementation() override;
 
 	virtual void FireWeapon_Implementation() override;
@@ -99,6 +98,9 @@ protected:
 
 public:
 
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponReloaded OnWeaponReloaded;
+
 	/** Evaluate whether or not this weapon can be reloaded */
 	UFUNCTION(BlueprintNativeEvent)
 	bool CanReloadWeapon();
@@ -112,4 +114,20 @@ public:
 
 	/** Actual reload process of adding ammo to chamber */
 	void ReloadActual();
+
+protected:
+
+	/** Cached weapon spread calculated based on movement parameters. */
+	UPROPERTY(Transient)
+	float CurrentWeaponSpreadRadius;
+
+	/** Calculates weapon spread based on movement parameters */
+	void UpdateWeaponSpreadRadius();
+
+	FVector GetWeaponInnacuracyFromSpread() const;
+
+public:
+
+	UFUNCTION(BlueprintPure)
+	float GetWeaponSpreadRadius() const { return CurrentWeaponSpreadRadius; }
 };

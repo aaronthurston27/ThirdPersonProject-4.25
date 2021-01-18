@@ -22,6 +22,12 @@ protected:
 
 	/** Reference to default aim properties object */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<UTPPAimProperties> AimPropertiesClass;
+
+protected:
+
+	/** Instantiated aim properties asset */
+	UPROPERTY(Transient)
 	UTPPAimProperties* AimProperties;
 
 public:
