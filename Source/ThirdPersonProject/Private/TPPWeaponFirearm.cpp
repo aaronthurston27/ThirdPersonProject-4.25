@@ -53,7 +53,11 @@ void ATPPWeaponFirearm::UpdateWeaponSpreadRadius()
 		SpreadRadius = bIsCrouching ? AimProperties->CrouchingAimSpreadAngle : AimProperties->StandingAimSpreadAngle;
 
 		const float Speed2DSquared = MovementComponent->Velocity.Size2D();
-		const float MovementPenalty = Speed2DSquared * AimProperties->MovementSpeedToWeaponSpreadRatio;
+		const float MaxSprintSpeed = MovementComponent->SprintingSpeed + 100.f;
+
+		// Increase spread as speed approaches max.
+		const float SpreadRadiusToSpeedRatio = (AimProperties->InaccuracySpreadMaxAngle - SpreadRadius) / MaxSprintSpeed;
+		const float MovementPenalty = Speed2DSquared * SpreadRadiusToSpeedRatio;
 
 		SpreadRadius += MovementPenalty;
 	}
@@ -113,7 +117,7 @@ void ATPPWeaponFirearm::FireWeapon_Implementation()
 
 void ATPPWeaponFirearm::HitscanFire()
 {
-	static const float HitScanLength = 2000.f;
+	static const float HitScanLength = 5000.f;
 
 	UWorld* World = GetWorld();
 	const UCameraComponent* PlayerCamera = CharacterOwner->GetFollowCamera();
@@ -129,10 +133,6 @@ void ATPPWeaponFirearm::HitscanFire()
 
 	const FVector CameraEndLocation = PlayerCamera->GetComponentLocation() + (FireDirection * HitScanLength);
 	const FVector ActualEndLocation = PlayerCamera->GetComponentLocation() + (WeaponInaccuracyVector * HitScanLength);
-
-	//UE_LOG(LogTemp, Warning, TEXT("Forward normalized: %s"), *FireDirection.GetSafeNormal().ToString());
-	//UE_LOG(LogTemp, Warning, TEXT("Weapon Inaccuracy normalized: %s"), *WeaponInaccuracyVector.GetSafeNormal().ToString());
-
 	DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), CameraEndLocation, FColor::Blue, false, 10.5f, 0, 1.5f);
 	DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), ActualEndLocation, FColor::Red, false, 10.5f, 0, 1.5f);
 
@@ -146,7 +146,7 @@ void ATPPWeaponFirearm::HitscanFire()
 	DrawDebugLine(World, WeaponMesh->GetSocketLocation("Muzzle"), EndDebugDrawLocation, FColor::Yellow, false, 1.5f, 0, 1.5f);
 	if (TraceResults.Num() > 0)
 	{
-		DrawDebugSphere(World, TraceResults[0].Location, 25.f, 2, FColor::Green, false, 1.5f, 0, 1.5f);
+		DrawDebugSphere(World, TraceResults[0].Location, 25.f, 2, FColor::Green, false, 10.5f, 0, 1.5f);
 	}
 
 	TimeSinceLastShot = World->GetTimeSeconds();

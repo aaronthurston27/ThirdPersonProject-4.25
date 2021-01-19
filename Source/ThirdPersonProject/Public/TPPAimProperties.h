@@ -18,7 +18,7 @@ public:
 
 	/** Max angle for innacuracy */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float InaccuracySpreadMaxAngle = 5.0f;
+	float InaccuracySpreadMaxAngle = 3.0f;
 
 	/** Inaccuracy angle to use when standing */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -31,9 +31,5 @@ public:
 	/** Multiplier when aiming down the sights */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float ADSAimMultiplier = .40f;
-
-	/** Ratio of velocity to weapon spread angle. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float MovementSpeedToWeaponSpreadRatio = .0095f;
 	
 };
