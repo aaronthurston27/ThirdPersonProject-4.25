@@ -44,13 +44,13 @@ void ATPPWeaponFirearm::UpdateWeaponSpreadRadius()
 		return;
 	}
 
-	float SpreadRadius = AimProperties->InaccuracySpreadMaxRadius;
+	float SpreadRadius = AimProperties->InaccuracySpreadMaxAngle;
 
 	const bool bIsMovingOnGround = MovementComponent->IsMovingOnGround();
 	if (bIsMovingOnGround)
 	{
 		const bool bIsCrouching = MovementComponent->IsCrouching();
-		SpreadRadius = bIsCrouching ? AimProperties->CrouchingAimSpreadRadius : AimProperties->StandingAimSpreadRadius;
+		SpreadRadius = bIsCrouching ? AimProperties->CrouchingAimSpreadAngle : AimProperties->StandingAimSpreadAngle;
 
 		const float Speed2DSquared = MovementComponent->Velocity.Size2D();
 		const float MovementPenalty = Speed2DSquared * AimProperties->MovementSpeedToWeaponSpreadRatio;
@@ -64,23 +64,24 @@ void ATPPWeaponFirearm::UpdateWeaponSpreadRadius()
 		SpreadRadius *= AimProperties->ADSAimMultiplier;
 	}
 
-	CurrentWeaponSpreadRadius = FMath::Min(SpreadRadius, AimProperties->InaccuracySpreadMaxRadius);
+	CurrentWeaponSpreadAngle = FMath::Min(SpreadRadius, AimProperties->InaccuracySpreadMaxAngle);
 }
 
-FVector ATPPWeaponFirearm::GetWeaponInnacuracyFromSpread() const
+void ATPPWeaponFirearm::ModifyAimVectorFromSpread(FVector& AimingVector)
 {
 	float HorizontalSpread = 0.0f;
 	float VerticalSpread = 0.0f;
 
-	// Calculate a random point in a circle. Radius is defined by the current weapon spread.
-	float RandAngleRad = FMath::DegreesToRadians(FMath::RandRange(0.0f, 360.f));
-	float HorizontalRadius = FMath::RandRange(0.0f, CurrentWeaponSpreadRadius);
-	float VerticalRadius = FMath::RandRange(0.0f, CurrentWeaponSpreadRadius);
+	// Calculate a random angle to adjust the initial aimed vector
+	float HorizontalAngleSpread = FMath::RandRange(-CurrentWeaponSpreadAngle, CurrentWeaponSpreadAngle);
+	float VerticalAngleSpread = FMath::RandRange(-CurrentWeaponSpreadAngle, CurrentWeaponSpreadAngle);
 
-	HorizontalSpread = HorizontalRadius * FMath::Cos(RandAngleRad);
-	VerticalSpread = VerticalRadius * FMath::Sin(RandAngleRad);
+	const FRotationMatrix ControllerRotationMatrix = FRotationMatrix(CharacterOwner->GetControlRotation());
+	FVector Up, Right, Forward;
+	ControllerRotationMatrix.GetUnitAxes(Forward, Right, Up);
 
-	return FVector(0.0f, HorizontalSpread, VerticalSpread);
+	AimingVector = AimingVector.RotateAngleAxis(HorizontalAngleSpread, Up);
+	AimingVector = AimingVector.RotateAngleAxis(VerticalAngleSpread, Right);
 }
 
 bool ATPPWeaponFirearm::CanFireWeapon_Implementation()
@@ -122,14 +123,18 @@ void ATPPWeaponFirearm::HitscanFire()
 	}
 
 	const FVector StartingLocation = PlayerCamera->GetComponentLocation();
-	const FVector WeaponInaccuracyVector = GetWeaponInnacuracyFromSpread();
 	const FVector FireDirection = PlayerCamera->GetForwardVector();
+	FVector WeaponInaccuracyVector = FireDirection;
+	ModifyAimVectorFromSpread(WeaponInaccuracyVector);
 
 	const FVector CameraEndLocation = PlayerCamera->GetComponentLocation() + (FireDirection * HitScanLength);
-	const FVector ActualEndLocation = CameraEndLocation + WeaponInaccuracyVector;
+	const FVector ActualEndLocation = PlayerCamera->GetComponentLocation() + (WeaponInaccuracyVector * HitScanLength);
 
-	DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), CameraEndLocation, FColor::Blue, false, 31.5f, 0, 1.5f);
-	DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), ActualEndLocation, FColor::Red, false, 31.5f, 0, 1.5f);
+	//UE_LOG(LogTemp, Warning, TEXT("Forward normalized: %s"), *FireDirection.GetSafeNormal().ToString());
+	//UE_LOG(LogTemp, Warning, TEXT("Weapon Inaccuracy normalized: %s"), *WeaponInaccuracyVector.GetSafeNormal().ToString());
+
+	DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), CameraEndLocation, FColor::Blue, false, 10.5f, 0, 1.5f);
+	DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), ActualEndLocation, FColor::Red, false, 10.5f, 0, 1.5f);
 
 	TArray<FHitResult> TraceResults;
 	FCollisionQueryParams QueryParams(FName(TEXT("Weapon")));

@@ -117,17 +117,16 @@ public:
 
 protected:
 
-	/** Cached weapon spread calculated based on movement parameters. */
+	/** Cached weapon angle calculated based on movement parameters. */
 	UPROPERTY(Transient)
-	float CurrentWeaponSpreadRadius;
+	float CurrentWeaponSpreadAngle;
 
 	/** Calculates weapon spread based on movement parameters */
 	void UpdateWeaponSpreadRadius();
 
-	FVector GetWeaponInnacuracyFromSpread() const;
-
+	void ModifyAimVectorFromSpread(FVector& AimingVector);
 public:
 
 	UFUNCTION(BlueprintPure)
-	float GetWeaponSpreadRadius() const { return CurrentWeaponSpreadRadius; }
+	float GetWeaponSpreadAngle() const { return CurrentWeaponSpreadAngle; }
 };

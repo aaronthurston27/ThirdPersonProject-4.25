@@ -16,24 +16,24 @@ class THIRDPERSONPROJECT_API UTPPAimProperties : public UDataAsset
 
 public:
 
-	/** Max circle radius for innacuracy */
+	/** Max angle for innacuracy */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float InaccuracySpreadMaxRadius = 200.f;
+	float InaccuracySpreadMaxAngle = 5.0f;
 
-	/** Inaccuracy circle radius to use when the player is standing */
+	/** Inaccuracy angle to use when standing */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float StandingAimSpreadRadius = 110.0f;
+	float StandingAimSpreadAngle = 1.1;
 
-	/** Inaccuracy circle radius to use when the player is crouching */
+	/** Inaccuracy angle to use when the player is crouching */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float CrouchingAimSpreadRadius = 70.0f;
+	float CrouchingAimSpreadAngle = .5f;
 
 	/** Multiplier when aiming down the sights */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float ADSAimMultiplier = .30f;
+	float ADSAimMultiplier = .40f;
 
-	/** Ratio of velocity to weapon spread. */
+	/** Ratio of velocity to weapon spread angle. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float MovementSpeedToWeaponSpreadRatio = .1714f;
+	float MovementSpeedToWeaponSpreadRatio = .0095f;
 	
 };
