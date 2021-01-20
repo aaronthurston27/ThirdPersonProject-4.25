@@ -50,7 +50,7 @@ void ATPPWeaponFirearm::UpdateWeaponSpreadRadius()
 	if (bIsMovingOnGround)
 	{
 		const bool bIsCrouching = MovementComponent->IsCrouching();
-		SpreadRadius = bIsCrouching ? AimProperties->CrouchingAimSpreadAngle : AimProperties->StandingAimSpreadAngle;
+		SpreadRadius = bIsCrouching ? CrouchingAimSpreadAngle : StandingAimSpreadAngle;
 
 		const float Speed2DSquared = MovementComponent->Velocity.Size2D();
 		const float MaxSprintSpeed = MovementComponent->SprintingSpeed + 100.f;
@@ -65,7 +65,7 @@ void ATPPWeaponFirearm::UpdateWeaponSpreadRadius()
 	const bool bIsAiming = CharacterOwner->IsPlayerAiming();
 	if (bIsAiming)
 	{
-		SpreadRadius *= AimProperties->ADSAimMultiplier;
+		SpreadRadius *= ADSAimMultiplier;
 	}
 
 	CurrentWeaponSpreadAngle = FMath::Min(SpreadRadius, AimProperties->InaccuracySpreadMaxAngle);

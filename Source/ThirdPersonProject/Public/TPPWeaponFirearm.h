@@ -52,6 +52,28 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing", BlueprintReadOnly)
 	float WeaponFireRate = .1f;
 
+	/** Inaccuracy Multiplier when aiming down the sights */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing", BlueprintReadOnly, meta = (UIMax = "1.0", ClampMax = "1.0"))
+	float ADSAimMultiplier = .40f;
+
+	/** Inaccuracy angle to use when standing */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Spread", BlueprintReadOnly)
+	float StandingAimSpreadAngle = 1.1;
+
+	/** Inaccuracy angle to use when the player is crouching */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Spread", BlueprintReadOnly)
+	float CrouchingAimSpreadAngle = .5f;
+
+	/** Vertical recoil penalty while firing */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil", BlueprintReadOnly)
+	float VerticalRecoilPenalty = 5.0f;
+
+	/** Recoil cooldown time needed to return to original intended firing position */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil", BlueprintReadOnly)
+	float VerticalRecoilCooldownTime = 1.2f;
+
+public:
+
 	/** Weapon fire montage to be played by owning character */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation", BlueprintReadOnly)
 	UAnimMontage* WeaponFireCharacterMontage;
@@ -63,6 +85,8 @@ public:
 	/** Weapon reload montage to be played by owning character */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	UAnimMontage* WeaponReloadCharacterMontage;
+
+public:
 
 	/** Sound to play when firing */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Audio")

@@ -19,17 +19,5 @@ public:
 	/** Max angle for innacuracy */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float InaccuracySpreadMaxAngle = 3.0f;
-
-	/** Inaccuracy angle to use when standing */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float StandingAimSpreadAngle = 1.1;
-
-	/** Inaccuracy angle to use when the player is crouching */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float CrouchingAimSpreadAngle = .5f;
-
-	/** Multiplier when aiming down the sights */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float ADSAimMultiplier = .40f;
 	
 };
