@@ -27,5 +27,9 @@ public:
 	/** Recoil recovery per frame */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float WeaponRecoilRecovery = 8.f;
+
+	/** Camera angle recoil factor that is added to the final pitch of the camera. Total camera pitch should be: OriginalPitch + (AccumulatedRecoil * RecoilOffset) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float CameraRecoilFactor = .85f;
 	
 };
