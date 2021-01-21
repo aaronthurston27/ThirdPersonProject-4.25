@@ -32,6 +32,19 @@ void ATPPWeaponFirearm::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateWeaponSpreadRadius();
+	UpdateWeaponRecoil(DeltaTime);
+}
+
+void ATPPWeaponFirearm::UpdateWeaponRecoil(const float DeltaTime)
+{
+	if (AccumulatedVerticalWeaponRecoil > 0.0f)
+	{
+		const UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
+		const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
+		
+		const float WeaponRecoilDelta = AimProperties ? AimProperties->WeaponRecoilRecovery * DeltaTime : 0.0f;
+		AccumulatedVerticalWeaponRecoil = FMath::Max(AccumulatedVerticalWeaponRecoil - WeaponRecoilDelta, 0.0f);
+	}
 }
 
 void ATPPWeaponFirearm::UpdateWeaponSpreadRadius()
@@ -121,7 +134,9 @@ void ATPPWeaponFirearm::HitscanFire()
 
 	UWorld* World = GetWorld();
 	const UCameraComponent* PlayerCamera = CharacterOwner->GetFollowCamera();
-	if (!World || !PlayerCamera)
+	UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
+	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
+	if (!World || !PlayerCamera || !AimProperties)
 	{
 		return;
 	}
@@ -167,6 +182,8 @@ void ATPPWeaponFirearm::HitscanFire()
 
 	const int32 AmmoToConsume = FMath::Min(AmmoConsumedPerShot, LoadedAmmo);
 	ModifyWeaponAmmo(-AmmoConsumedPerShot, 0);
+
+	AccumulatedVerticalWeaponRecoil = FMath::Min(AccumulatedVerticalWeaponRecoil + VerticalRecoilPenalty, AimProperties->WeaponRecoilMaxVerticalAngle);
 }
 
 void ATPPWeaponFirearm::ProjectileFire()

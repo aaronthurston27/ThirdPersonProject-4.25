@@ -64,13 +64,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Spread", BlueprintReadOnly)
 	float CrouchingAimSpreadAngle = .5f;
 
-	/** Vertical recoil penalty while firing */
+	/** Vertical recoil penalty per shot while firing */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil", BlueprintReadOnly)
-	float VerticalRecoilPenalty = 5.0f;
-
-	/** Recoil cooldown time needed to return to original intended firing position */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil", BlueprintReadOnly)
-	float VerticalRecoilCooldownTime = 1.2f;
+	float VerticalRecoilPenalty = 1.11f;
 
 public:
 
@@ -149,8 +145,21 @@ protected:
 	void UpdateWeaponSpreadRadius();
 
 	void ModifyAimVectorFromSpread(FVector& AimingVector);
+
+protected:
+
+	/** Current accumulated weapon recoil from sustained fire */
+	UPROPERTY(Transient, VisibleAnywhere)
+	float AccumulatedVerticalWeaponRecoil = 0.0f;
+
+	/** Updates accumulated vertical weapon Recoil */
+	void UpdateWeaponRecoil(const float DeltaTime);
+
 public:
 
 	UFUNCTION(BlueprintPure)
 	float GetWeaponSpreadAngle() const { return CurrentWeaponSpreadAngle; }
+
+	UFUNCTION(BlueprintPure)
+	float GetAccumulatedWeaponRecoil() const { return AccumulatedVerticalWeaponRecoil; }
 };

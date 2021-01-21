@@ -19,5 +19,13 @@ public:
 	/** Max angle for innacuracy */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float InaccuracySpreadMaxAngle = 3.0f;
+
+	/** Max vertical angle for weapon recoil */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float WeaponRecoilMaxVerticalAngle = 11.0f;
+
+	/** Recoil recovery per frame */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float WeaponRecoilRecovery = 8.f;
 	
 };
