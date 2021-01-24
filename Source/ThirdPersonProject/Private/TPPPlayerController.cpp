@@ -53,7 +53,6 @@ void ATPPPlayerController::Tick(float DeltaTime)
 
 void ATPPPlayerController::UpdateRotation(float DeltaTime)
 {
-
 	if (!PlayerCameraManager)
 	{
 		return;
@@ -72,23 +71,16 @@ void ATPPPlayerController::UpdateRotation(float DeltaTime)
 	}
 
 	const bool bIsRecoilIncreasing = TargetCameraRecoil.Pitch > 0.0f;
-	if (!bIsRecoilIncreasing && !FMath::IsNearlyZero(CurrentCameraRecoil.Pitch) || bIsRecoilIncreasing && CurrentPitch < PlayerCameraManager->ViewPitchMax)
+	if (bIsRecoilIncreasing && CurrentPitch < PlayerCameraManager->ViewPitchMax)
 	{
-		if (bIsRecoilIncreasing && CurrentCameraRecoil.Pitch > TargetCameraRecoil.Pitch)
+		if (CurrentCameraRecoil.Pitch > TargetCameraRecoil.Pitch)
 		{
 			TargetCameraRecoil = CurrentCameraRecoil;
 		}
 		else
 		{
-			CurrentCameraRecoil.Pitch += (bIsRecoilIncreasing ? AimProperties->WeaponRecoilAccumulationPerFrame : -AimProperties->WeaponRecoilRecoveryPerFrame) * DeltaTime;
-			if (!bIsRecoilIncreasing)
-			{
-				CurrentCameraRecoil.Pitch = FMath::Max(CurrentCameraRecoil.Pitch, 0.0f);
-			}
-			else
-			{
-				CurrentCameraRecoil.Pitch = FMath::Min(CurrentCameraRecoil.Pitch, TargetCameraRecoil.Pitch);
-			}
+			CurrentCameraRecoil.Pitch += AimProperties->WeaponRecoilAccumulationPerFrame * DeltaTime;
+			CurrentCameraRecoil.Pitch = FMath::Min(CurrentCameraRecoil.Pitch, TargetCameraRecoil.Pitch);
 		}
 	}
 
@@ -268,4 +260,6 @@ void ATPPPlayerController::AddCameraRecoil(const float RecoilToAdd)
 void ATPPPlayerController::ResetCameraRecoil()
 {
 	TargetCameraRecoil = FRotator::ZeroRotator;
+	CurrentCameraRecoil = FRotator::ZeroRotator;
+	DesiredControlRotation = GetControlRotation();
 }
