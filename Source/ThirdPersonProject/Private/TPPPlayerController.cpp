@@ -95,7 +95,7 @@ void ATPPPlayerController::UpdateRotation(float DeltaTime)
 	// Add recoil compensating if pulling the camera down while recoil is increasing.
 	if (bIsRecoilIncreasing && DeltaRot.Pitch < 0.0f)
 	{
-		const float Compensation = DeltaTime * AimProperties->RecoilCompensationScale * DeltaRot.Pitch;
+		const float Compensation = AimProperties->RecoilCompensationScale * DeltaRot.Pitch;
 		TargetCameraRecoil.Pitch = FMath::Max(TargetCameraRecoil.Pitch + Compensation, 0.0f);
 		CurrentCameraRecoil.Pitch = FMath::Max(CurrentCameraRecoil.Pitch + Compensation, 0.0f);
 		DeltaRot.Pitch = 0.0f;
