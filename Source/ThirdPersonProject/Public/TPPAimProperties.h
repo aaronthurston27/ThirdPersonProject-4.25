@@ -20,16 +20,20 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float InaccuracySpreadMaxAngle = 3.0f;
 
-	/** Max vertical angle for weapon recoil */
+	/** Delay between shots before beginning weapon recoil recovery */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float WeaponRecoilMaxVerticalAngle = 11.0f;
+	float WeaponRecoilRecoveryDelay = 0.8f;
 
-	/** Recoil recovery per frame */
+	/** Recoil to apply to the camera per frame */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float WeaponRecoilRecovery = 8.f;
+	float WeaponRecoilAccumulationPerFrame = .033;
 
-	/** Camera angle recoil factor that is added to the final pitch of the camera. Total camera pitch should be: OriginalPitch + (AccumulatedRecoil * RecoilOffset) */
+	/** Recoil to recover per frame */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	float CameraRecoilFactor = .85f;
+	float WeaponRecoilRecoveryPerFrame = 2.0f;
+
+	/** Amount to scale pitch input by when comensating for weapon recoil */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float RecoilCompensationScale = 2.0f;
 	
 };

@@ -1,6 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TPPPlayerController.h"
+#include "TPPWeaponBase.h"
+#include "TPPWeaponFirearm.h"
+#include "TPPAimProperties.h"
+#include "TPPGameInstance.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 
 ATPPPlayerController::ATPPPlayerController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -12,6 +16,7 @@ void ATPPPlayerController::BeginPlay()
 {
 	CachedOwnerCharacter = GetOwnerCharacter();
 	bIsMovementInputEnabled = true;
+	DesiredControlRotation = GetControlRotation();
 }
 
 void ATPPPlayerController::SetupInputComponent()
@@ -44,6 +49,70 @@ void ATPPPlayerController::SetupInputComponent()
 void ATPPPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void ATPPPlayerController::UpdateRotation(float DeltaTime)
+{
+
+	if (!PlayerCameraManager)
+	{
+		return;
+	}
+
+	// Calculate Delta to be applied on ViewRotation
+	FRotator DeltaRot(RotationInput);
+	
+	const UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
+	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
+
+	float CurrentPitch = GetControlRotation().Pitch;
+	if (CurrentPitch >= 180.0f)
+	{
+		CurrentPitch -= 360.0f;
+	}
+
+	const bool bIsRecoilIncreasing = TargetCameraRecoil.Pitch > 0.0f;
+	if (!bIsRecoilIncreasing && !FMath::IsNearlyZero(CurrentCameraRecoil.Pitch) || bIsRecoilIncreasing && CurrentPitch < PlayerCameraManager->ViewPitchMax)
+	{
+		if (bIsRecoilIncreasing && CurrentCameraRecoil.Pitch > TargetCameraRecoil.Pitch)
+		{
+			TargetCameraRecoil = CurrentCameraRecoil;
+		}
+		else
+		{
+			CurrentCameraRecoil.Pitch += (bIsRecoilIncreasing ? AimProperties->WeaponRecoilAccumulationPerFrame : -AimProperties->WeaponRecoilRecoveryPerFrame) * DeltaTime;
+			if (!bIsRecoilIncreasing)
+			{
+				CurrentCameraRecoil.Pitch = FMath::Max(CurrentCameraRecoil.Pitch, 0.0f);
+			}
+			else
+			{
+				CurrentCameraRecoil.Pitch = FMath::Min(CurrentCameraRecoil.Pitch, TargetCameraRecoil.Pitch);
+			}
+		}
+	}
+
+	if (bIsRecoilIncreasing && DeltaRot.Pitch < 0.0f)
+	{
+		const float Compensation = DeltaTime * AimProperties->RecoilCompensationScale * DeltaRot.Pitch;
+		TargetCameraRecoil.Pitch = FMath::Max(TargetCameraRecoil.Pitch + Compensation, 0.0f);
+		CurrentCameraRecoil.Pitch = FMath::Max(CurrentCameraRecoil.Pitch + Compensation, 0.0f);
+		DeltaRot.Pitch = 0.0f;
+	}
+
+	DesiredControlRotation += DeltaRot;
+
+	FRotator ViewRotation = DesiredControlRotation + CurrentCameraRecoil;
+	PlayerCameraManager->ProcessViewRotation(DeltaTime, ViewRotation, DeltaRot);
+
+	AActor* ViewTarget = GetViewTarget();
+	SetControlRotation(ViewRotation);
+
+	APawn* const P = GetPawnOrSpectator();
+	if (P)
+	{
+		P->FaceRotation(ViewRotation, DeltaTime);
+	}
 }
 
 void ATPPPlayerController::MoveForward(float Value)
@@ -164,4 +233,38 @@ FRotator ATPPPlayerController::GetRelativeControllerMovementRotation() const
 ATPPPlayerCharacter* ATPPPlayerController::GetOwnerCharacter()
 {
 	return Cast<ATPPPlayerCharacter>(GetPawn());
+}
+
+FVector ATPPPlayerController::GetControllerRelativeForwardVector() const
+{
+	const FRotator CurrentRotation = GetControlRotation();
+	const FRotationMatrix RotMatrix = FRotationMatrix(CurrentRotation);
+
+	return RotMatrix.GetUnitAxis(EAxis::X);
+}
+
+FVector ATPPPlayerController::GetControllerRelativeRightVector() const
+{
+	const FRotator CurrentRotation = GetControlRotation();
+	const FRotationMatrix RotMatrix = FRotationMatrix(CurrentRotation);
+
+	return RotMatrix.GetUnitAxis(EAxis::Y);
+}
+
+FVector ATPPPlayerController::GetControllerRelativeUpVector() const
+{
+	const FRotator CurrentRotation = GetControlRotation();
+	const FRotationMatrix RotMatrix = FRotationMatrix(CurrentRotation);
+
+	return RotMatrix.GetUnitAxis(EAxis::Z);
+}
+
+void ATPPPlayerController::AddCameraRecoil(const float RecoilToAdd)
+{
+	TargetCameraRecoil.Pitch += RecoilToAdd;
+}
+
+void ATPPPlayerController::ResetCameraRecoil()
+{
+	TargetCameraRecoil = FRotator::ZeroRotator;
 }

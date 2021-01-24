@@ -68,6 +68,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil", BlueprintReadOnly)
 	float VerticalRecoilPenalty = 1.11f;
 
+	/** Max vertical angle for weapon recoil */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil", BlueprintReadOnly)
+	float MaxVerticalRecoilAngle = 20.0f;
+
 public:
 
 	/** Weapon fire montage to be played by owning character */
@@ -148,18 +152,15 @@ protected:
 
 protected:
 
-	/** Current accumulated weapon recoil from sustained fire */
-	UPROPERTY(Transient, VisibleAnywhere)
-	float AccumulatedVerticalWeaponRecoil = 0.0f;
+	/** Timer for resetting accumlated weapon recoil */
+	UPROPERTY(Transient)
+	FTimerHandle WeaponRecoilResetTimer;
 
-	/** Updates accumulated vertical weapon Recoil */
-	void UpdateWeaponRecoil(const float DeltaTime);
+	/** Resets recoil when weapon has stopped firing after period of time */
+	void OnWeaponRecoilReset();
 
 public:
 
 	UFUNCTION(BlueprintPure)
 	float GetWeaponSpreadAngle() const { return CurrentWeaponSpreadAngle; }
-
-	UFUNCTION(BlueprintPure)
-	float GetAccumulatedWeaponRecoil() const { return AccumulatedVerticalWeaponRecoil; }
 };

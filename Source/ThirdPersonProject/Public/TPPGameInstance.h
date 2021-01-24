@@ -32,6 +32,8 @@ protected:
 
 public:
 
+	static UTPPGameInstance* Get();
+
 	/** Init method for setting up objects in game instance */
 	virtual void Init() override;
 

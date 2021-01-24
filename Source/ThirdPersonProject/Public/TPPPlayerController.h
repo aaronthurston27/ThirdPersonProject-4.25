@@ -24,6 +24,8 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void UpdateRotation(float DeltaTime);
+
 	/** Threshold of axis value to begin weapon fire */
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMax = "1.0", UIMax = "1.0", ClampMin = "0.0", UIMin = "0.0"))
 	float FireWeaponThreshold = .8f;
@@ -105,4 +107,43 @@ protected:
 
 	UPROPERTY(Transient)
 	ATPPPlayerCharacter* CachedOwnerCharacter = nullptr;
+
+public:
+
+	/** Gets the forward vector of the controller relative to its current rotation */
+	UFUNCTION(BlueprintPure)
+	FVector GetControllerRelativeForwardVector() const;
+	
+	/** Gets the right vector of the controller relative to its current rotation */
+	UFUNCTION(BlueprintPure)
+	FVector GetControllerRelativeRightVector() const;
+
+	/** Gets the up vector of the controller relative to its current rotation */
+	UFUNCTION(BlueprintPure)
+	FVector GetControllerRelativeUpVector() const;
+
+protected:
+
+
+	/* Cached control rotation. Used to track intended aim direction without recoil */
+	UPROPERTY(Transient, VisibleAnywhere)
+	FRotator DesiredControlRotation = FRotator::ZeroRotator;
+
+	/** Current recoil to be applied to the camera */
+	UPROPERTY(Transient, VisibleAnywhere)
+	FRotator CurrentCameraRecoil = FRotator::ZeroRotator;
+
+	/** Recoil that the camera should be interpolating to */
+	UPROPERTY(Transient, VisibleAnywhere)
+	FRotator TargetCameraRecoil = FRotator::ZeroRotator;
+
+
+public:
+
+	void AddCameraRecoil(const float RecoilToAdd);
+
+	void ResetCameraRecoil();
+
+	FRotator GetTargetCameraRecoil() const { return TargetCameraRecoil; }
+
 };

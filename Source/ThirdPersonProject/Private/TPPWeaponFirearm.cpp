@@ -7,6 +7,7 @@
 #include "TPPMovementComponent.h"
 #include "TPPGameInstance.h"
 #include "TPPAimProperties.h"
+#include "TPPPlayerController.h"
 #include "DrawDebugHelpers.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 
@@ -32,19 +33,18 @@ void ATPPWeaponFirearm::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateWeaponSpreadRadius();
-	UpdateWeaponRecoil(DeltaTime);
-}
 
-void ATPPWeaponFirearm::UpdateWeaponRecoil(const float DeltaTime)
-{
-	if (AccumulatedVerticalWeaponRecoil > 0.0f)
-	{
-		const UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
-		const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
-		
-		const float WeaponRecoilDelta = AimProperties ? AimProperties->WeaponRecoilRecovery * DeltaTime : 0.0f;
-		AccumulatedVerticalWeaponRecoil = FMath::Max(AccumulatedVerticalWeaponRecoil - WeaponRecoilDelta, 0.0f);
-	}
+	const FVector CurrentAim = CharacterOwner->GetTPPPlayerController()->GetControllerRelativeForwardVector();
+	const UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
+	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
+
+	/*
+	const FVector OffsetAim = CurrentAim.RotateAngleAxis(CharacterOwner->GetTPPPlayerController()->GetTarge, -CharacterOwner->GetTPPPlayerController()->GetControllerRelativeRightVector());
+
+	const FVector VecStart = CharacterOwner->GetActorLocation();
+	DrawDebugLine(GetWorld(), VecStart, VecStart + (CurrentAim * 150.f), FColor::Blue, false, .5f, 0, 1.f);
+	DrawDebugLine(GetWorld(), VecStart, VecStart + (OffsetAim * 150.f), FColor::Red, false, .5f, 0, 1.f);
+	*/
 }
 
 void ATPPWeaponFirearm::UpdateWeaponSpreadRadius()
@@ -133,10 +133,11 @@ void ATPPWeaponFirearm::HitscanFire()
 	static const float HitScanLength = 5000.f;
 
 	UWorld* World = GetWorld();
-	const UCameraComponent* PlayerCamera = CharacterOwner->GetFollowCamera();
-	UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
+	const UCameraComponent* PlayerCamera = CharacterOwner ? CharacterOwner->GetFollowCamera() : nullptr;
+	ATPPPlayerController* PlayerController = CharacterOwner ? CharacterOwner->GetTPPPlayerController() : nullptr;
+	const UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
 	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
-	if (!World || !PlayerCamera || !AimProperties)
+	if (!World || !PlayerCamera || !PlayerController || !AimProperties)
 	{
 		return;
 	}
@@ -148,8 +149,8 @@ void ATPPWeaponFirearm::HitscanFire()
 
 	const FVector CameraEndLocation = PlayerCamera->GetComponentLocation() + (FireDirection * HitScanLength);
 	const FVector ActualEndLocation = PlayerCamera->GetComponentLocation() + (WeaponInaccuracyVector * HitScanLength);
-	DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), CameraEndLocation, FColor::Blue, false, 10.5f, 0, 1.5f);
-	DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), ActualEndLocation, FColor::Red, false, 10.5f, 0, 1.5f);
+	//DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), CameraEndLocation, FColor::Blue, false, 10.5f, 0, 1.5f);
+	//DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), ActualEndLocation, FColor::Red, false, 10.5f, 0, 1.5f);
 
 	TArray<FHitResult> TraceResults;
 	FCollisionQueryParams QueryParams(FName(TEXT("Weapon")));
@@ -183,7 +184,14 @@ void ATPPWeaponFirearm::HitscanFire()
 	const int32 AmmoToConsume = FMath::Min(AmmoConsumedPerShot, LoadedAmmo);
 	ModifyWeaponAmmo(-AmmoConsumedPerShot, 0);
 
-	AccumulatedVerticalWeaponRecoil = FMath::Min(AccumulatedVerticalWeaponRecoil + VerticalRecoilPenalty, AimProperties->WeaponRecoilMaxVerticalAngle);
+	const float AccumulatedCameraRecoil = PlayerController->GetTargetCameraRecoil().Pitch;
+	if (AccumulatedCameraRecoil < MaxVerticalRecoilAngle)
+	{
+		PlayerController->AddCameraRecoil(VerticalRecoilPenalty);
+	}
+
+	GetWorldTimerManager().ClearTimer(WeaponRecoilResetTimer);
+	GetWorldTimerManager().SetTimer(WeaponRecoilResetTimer, this, &ATPPWeaponFirearm::OnWeaponRecoilReset, AimProperties->WeaponRecoilRecoveryDelay, false);
 }
 
 void ATPPWeaponFirearm::ProjectileFire()
@@ -223,6 +231,15 @@ void ATPPWeaponFirearm::ReloadActual()
 	if (OnWeaponReloaded.IsBound())
 	{
 		OnWeaponReloaded.Broadcast();
+	}
+}
+
+void ATPPWeaponFirearm::OnWeaponRecoilReset()
+{
+	ATPPPlayerController* PlayerController = CharacterOwner ? CharacterOwner->GetTPPPlayerController() : nullptr;
+	if (PlayerController)
+	{
+		PlayerController->ResetCameraRecoil();
 	}
 }
 
