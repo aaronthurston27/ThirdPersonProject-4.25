@@ -77,7 +77,7 @@ void UTPP_SPM_DodgeRoll::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted
 	if (AnimMontage == Montage)
 	{
 		ATPPPlayerController* PlayerController = OwningCharacter->GetTPPPlayerController();
-		if (PlayerController)
+		if (PlayerController && OwningCharacter->GetTPPMovementComponent()->IsMovingOnGround())
 		{
 			const FVector CurrentDesiredMovementDirection = PlayerController->GetDesiredMovementDirection();
 
