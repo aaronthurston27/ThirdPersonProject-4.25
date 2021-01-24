@@ -33,24 +33,12 @@ void ATPPWeaponFirearm::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateWeaponSpreadRadius();
-
-	const FVector CurrentAim = CharacterOwner->GetTPPPlayerController()->GetControllerRelativeForwardVector();
-	const UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
-	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
-
-	/*
-	const FVector OffsetAim = CurrentAim.RotateAngleAxis(CharacterOwner->GetTPPPlayerController()->GetTarge, -CharacterOwner->GetTPPPlayerController()->GetControllerRelativeRightVector());
-
-	const FVector VecStart = CharacterOwner->GetActorLocation();
-	DrawDebugLine(GetWorld(), VecStart, VecStart + (CurrentAim * 150.f), FColor::Blue, false, .5f, 0, 1.f);
-	DrawDebugLine(GetWorld(), VecStart, VecStart + (OffsetAim * 150.f), FColor::Red, false, .5f, 0, 1.f);
-	*/
 }
 
 void ATPPWeaponFirearm::UpdateWeaponSpreadRadius()
 {
 	UTPPMovementComponent* MovementComponent = CharacterOwner ? CharacterOwner->GetTPPMovementComponent() : nullptr;
-	UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
+	UTPPGameInstance* GameInstance = UTPPGameInstance::Get();
 	UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
 	if (!MovementComponent || !AimProperties)
 	{
@@ -135,7 +123,7 @@ void ATPPWeaponFirearm::HitscanFire()
 	UWorld* World = GetWorld();
 	const UCameraComponent* PlayerCamera = CharacterOwner ? CharacterOwner->GetFollowCamera() : nullptr;
 	ATPPPlayerController* PlayerController = CharacterOwner ? CharacterOwner->GetTPPPlayerController() : nullptr;
-	const UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
+	const UTPPGameInstance* GameInstance = UTPPGameInstance::Get();
 	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
 	if (!World || !PlayerCamera || !PlayerController || !AimProperties)
 	{

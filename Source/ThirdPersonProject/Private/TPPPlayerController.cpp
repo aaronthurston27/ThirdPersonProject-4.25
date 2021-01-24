@@ -62,7 +62,7 @@ void ATPPPlayerController::UpdateRotation(float DeltaTime)
 	// Calculate Delta to be applied on ViewRotation
 	FRotator DeltaRot(RotationInput);
 	
-	const UTPPGameInstance* GameInstance = Cast<UTPPGameInstance>(GetGameInstance());
+	const UTPPGameInstance* GameInstance = UTPPGameInstance::Get();
 	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
 
 	float CurrentPitch = GetControlRotation().Pitch;
@@ -92,6 +92,7 @@ void ATPPPlayerController::UpdateRotation(float DeltaTime)
 		}
 	}
 
+	// Add recoil compensating if pulling the camera down while recoil is increasing.
 	if (bIsRecoilIncreasing && DeltaRot.Pitch < 0.0f)
 	{
 		const float Compensation = DeltaTime * AimProperties->RecoilCompensationScale * DeltaRot.Pitch;

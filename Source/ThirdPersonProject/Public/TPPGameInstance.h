@@ -18,6 +18,10 @@ class THIRDPERSONPROJECT_API UTPPGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 
+private:
+
+	static UTPPGameInstance* Instance;
+
 protected:
 
 	/** Reference to default aim properties object */
@@ -32,7 +36,7 @@ protected:
 
 public:
 
-	static UTPPGameInstance* Get();
+	static UTPPGameInstance* Get() { return Instance; }
 
 	/** Init method for setting up objects in game instance */
 	virtual void Init() override;

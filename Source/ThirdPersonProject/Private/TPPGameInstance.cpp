@@ -6,11 +6,14 @@
 #include "TPPHUD.h"
 #include "Kismet/GameplayStatics.h"
 
+UTPPGameInstance* UTPPGameInstance::Instance = nullptr;
+
 void UTPPGameInstance::Init()
 {
 	Super::Init();
 
 	AimProperties = NewObject<UTPPAimProperties>(this, AimPropertiesClass);
+	Instance = this;
 }
 
 ATPPPlayerCharacter* UTPPGameInstance::GetPlayerCharacter() const
