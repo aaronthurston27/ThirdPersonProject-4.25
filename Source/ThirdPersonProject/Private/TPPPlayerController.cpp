@@ -73,18 +73,11 @@ void ATPPPlayerController::UpdateRotation(float DeltaTime)
 	const bool bIsRecoilIncreasing = TargetCameraRecoil.Pitch > 0.0f;
 	if (bIsRecoilIncreasing && CurrentPitch < PlayerCameraManager->ViewPitchMax)
 	{
-		if (CurrentCameraRecoil.Pitch > TargetCameraRecoil.Pitch)
-		{
-			TargetCameraRecoil = CurrentCameraRecoil;
-		}
-		else
-		{
-			CurrentCameraRecoil.Pitch += AimProperties->WeaponRecoilAccumulationPerFrame * DeltaTime;
-			CurrentCameraRecoil.Pitch = FMath::Min(CurrentCameraRecoil.Pitch, TargetCameraRecoil.Pitch);
-		}
+		CurrentCameraRecoil.Pitch += AimProperties->WeaponRecoilAccumulationPerFrame * DeltaTime;
+		CurrentCameraRecoil.Pitch = FMath::Min(CurrentCameraRecoil.Pitch, TargetCameraRecoil.Pitch);
 	}
 
-	// Add recoil compensating if pulling the camera down while recoil is increasing.
+	// Add recoil compensation if pulling the camera down while recoil is increasing.
 	if (bIsRecoilIncreasing && DeltaRot.Pitch < 0.0f)
 	{
 		const float Compensation = AimProperties->RecoilCompensationScale * DeltaRot.Pitch;
