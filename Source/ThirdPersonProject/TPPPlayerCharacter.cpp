@@ -159,7 +159,8 @@ bool ATPPPlayerCharacter::CanSprint() const
 {
 	const bool bBlockedBySpecialMove = CurrentSpecialMove && CurrentSpecialMove->bDisablesSprint;
 	const UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
-	return !bBlockedBySpecialMove && !bIsAiming && MovementComp->IsMovingOnGround() && !bIsCrouched;
+	const ATPPPlayerController* PC = GetTPPPlayerController();
+	return !bBlockedBySpecialMove && !bIsAiming && MovementComp->IsMovingOnGround() && !bIsCrouched && PC->GetInputAxisValue(FName("FireWeapon")) < PC->FireWeaponThreshold;
 }
 
 bool ATPPPlayerCharacter::CanCrouch() const
@@ -340,6 +341,11 @@ void ATPPPlayerCharacter::TryToFireWeapon()
 	if (CurrentSpecialMove && CurrentSpecialMove->IsMoveBlockingWeaponUse())
 	{
 		return;
+	}
+
+	if (IsSprinting())
+	{
+		StopSprint();
 	}
 
 	CurrentWeapon->FireWeapon();
