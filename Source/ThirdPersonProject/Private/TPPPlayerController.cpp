@@ -87,7 +87,11 @@ void ATPPPlayerController::UpdateRotation(float DeltaTime)
 	}
 	else if (CurrentCameraRecoil.Pitch > TargetCameraRecoil.Pitch)
 	{
-		CurrentCameraRecoil.Pitch = FMath::Max(0.0f, CurrentCameraRecoil.Pitch - CachedAimRestorationDelta * DeltaTime);
+		CurrentCameraRecoil.Pitch = FMath::Lerp(CurrentCameraRecoil.Pitch, TargetCameraRecoil.Pitch, AimProperties->AimRecoilRestorationInterpAlpha);
+		if (FMath::IsNearlyZero(CurrentCameraRecoil.Pitch, .2f))
+		{
+			CurrentCameraRecoil = FRotator::ZeroRotator;
+		}
 	}
 
 
@@ -265,8 +269,5 @@ void ATPPPlayerController::AddCameraRecoil(const float RecoilToAdd)
 
 void ATPPPlayerController::ResetCameraRecoil()
 {
-	const UTPPGameInstance* GameInstance = UTPPGameInstance::Get();
-	const UTPPAimProperties* AimProperties = GameInstance->GetAimProperties();
-	CachedAimRestorationDelta = CurrentCameraRecoil.Pitch / AimProperties->AimRecoilRestorationTime;
 	TargetCameraRecoil = FRotator::ZeroRotator;
 }

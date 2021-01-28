@@ -26,5 +26,5 @@ public:
 
 	/** Time needed to restore recoil back to zero */
 	UPROPERTY(EditDefaultsOnly)
-	float AimRecoilRestorationTime = 0.45f;
+	float AimRecoilRestorationInterpAlpha = 0.45f;
 };
