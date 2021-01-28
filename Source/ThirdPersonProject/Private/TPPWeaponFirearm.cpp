@@ -116,6 +116,16 @@ void ATPPWeaponFirearm::FireWeapon_Implementation()
 	}
 }
 
+FRotator ATPPWeaponFirearm::CalculateRecoil() const
+{
+	if (BurstCount < 0 || RecoilPatternEntries.Num() == 0)
+	{
+		return FRotator::ZeroRotator;
+	}
+
+	return RecoilPatternEntries[FMath::Min(BurstCount,RecoilPatternEntries.Num() - 1)];
+}
+
 void ATPPWeaponFirearm::HitscanFire()
 {
 	static const float HitScanLength = 5000.f;
@@ -153,8 +163,6 @@ void ATPPWeaponFirearm::HitscanFire()
 		DrawDebugSphere(World, TraceResults[0].Location, 25.f, 2, FColor::Green, false, 10.5f, 0, 1.5f);
 	}
 
-	TimeSinceLastShot = World->GetTimeSeconds();
-
 	const bool bIsAiming = CharacterOwner->IsPlayerAiming();
 	UAnimMontage* MontageToPlay = bIsAiming ? WeaponFireADSCharacterMontage : WeaponFireCharacterMontage;
 	if (MontageToPlay)
@@ -172,14 +180,19 @@ void ATPPWeaponFirearm::HitscanFire()
 	const int32 AmmoToConsume = FMath::Min(AmmoConsumedPerShot, LoadedAmmo);
 	ModifyWeaponAmmo(-AmmoConsumedPerShot, 0);
 
-	const float AccumulatedCameraRecoil = PlayerController->GetTargetCameraRecoil().Pitch;
-	if (AccumulatedCameraRecoil < MaxVerticalRecoilAngle)
-	{
-		PlayerController->AddCameraRecoil(VerticalRecoilPenalty);
-	}
+	const float TimeInSeconds = World->GetTimeSeconds();
+
+	BurstCount -= (int32)((TimeInSeconds - TimeSinceLastShot) / BurstRecoveryTime);
+	BurstCount = FMath::Max(BurstCount, 0);
+	
+	const FRotator RecoilRotator = CalculateRecoil();
+	PlayerController->AddCameraRecoil(RecoilRotator.Pitch);
+
+	BurstCount = FMath::Min(++BurstCount, RecoilPatternEntries.Num() - 1);
+	TimeSinceLastShot = TimeInSeconds;
 
 	GetWorldTimerManager().ClearTimer(WeaponRecoilResetTimer);
-	GetWorldTimerManager().SetTimer(WeaponRecoilResetTimer, this, &ATPPWeaponFirearm::OnWeaponRecoilReset, AimProperties->WeaponRecoilRecoveryDelay, false);
+	GetWorldTimerManager().SetTimer(WeaponRecoilResetTimer, this, &ATPPWeaponFirearm::OnWeaponRecoilReset, .15f, false);
 }
 
 void ATPPWeaponFirearm::ProjectileFire()

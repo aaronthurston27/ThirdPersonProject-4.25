@@ -64,13 +64,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Spread", BlueprintReadOnly)
 	float CrouchingAimSpreadAngle = .5f;
 
-	/** Vertical recoil penalty per shot while firing */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil", BlueprintReadOnly)
-	float VerticalRecoilPenalty = 1.11f;
+	/** Vector containing the recoil offsets to use while consecutively firing this weapon */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil")
+	TArray<FRotator> RecoilPatternEntries;
 
-	/** Max vertical angle for weapon recoil */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil", BlueprintReadOnly)
-	float MaxVerticalRecoilAngle = 20.0f;
+	/** Time needed to decrease the recoil pattern index by one shot */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil")
+	float BurstRecoveryTime = .2f;
+
+	/** Time to apply complete recoil recovery over */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil")
+	float RecoilRecoveryTime = .8f;
 
 public:
 
@@ -101,6 +105,10 @@ protected:
 	/** Time since weapon was last fired * */
 	UPROPERTY(Transient)
 	float TimeSinceLastShot = 0.0f;
+
+	/** Recoil shot index. Used to access recoil pattern array */
+	UPROPERTY(Transient, VisibleAnywhere)
+	int32 BurstCount = 0;
 
 	/** True if weapon is being reloaded */
 	UPROPERTY(Transient)
@@ -158,6 +166,9 @@ protected:
 
 	/** Resets recoil when weapon has stopped firing after period of time */
 	void OnWeaponRecoilReset();
+
+	/** Calculates the current recoil offset of the weapon */
+	FRotator CalculateRecoil() const;
 
 public:
 

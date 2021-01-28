@@ -64,30 +64,34 @@ void ATPPPlayerController::UpdateRotation(float DeltaTime)
 	const UTPPGameInstance* GameInstance = UTPPGameInstance::Get();
 	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
 
-	float CurrentPitch = GetControlRotation().Pitch;
-	if (CurrentPitch >= 180.0f)
-	{
-		CurrentPitch -= 360.0f;
-	}
-
+	const FRotator CurrentRotation = GetControlRotation();
 	const bool bIsRecoilIncreasing = TargetCameraRecoil.Pitch > 0.0f;
-	if (bIsRecoilIncreasing && CurrentPitch < PlayerCameraManager->ViewPitchMax)
+	if (bIsRecoilIncreasing)
 	{
-		CurrentCameraRecoil.Pitch += AimProperties->WeaponRecoilAccumulationPerFrame * DeltaTime;
-		CurrentCameraRecoil.Pitch = FMath::Min(CurrentCameraRecoil.Pitch, TargetCameraRecoil.Pitch);
+		if (!FMath::IsNearlyEqual(CurrentRotation.Pitch, PlayerCameraManager->ViewPitchMax))
+		{
+			CurrentCameraRecoil.Pitch = FMath::Lerp(CurrentCameraRecoil.Pitch, TargetCameraRecoil.Pitch, AimProperties->AimRecoilInterpAlpha);
+		}
+
+		// Add recoil compensation if pulling the camera down while recoil is increasing.
+		if (DeltaRot.Pitch < 0.0f)
+		{
+			const float NewRecoil = TargetCameraRecoil.Pitch - CurrentCameraRecoil.Pitch;
+			CurrentCameraRecoil.Pitch = FMath::Max(0.0f, DeltaRot.Pitch + CurrentCameraRecoil.Pitch);
+			TargetCameraRecoil.Pitch = FMath::Max(TargetCameraRecoil.Pitch + DeltaRot.Pitch, NewRecoil);
+			if (!FMath::IsNearlyZero(CurrentCameraRecoil.Pitch, .01f))
+			{
+				DeltaRot.Pitch = 0.0f;
+			}
+		}
+	}
+	else if (CurrentCameraRecoil.Pitch > TargetCameraRecoil.Pitch)
+	{
+		CurrentCameraRecoil.Pitch = FMath::Max(0.0f, CurrentCameraRecoil.Pitch - CachedAimRestorationDelta * DeltaTime);
 	}
 
-	// Add recoil compensation if pulling the camera down while recoil is increasing.
-	if (bIsRecoilIncreasing && DeltaRot.Pitch < 0.0f)
-	{
-		const float Compensation = AimProperties->RecoilCompensationScale * DeltaRot.Pitch;
-		TargetCameraRecoil.Pitch = FMath::Max(TargetCameraRecoil.Pitch + Compensation, 0.0f);
-		CurrentCameraRecoil.Pitch = FMath::Max(CurrentCameraRecoil.Pitch + Compensation, 0.0f);
-		DeltaRot.Pitch = 0.0f;
-	}
 
 	DesiredControlRotation += DeltaRot;
-
 	FRotator ViewRotation = DesiredControlRotation + CurrentCameraRecoil;
 	PlayerCameraManager->ProcessViewRotation(DeltaTime, ViewRotation, DeltaRot);
 
@@ -247,12 +251,22 @@ FVector ATPPPlayerController::GetControllerRelativeUpVector() const
 
 void ATPPPlayerController::AddCameraRecoil(const float RecoilToAdd)
 {
-	TargetCameraRecoil.Pitch += RecoilToAdd;
+	if (PlayerCameraManager && !FMath::IsNearlyEqual(GetControlRotation().Pitch, PlayerCameraManager->ViewPitchMax))
+	{
+		// Add to the existing pitch if we have begun firing while the recoil was being restored.
+		if (CurrentCameraRecoil.Pitch > TargetCameraRecoil.Pitch)
+		{
+			TargetCameraRecoil = CurrentCameraRecoil;
+		}
+		TargetCameraRecoil.Pitch += RecoilToAdd;
+	}
 }
+
 
 void ATPPPlayerController::ResetCameraRecoil()
 {
+	const UTPPGameInstance* GameInstance = UTPPGameInstance::Get();
+	const UTPPAimProperties* AimProperties = GameInstance->GetAimProperties();
+	CachedAimRestorationDelta = CurrentCameraRecoil.Pitch / AimProperties->AimRecoilRestorationTime;
 	TargetCameraRecoil = FRotator::ZeroRotator;
-	CurrentCameraRecoil = FRotator::ZeroRotator;
-	DesiredControlRotation = GetControlRotation();
 }

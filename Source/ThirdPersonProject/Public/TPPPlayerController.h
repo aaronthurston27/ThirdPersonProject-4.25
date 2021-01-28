@@ -124,7 +124,6 @@ public:
 
 protected:
 
-
 	/* Cached control rotation. Used to track intended aim direction without recoil */
 	UPROPERTY(Transient, VisibleAnywhere)
 	FRotator DesiredControlRotation = FRotator::ZeroRotator;
@@ -136,6 +135,10 @@ protected:
 	/** Recoil that the camera should be interpolating to */
 	UPROPERTY(Transient, VisibleAnywhere)
 	FRotator TargetCameraRecoil = FRotator::ZeroRotator;
+
+	/** Cached aim restoration delta per frame */
+	UPROPERTY(Transient)
+	float CachedAimRestorationDelta = 0.0f;
 
 
 public:
