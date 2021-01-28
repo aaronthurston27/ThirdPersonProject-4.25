@@ -3,6 +3,7 @@
 
 #include "TPPSpecialMove.h"
 #include "TPPPlayerController.h"
+#include "TPPWeaponBase.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 
 UTPPSpecialMove::UTPPSpecialMove(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
@@ -44,6 +45,15 @@ void UTPPSpecialMove::BeginSpecialMove_Implementation()
 		if (PlayerController)
 		{
 			PlayerController->SetMovementInputEnabled(false);
+		}
+	}
+
+	if (bInterruptsReload)
+	{
+		ATPPWeaponBase* Firearm = OwningCharacter->GetCurrentEquippedWeapon();
+		if (Firearm)
+		{
+			Firearm->InterruptReload();
 		}
 	}
 

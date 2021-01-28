@@ -44,4 +44,35 @@ void ATPPWeaponBase::FireWeapon_Implementation()
 	OnWeaponFired.Broadcast();
 }
 
+bool ATPPWeaponBase::CanReloadWeapon_Implementation()
+{
+	return bIsWeaponReady && !bIsReloading && LoadedAmmo < MaxLoadedAmmo&&
+		CurrentAmmoPool > 0;
+}
+
+void ATPPWeaponBase::SetIsReloading(bool bIsWeaponReloading)
+{
+	bIsReloading = bIsWeaponReloading;
+}
+
+void ATPPWeaponBase::StartWeaponReload()
+{
+}
+
+void ATPPWeaponBase::ReloadActual()
+{
+	const int32 AmmoToChamber = FMath::Min(CurrentAmmoPool, MaxLoadedAmmo);
+	ModifyWeaponAmmo(AmmoToChamber, -AmmoToChamber);
+
+	if (OnWeaponReloaded.IsBound())
+	{
+		OnWeaponReloaded.Broadcast();
+	}
+}
+
+void ATPPWeaponBase::InterruptReload()
+{
+}
+
+
 

@@ -3,14 +3,14 @@
 
 #include "TPPWeaponReloadNotify.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
-#include "TPPWeaponFirearm.h"
+#include "TPPWeaponBase.h"
 
 void UTPPWeaponReloadNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
 	ATPPPlayerCharacter* PlayerCharacter = MeshComp ? Cast<ATPPPlayerCharacter>(MeshComp->GetOwner()) : nullptr;
-	ATPPWeaponFirearm* FirearmToReload = PlayerCharacter ? Cast<ATPPWeaponFirearm>(PlayerCharacter->GetCurrentEquippedWeapon()) : nullptr;
-	if (FirearmToReload)
+	ATPPWeaponBase* WeaponToReload = PlayerCharacter ? PlayerCharacter->GetCurrentEquippedWeapon() : nullptr;
+	if (WeaponToReload)
 	{
-		FirearmToReload->ReloadActual();
+		WeaponToReload->ReloadActual();
 	}
 }

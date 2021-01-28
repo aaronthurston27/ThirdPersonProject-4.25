@@ -48,8 +48,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	bool bDisablesCrouch = false;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	bool bDisablesWeaponUseOnStart = true;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	bool bInterruptsReload = false;
 
 public:
 

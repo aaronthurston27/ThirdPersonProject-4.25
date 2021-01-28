@@ -227,7 +227,7 @@ void ATPPWeaponFirearm::ReloadActual()
 void ATPPWeaponFirearm::InterruptReload()
 {
 	const UAnimInstance* AnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
-	if (WeaponReloadCharacterMontage && AnimInstance->Montage_IsPlaying(WeaponReloadCharacterMontage))
+	if (WeaponReloadCharacterMontage && !AnimInstance->Montage_IsPlaying(WeaponReloadCharacterMontage))
 	{
 		CharacterOwner->SetAnimationBlendSlot(EAnimationBlendSlot::None);
 		CharacterOwner->StopAnimMontage(WeaponReloadCharacterMontage);

@@ -3,30 +3,29 @@
 
 #include "TPPWeaponReloadNotifyState.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
-#include "TPPWeaponFirearm.h"
+#include "TPPWeaponBase.h"
 
 void UTPPWeaponReloadNotifyState::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration)
 {
 	ATPPPlayerCharacter* PlayerCharacter = MeshComp ? Cast<ATPPPlayerCharacter>(MeshComp->GetOwner()) : nullptr;
-	ATPPWeaponFirearm* FirearmToReload = PlayerCharacter ? Cast<ATPPWeaponFirearm>(PlayerCharacter->GetCurrentEquippedWeapon()) : nullptr;
-	if (FirearmToReload)
+	ATPPWeaponBase* WeaponToReload = PlayerCharacter ? PlayerCharacter->GetCurrentEquippedWeapon() : nullptr;
+	if (WeaponToReload)
 	{
-		FirearmToReload->SetIsReloading(true);
+		WeaponToReload->SetIsReloading(true);
 	}
 }
 
 void UTPPWeaponReloadNotifyState::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
 	ATPPPlayerCharacter* PlayerCharacter = MeshComp ? Cast<ATPPPlayerCharacter>(MeshComp->GetOwner()) : nullptr;
-	ATPPWeaponFirearm* FirearmToReload = PlayerCharacter ? Cast<ATPPWeaponFirearm>(PlayerCharacter->GetCurrentEquippedWeapon()) : nullptr;
-	if (FirearmToReload)
+	ATPPWeaponBase* WeaponToReload = PlayerCharacter ? PlayerCharacter->GetCurrentEquippedWeapon() : nullptr;
+	if (WeaponToReload)
 	{
-		FirearmToReload->SetIsReloading(false);
+		WeaponToReload->SetIsReloading(false);
 	}
 }
 
 void UTPPWeaponReloadNotifyState::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime)
 {
-	ATPPPlayerCharacter* PlayerCharacter = MeshComp ? Cast<ATPPPlayerCharacter>(MeshComp->GetOwner()) : nullptr;
-	ATPPWeaponFirearm* FirearmToReload = PlayerCharacter ? Cast<ATPPWeaponFirearm>(PlayerCharacter->GetCurrentEquippedWeapon()) : nullptr;
+
 }

@@ -15,6 +15,7 @@ UTPP_SPM_DodgeRoll::UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializ
 	bDisablesCrouch = true;
 	bDisablesWeaponUseOnStart = true;
 	bDisablesCharacterRotation = true;
+	bInterruptsReload = true;
 
 	RollSpeed = 300.f;
 	RollRampDownSpeed = 150.f;

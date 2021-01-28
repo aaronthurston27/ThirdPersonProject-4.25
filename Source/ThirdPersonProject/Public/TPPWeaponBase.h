@@ -9,6 +9,7 @@
 #include "TPPWeaponBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFired);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloaded);
 
 class ATPPPlayerCharacter;
 
@@ -119,6 +120,35 @@ public:
 	void FireWeapon();
 
 	virtual void FireWeapon_Implementation();
+
+public:
+
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponReloaded OnWeaponReloaded;
+
+	/** Evaluate whether or not this weapon can be reloaded */
+	UFUNCTION(BlueprintNativeEvent)
+	bool CanReloadWeapon();
+
+	virtual bool CanReloadWeapon_Implementation();
+
+	void SetIsReloading(bool bIsWeaponReloading);
+
+	/** Starts the reload process and animation */
+	virtual void StartWeaponReload();
+
+	/** Actual reload process of adding ammo to chamber */
+	virtual void ReloadActual();
+
+	/** Interrups the currently playing reload animation, if any. */
+	UFUNCTION(BlueprintCallable)
+	virtual void InterruptReload();
+
+protected:
+
+	/** True if weapon is being reloaded */
+	UPROPERTY(Transient)
+	bool bIsReloading = false;
 
 public:
 

@@ -6,8 +6,6 @@
 #include "TPPWeaponBase.h"
 #include "TPPWeaponFirearm.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloaded);
-
 /** Hit logic to use for this weapon */
 UENUM(BlueprintType)
 enum class EWeaponHitType : uint8
@@ -110,10 +108,6 @@ protected:
 	UPROPERTY(Transient, VisibleAnywhere)
 	int32 BurstCount = 0;
 
-	/** True if weapon is being reloaded */
-	UPROPERTY(Transient)
-	bool bIsReloading = false;
-
 public:
 
 	virtual bool CanFireWeapon_Implementation() override;
@@ -130,22 +124,13 @@ protected:
 
 public:
 
-	UPROPERTY(BlueprintAssignable)
-	FOnWeaponReloaded OnWeaponReloaded;
-
-	/** Evaluate whether or not this weapon can be reloaded */
-	UFUNCTION(BlueprintNativeEvent)
-	bool CanReloadWeapon();
-
-	virtual bool CanReloadWeapon_Implementation();
-
-	void SetIsReloading(bool bIsWeaponReloading);
-
 	/** Starts the reload process and animation */
-	virtual void StartWeaponReload();
+	virtual void StartWeaponReload() override;
 
 	/** Actual reload process of adding ammo to chamber */
-	void ReloadActual();
+	void ReloadActual() override;
+
+	virtual void InterruptReload() override;
 
 protected:
 
