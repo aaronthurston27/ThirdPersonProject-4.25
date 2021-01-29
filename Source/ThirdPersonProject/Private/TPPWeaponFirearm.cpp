@@ -191,7 +191,7 @@ void ATPPWeaponFirearm::HitscanFire()
 	//DrawDebugLine(World, WeaponMesh->GetSocketLocation("Muzzle"), EndDebugDrawLocation, FColor::Yellow, false, 1.5f, 0, 1.5f);
 	if (TraceResults.Num() > 0)
 	{
-		//DrawDebugSphere(World, TraceResults[0].Location, 25.f, 2, FColor::Green, false, 10.5f, 0, 1.5f);
+		DrawDebugSphere(World, TraceResults[0].Location, 25.f, 2, FColor::Green, false, 10.5f, 0, 1.5f);
 		OnWeaponHit(TraceResults[0]);
 	}
 }
