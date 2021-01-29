@@ -99,6 +99,9 @@ protected:
 	UFUNCTION()
 	void OnReloadPressed();
 
+	UFUNCTION()
+	void OnPausePressed();
+
 public:
 
 	ATPPPlayerCharacter* GetOwnerCharacter();

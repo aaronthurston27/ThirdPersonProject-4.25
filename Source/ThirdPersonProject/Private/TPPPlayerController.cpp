@@ -44,6 +44,8 @@ void ATPPPlayerController::SetupInputComponent()
 	InputComponent->BindAction("ADS", IE_Pressed, this, &ATPPPlayerController::OnAimWeaponPressed);
 	InputComponent->BindAction("ADS", IE_Released, this, &ATPPPlayerController::OnAimWeaponReleased);
 	InputComponent->BindAction("Reload", IE_Pressed, this, &ATPPPlayerController::OnReloadPressed);
+
+	InputComponent->BindAction("Pause", IE_Pressed, this, &ATPPPlayerController::OnPausePressed);
 }
 
 void ATPPPlayerController::Tick(float DeltaTime)
@@ -215,6 +217,15 @@ void ATPPPlayerController::OnReloadPressed()
 	CachedOwnerCharacter->TryToReloadWeapon();
 }
 
+void ATPPPlayerController::OnPausePressed()
+{
+#if !WITH_EDITOR
+
+	FGenericPlatformMisc::RequestExit(false);
+
+#endif !WITH_EDITOR
+}
+
 FRotator ATPPPlayerController::GetRelativeControllerMovementRotation() const
 {
 	const FRotator DesiredDirection = GetDesiredMovementDirection().ToOrientationRotator();
@@ -265,7 +276,6 @@ void ATPPPlayerController::AddCameraRecoil(const float RecoilToAdd)
 		TargetCameraRecoil.Pitch += RecoilToAdd;
 	}
 }
-
 
 void ATPPPlayerController::ResetCameraRecoil()
 {
