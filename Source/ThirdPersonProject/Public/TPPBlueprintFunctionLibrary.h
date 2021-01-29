@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "TPPGameInstance.h"
+#include "TPPAimProperties.h"
 #include "TPPBlueprintFunctionLibrary.generated.h"
 
 /**
@@ -13,5 +15,14 @@ UCLASS()
 class THIRDPERSONPROJECT_API UTPPBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
+
+public:
+
+	static UTPPGameInstance* GetTPPGameInstance();
+
+	static UTPPAimProperties* GetAimProperties();
+
+	static UDecalComponent* SpawnDecalWithParameters(UPrimitiveComponent* ComponentTarget, UMaterial* Material, const float Lifetime = 10.f,
+		const FVector& AttachLocation = FVector::ZeroVector, const FRotator& Rotation = FRotator::ZeroRotator, const FVector& Scale = FVector::OneVector);
 	
 };

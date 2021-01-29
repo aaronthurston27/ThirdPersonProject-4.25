@@ -2,6 +2,8 @@
 
 
 #include "TPPWeaponBase.h"
+#include "TPPBlueprintFunctionLibrary.h"
+#include "Components/DecalComponent.h"
 
 // Sets default values
 ATPPWeaponBase::ATPPWeaponBase()
@@ -72,6 +74,20 @@ void ATPPWeaponBase::ReloadActual()
 
 void ATPPWeaponBase::InterruptReload()
 {
+
+}
+
+void ATPPWeaponBase::OnWeaponHit_Implementation(const FHitResult& HitResult)
+{
+	if (HitResult.bBlockingHit && HitResult.Component != nullptr)
+	{
+		UPrimitiveComponent* PrimitiveComp = HitResult.Component.Get();
+		UDecalComponent* Hmm = UTPPBlueprintFunctionLibrary::SpawnDecalWithParameters(PrimitiveComp, ImpactProperties.WeaponHitMaterial, 10.0f, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), ImpactProperties.WeaponHitDecalSize);
+		if (Hmm)
+		{
+			Hmm->Activate();
+		}
+	}
 }
 
 

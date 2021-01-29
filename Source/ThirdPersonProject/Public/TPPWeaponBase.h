@@ -21,6 +21,22 @@ enum class EWeaponAmmoType : uint8
 	MAX UMETA(Hidden)
 };
 
+/** Struct defining properties to apply to objects when hit by a weapon */
+USTRUCT(Blueprintable)
+struct FTPPWeaponImpactProperties
+{
+
+	GENERATED_BODY()
+
+	/** Weapon hit material to apply */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UMaterial* WeaponHitMaterial = nullptr;
+
+	/** Size of weapon hit decal */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FVector WeaponHitDecalSize = FVector::OneVector * 2.0f;
+};
+
 /**
 * Base class that all weapons (or items that can hurt people) should derive from
 */
@@ -64,6 +80,10 @@ public:
 	/** Weapon image to display on HUD */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|HUD", BlueprintReadOnly)
 	TSoftObjectPtr<UTexture2D> HUDImage;
+
+	/** Weapon hit material to apply */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Hit", BlueprintReadOnly)
+	FTPPWeaponImpactProperties ImpactProperties;
 
 protected:
 
@@ -120,6 +140,13 @@ public:
 	void FireWeapon();
 
 	virtual void FireWeapon_Implementation();
+
+protected:
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnWeaponHit(const FHitResult& HitResult);
+
+	void OnWeaponHit_Implementation(const FHitResult& HitResult);
 
 public:
 

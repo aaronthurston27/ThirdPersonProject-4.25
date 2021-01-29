@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "TPPWeaponBase.h"
 #include "TPPMovementComponent.generated.h"
 
 UENUM()

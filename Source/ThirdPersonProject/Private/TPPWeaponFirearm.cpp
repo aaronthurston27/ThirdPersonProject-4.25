@@ -140,29 +140,6 @@ void ATPPWeaponFirearm::HitscanFire()
 		return;
 	}
 
-	const FVector StartingLocation = PlayerCamera->GetComponentLocation();
-	const FVector FireDirection = PlayerCamera->GetForwardVector();
-	FVector WeaponInaccuracyVector = FireDirection;
-	ModifyAimVectorFromSpread(WeaponInaccuracyVector);
-
-	const FVector CameraEndLocation = PlayerCamera->GetComponentLocation() + (FireDirection * HitScanLength);
-	const FVector ActualEndLocation = PlayerCamera->GetComponentLocation() + (WeaponInaccuracyVector * HitScanLength);
-	//DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), CameraEndLocation, FColor::Blue, false, 10.5f, 0, 1.5f);
-	//DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), ActualEndLocation, FColor::Red, false, 10.5f, 0, 1.5f);
-
-	TArray<FHitResult> TraceResults;
-	FCollisionQueryParams QueryParams(FName(TEXT("Weapon")));
-	QueryParams.AddIgnoredActor(CharacterOwner);
-	QueryParams.AddIgnoredActor(this);
-
-	World->LineTraceMultiByChannel(TraceResults, StartingLocation, ActualEndLocation, ECollisionChannel::ECC_GameTraceChannel1, QueryParams);
-	const FVector EndDebugDrawLocation = TraceResults.Num() > 0 ? TraceResults[0].Location : ActualEndLocation;
-	DrawDebugLine(World, WeaponMesh->GetSocketLocation("Muzzle"), EndDebugDrawLocation, FColor::Yellow, false, 1.5f, 0, 1.5f);
-	if (TraceResults.Num() > 0)
-	{
-		DrawDebugSphere(World, TraceResults[0].Location, 25.f, 2, FColor::Green, false, 10.5f, 0, 1.5f);
-	}
-
 	const bool bIsAiming = CharacterOwner->IsPlayerAiming();
 	UAnimMontage* MontageToPlay = bIsAiming ? WeaponFireADSCharacterMontage : WeaponFireCharacterMontage;
 	if (MontageToPlay)
@@ -193,6 +170,30 @@ void ATPPWeaponFirearm::HitscanFire()
 
 	GetWorldTimerManager().ClearTimer(WeaponRecoilResetTimer);
 	GetWorldTimerManager().SetTimer(WeaponRecoilResetTimer, this, &ATPPWeaponFirearm::OnWeaponRecoilReset, .15f, false);
+
+	const FVector StartingLocation = PlayerCamera->GetComponentLocation();
+	const FVector FireDirection = PlayerCamera->GetForwardVector();
+	FVector WeaponInaccuracyVector = FireDirection;
+	ModifyAimVectorFromSpread(WeaponInaccuracyVector);
+
+	const FVector CameraEndLocation = PlayerCamera->GetComponentLocation() + (FireDirection * HitScanLength);
+	const FVector ActualEndLocation = PlayerCamera->GetComponentLocation() + (WeaponInaccuracyVector * HitScanLength);
+	//DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), CameraEndLocation, FColor::Blue, false, 10.5f, 0, 1.5f);
+	//DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), ActualEndLocation, FColor::Red, false, 10.5f, 0, 1.5f);
+
+	TArray<FHitResult> TraceResults;
+	FCollisionQueryParams QueryParams(FName(TEXT("Weapon")));
+	QueryParams.AddIgnoredActor(CharacterOwner);
+	QueryParams.AddIgnoredActor(this);
+
+	World->LineTraceMultiByChannel(TraceResults, StartingLocation, ActualEndLocation, ECollisionChannel::ECC_GameTraceChannel1, QueryParams);
+	const FVector EndDebugDrawLocation = TraceResults.Num() > 0 ? TraceResults[0].Location : ActualEndLocation;
+	//DrawDebugLine(World, WeaponMesh->GetSocketLocation("Muzzle"), EndDebugDrawLocation, FColor::Yellow, false, 1.5f, 0, 1.5f);
+	if (TraceResults.Num() > 0)
+	{
+		//DrawDebugSphere(World, TraceResults[0].Location, 25.f, 2, FColor::Green, false, 10.5f, 0, 1.5f);
+		OnWeaponHit(TraceResults[0]);
+	}
 }
 
 void ATPPWeaponFirearm::ProjectileFire()
