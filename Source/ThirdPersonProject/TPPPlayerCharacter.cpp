@@ -19,6 +19,7 @@
 #include "TPPWeaponBase.h"
 #include "TPPWeaponFirearm.h"
 #include "TPPHUD.h"
+#include "TPPDamageType.h"
 #include "GameFramework/SpringArmComponent.h"
 
 ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitialzer) :
@@ -54,6 +55,10 @@ ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitial
 	ADSRotationRate = 200.0f;
 	
 	PrimaryActorTick.bCanEverTick = true;
+
+	MaxHealth = 125.0f;
+	HealthRegenDelay = 6.0f;
+	HealthRegenRate = 33.33f;
 }
 
 void ATPPPlayerCharacter::BeginPlay()
@@ -83,6 +88,8 @@ void ATPPPlayerCharacter::BeginPlay()
 			HUD->InitializeHUD(this);
 		}
 	}
+
+	Health = MaxHealth;
 
 	Super::BeginPlay();
 }
@@ -486,4 +493,24 @@ void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutpu
 			break;
 		}
 	}
+}
+
+float ATPPPlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	if (!CanBeDamaged() || !IsCharacterAlive())
+	{
+		return 0.0f;
+	}
+
+	const float OldHealth = Health;
+	if (EventInstigator && DamageCauser)
+	{
+		UTPPDamageType* DamageType = Cast<UTPPDamageType>(DamageEvent.DamageTypeClass.GetDefaultObject());
+		if (DamageType)
+		{
+			Health = FMath::Max(Health - Damage, 0.0f);
+		}
+	}
+
+	return OldHealth - Health;
 }

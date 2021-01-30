@@ -3,6 +3,7 @@
 
 #include "TPPWeaponBase.h"
 #include "TPPBlueprintFunctionLibrary.h"
+#include "ThirdPersonProject/TPPPlayerCharacter.h"
 #include "Components/DecalComponent.h"
 
 // Sets default values
@@ -12,6 +13,8 @@ ATPPWeaponBase::ATPPWeaponBase()
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	AudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
 	SetRootComponent(WeaponMesh);
+
+	BaseWeaponDamage = 8.0f;
 }
 
 void ATPPWeaponBase::BeginPlay()
@@ -88,8 +91,17 @@ void ATPPWeaponBase::InterruptReload()
 
 void ATPPWeaponBase::OnWeaponHit_Implementation(const FHitResult& HitResult)
 {
-	if (HitResult.bBlockingHit && HitResult.Component != nullptr)
+	if (HitResult.bBlockingHit && HitResult.Component != nullptr && CharacterOwner)
 	{
+
+		ATPPPlayerCharacter* CharacterHit = Cast<ATPPPlayerCharacter>(HitResult.Actor.Get());
+		if (CharacterHit && CharacterHit->IsCharacterAlive())
+		{
+			FDamageEvent DamageEvent;
+			DamageEvent.DamageTypeClass = HitDamageClass;
+			CharacterHit->TakeDamage(BaseWeaponDamage, DamageEvent, CharacterOwner->GetController(), CharacterOwner);
+		}
+
 		UPrimitiveComponent* PrimitiveComp = HitResult.Component.Get();
 		UDecalComponent* Hmm = UTPPBlueprintFunctionLibrary::SpawnDecalWithParameters(PrimitiveComp, ImpactProperties.WeaponHitMaterial, 10.0f, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), ImpactProperties.WeaponHitDecalSize);
 		if (Hmm)

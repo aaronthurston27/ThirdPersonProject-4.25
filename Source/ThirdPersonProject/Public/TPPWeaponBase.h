@@ -81,6 +81,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|HUD", BlueprintReadOnly)
 	TSoftObjectPtr<UTexture2D> HUDImage;
 
+	/** Weapon hit base damage */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Hit", BlueprintReadOnly)
+	float BaseWeaponDamage;
+
+	/** Damage type class to use when hit by this weapon */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Hit", BlueprintReadOnly)
+	TSubclassOf<UDamageType> HitDamageClass;
+
 	/** Weapon hit material to apply */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Hit", BlueprintReadOnly)
 	FTPPWeaponImpactProperties ImpactProperties;

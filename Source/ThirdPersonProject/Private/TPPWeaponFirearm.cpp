@@ -189,7 +189,7 @@ void ATPPWeaponFirearm::HitscanFire()
 	//DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), ActualEndLocation, FColor::Red, false, 10.5f, 0, 1.5f);
 
 	TArray<FHitResult> TraceResults;
-	FCollisionQueryParams QueryParams(FName(TEXT("Weapon")));
+	FCollisionQueryParams QueryParams(FName(TEXT("WeaponFire")));
 	QueryParams.AddIgnoredActor(CharacterOwner);
 	QueryParams.AddIgnoredActor(this);
 

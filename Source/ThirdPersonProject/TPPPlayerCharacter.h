@@ -105,13 +105,13 @@ protected:
 
 public:
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character Rotation")
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
 	float DefaultRotationRate;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character Rotation")
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
 	float SprintRotationRate;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character Rotation")
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
 	float ADSRotationRate;
 
 public:
@@ -301,5 +301,33 @@ protected:
 
 	/** Stops the player from aiming down the sights */
 	void StopAiming();
+
+public:
+
+	/** Max health this player can have */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Gameplay|Health")
+	float MaxHealth;
+
+	/** Time delay before health begins regenerating */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Gameplay|Health")
+	float HealthRegenDelay;
+
+	/** Health to regenerate per second */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Gameplay|Health")
+	float HealthRegenRate;
+
+protected:
+
+	/** Current health of the player */
+	UPROPERTY(Transient, VisibleAnywhere)
+	float Health;
+
+public:
+
+	/** Returns true if the character is alive */
+	UFUNCTION(BlueprintPure)
+	bool IsCharacterAlive() const { return Health > 0.0f; }
+
+	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 };
 
