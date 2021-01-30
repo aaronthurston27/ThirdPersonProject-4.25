@@ -122,6 +122,9 @@ public:
 	/** Sets the owner of this weapon */
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponOwner(ATPPPlayerCharacter* NewOwner);
+
+	UFUNCTION(BlueprintCallable)
+	virtual void Equip();
 	
 public:
 
@@ -132,14 +135,19 @@ public:
 	void SetWeaponReady(bool bWeaponReady);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	bool CanFireWeapon();
+	bool CanFireWeapon() const;
 
-	virtual bool CanFireWeapon_Implementation();
+	virtual bool CanFireWeapon_Implementation() const;
 
 	UFUNCTION(BlueprintNativeEvent)
 	void FireWeapon();
 
 	virtual void FireWeapon_Implementation();
+
+protected:
+
+	UFUNCTION()
+	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 protected:
 

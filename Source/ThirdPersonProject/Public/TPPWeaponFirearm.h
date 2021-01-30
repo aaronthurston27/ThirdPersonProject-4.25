@@ -74,7 +74,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil")
 	float RecoilRecoveryTime = .8f;
 
-public:
+	/** True if this weapon should use IK to control the non-dominant hand. */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation", BlueprintReadOnly)
+	bool bShouldUseLeftHandIK = true;
 
 	/** Weapon fire montage to be played by owning character */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation", BlueprintReadOnly)
@@ -87,8 +89,6 @@ public:
 	/** Weapon reload montage to be played by owning character */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	UAnimMontage* WeaponReloadCharacterMontage;
-
-public:
 
 	/** Sound to play when firing */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Audio")
@@ -110,9 +110,18 @@ protected:
 
 public:
 
-	virtual bool CanFireWeapon_Implementation() override;
+	virtual void Equip() override;
+
+public:
+
+	virtual bool CanFireWeapon_Implementation() const override;
 
 	virtual void FireWeapon_Implementation() override;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintPure)
+	bool ShouldUseWeaponIk() const;
+
+	virtual bool ShouldUseWeaponIk_Implementation() const;
 
 protected:
 
@@ -131,6 +140,8 @@ public:
 	void ReloadActual() override;
 
 	virtual void InterruptReload() override;
+	
+	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted) override;
 
 protected:
 

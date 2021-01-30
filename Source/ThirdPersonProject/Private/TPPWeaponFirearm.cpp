@@ -89,7 +89,7 @@ void ATPPWeaponFirearm::ModifyAimVectorFromSpread(FVector& AimingVector)
 	AimingVector = AimingVector.RotateAngleAxis(VerticalAngleSpread, Right);
 }
 
-bool ATPPWeaponFirearm::CanFireWeapon_Implementation()
+bool ATPPWeaponFirearm::CanFireWeapon_Implementation() const
 {
 	const UWorld* World = GetWorld();
 	const float GameTimeInSeconds = World ? World->GetTimeSeconds() : 0.0f;
@@ -114,6 +114,13 @@ void ATPPWeaponFirearm::FireWeapon_Implementation()
 	{
 		StartWeaponReload();
 	}
+}
+
+bool ATPPWeaponFirearm::ShouldUseWeaponIk_Implementation() const
+{
+	UAnimInstance* AnimInstance = CharacterOwner ? CharacterOwner->GetMesh()->GetAnimInstance() : nullptr;
+	const bool bIsPlayingReloadAnim = AnimInstance && AnimInstance->Montage_IsPlaying(WeaponReloadCharacterMontage);
+	return bShouldUseLeftHandIK && bIsWeaponReady && AnimInstance && !bIsPlayingReloadAnim && CharacterOwner->GetCurrentAnimationBlendSlot() != EAnimationBlendSlot::FullBody;
 }
 
 FRotator ATPPWeaponFirearm::CalculateRecoil() const
@@ -230,9 +237,13 @@ void ATPPWeaponFirearm::InterruptReload()
 	const UAnimInstance* AnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
 	if (WeaponReloadCharacterMontage && AnimInstance->Montage_IsPlaying(WeaponReloadCharacterMontage))
 	{
-		CharacterOwner->SetAnimationBlendSlot(EAnimationBlendSlot::None);
 		CharacterOwner->StopAnimMontage(WeaponReloadCharacterMontage);
 	}
+}
+
+void ATPPWeaponFirearm::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	Super::OnMontageEnded(Montage, bInterrupted);
 }
 
 void ATPPWeaponFirearm::OnWeaponRecoilReset()
@@ -242,5 +253,13 @@ void ATPPWeaponFirearm::OnWeaponRecoilReset()
 	{
 		PlayerController->ResetCameraRecoil();
 	}
+}
+
+void ATPPWeaponFirearm::Equip()
+{
+	Super::Equip();
+	
+	UAnimInstance* AnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
+	AnimInstance->OnMontageEnded.AddDynamic(this, &ATPPWeaponFirearm::OnMontageEnded);
 }
 

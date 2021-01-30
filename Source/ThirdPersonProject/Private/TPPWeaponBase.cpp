@@ -25,6 +25,11 @@ void ATPPWeaponBase::SetWeaponOwner(ATPPPlayerCharacter* NewWeaponOwner)
 	CharacterOwner = NewWeaponOwner;
 }
 
+void ATPPWeaponBase::Equip()
+{
+
+}
+
 void ATPPWeaponBase::ModifyWeaponAmmo(const int32 ChamberAmmoChange, const int32 PooledAmmoChange)
 {
 	LoadedAmmo = FMath::Clamp(LoadedAmmo + ChamberAmmoChange, 0, MaxLoadedAmmo);
@@ -36,7 +41,7 @@ void ATPPWeaponBase::SetWeaponReady(bool bWeaponReady)
 	bIsWeaponReady = bWeaponReady;
 }
 
-bool ATPPWeaponBase::CanFireWeapon_Implementation()
+bool ATPPWeaponBase::CanFireWeapon_Implementation() const
 {
 	return bIsWeaponReady && LoadedAmmo > 0 && CharacterOwner != nullptr;
 }
@@ -44,6 +49,10 @@ bool ATPPWeaponBase::CanFireWeapon_Implementation()
 void ATPPWeaponBase::FireWeapon_Implementation()
 {
 	OnWeaponFired.Broadcast();
+}
+
+void ATPPWeaponBase::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
 }
 
 bool ATPPWeaponBase::CanReloadWeapon_Implementation()

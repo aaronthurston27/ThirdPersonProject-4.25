@@ -320,9 +320,8 @@ void ATPPPlayerCharacter::EquipWeapon(ATPPWeaponBase* NewEquippedWeapon)
 	if (NewEquippedWeapon)
 	{
 		NewEquippedWeapon->SetWeaponOwner(this);
-
+		NewEquippedWeapon->Equip();
 		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, false);
-
 		NewEquippedWeapon->WeaponMesh->AttachToComponent(GetMesh(), AttachmentRules, WeaponAttachmentSocketName);
 		NewEquippedWeapon->AddActorWorldRotation(FRotator(0.0f, 90.0f, 0.0f));
 	}
