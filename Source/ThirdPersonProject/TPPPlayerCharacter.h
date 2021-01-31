@@ -13,6 +13,7 @@
 #include "TPPWeaponBase.h"
 #include "TPPHealthComponent.h"
 #include "TPPSpecialMove.h"
+#include "TPP_SPM_Defeated.h"
 #include "TPPPlayerCharacter.generated.h"
 
 class ATPPPlayerController;
@@ -351,11 +352,20 @@ protected:
 
 protected:
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<UTPP_SPM_Defeated> DeathSpecialMove;
+
 	/** Called when the player runs out of health */
 	UFUNCTION()
 	void OnPlayerHealthDepleted();
 
 	/** Stop player movement and become inactive */
 	void BecomeDefeated();
+
+public:
+
+	void OnDeath();
+
+	void BeginRagdoll();
 };
 

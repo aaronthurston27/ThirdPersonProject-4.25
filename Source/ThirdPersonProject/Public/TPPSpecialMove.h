@@ -96,7 +96,7 @@ public:
 
 protected:
 
-	void PlayAnimMontage(UAnimMontage* Montage);
+	void PlayAnimMontage(UAnimMontage* Montage, bool bShouldEndAllMontages = false);
 
 	void EndAnimMontage(UAnimMontage* MontageToEnd);
 

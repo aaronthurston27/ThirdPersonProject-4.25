@@ -6,7 +6,8 @@
 #include "TPPWeaponBase.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 
-UTPPSpecialMove::UTPPSpecialMove(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
+UTPPSpecialMove::UTPPSpecialMove(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) 
+{
 
 }
 
@@ -84,14 +85,14 @@ void UTPPSpecialMove::EndSpecialMove_Implementation()
 	OwningCharacter = nullptr;
 }
 
-void UTPPSpecialMove::PlayAnimMontage(UAnimMontage* Montage)
+void UTPPSpecialMove::PlayAnimMontage(UAnimMontage* Montage, bool bShouldEndAllMontages)
 {
 	if (Montage && OwningCharacter)
 	{
 		UAnimInstance* AnimInstance = OwningCharacter->GetMesh()->GetAnimInstance();
 		if (AnimInstance)
 		{
-			AnimInstance->Montage_Play(Montage, 1.0f);
+			AnimInstance->Montage_Play(Montage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, bShouldEndAllMontages);
 		}
 	}
 }

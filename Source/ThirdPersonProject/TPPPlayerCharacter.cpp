@@ -540,10 +540,36 @@ void ATPPPlayerCharacter::OnPlayerHealthDepleted()
 
 void ATPPPlayerCharacter::BecomeDefeated()
 {
-	UE_LOG(LogTemp,Warning,TEXT("Player defeated."))
+	if (DeathSpecialMove)
+	{
+		ExecuteSpecialMove(DeathSpecialMove);
+	}
 }
 
 bool ATPPPlayerCharacter::IsCharacterAlive() const
 {
 	return HealthComponent->GetHealth() > 0;
+}
+
+void ATPPPlayerCharacter::OnDeath()
+{
+	BeginRagdoll();
+}
+
+void ATPPPlayerCharacter::BeginRagdoll()
+{
+	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
+	CapsuleComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	USkeletalMeshComponent* SkeletalMesh = GetMesh();
+	if (SkeletalMesh)
+	{
+		SkeletalMesh->SetCollisionProfileName(FName(TEXT("Ragdoll")));
+		SkeletalMesh->SetAllBodiesBelowSimulatePhysics(FName(TEXT("Root")), true, true);
+		for (FBodyInstance* BI : SkeletalMesh->Bodies)
+		{
+			BI->SetLinearVelocity(FVector::ZeroVector, false);
+		}
+		SetRootComponent(SkeletalMesh);
+	}
 }
