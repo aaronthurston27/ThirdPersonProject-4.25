@@ -12,7 +12,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"
-#include "BaseAbility.h"
+#include "TPPAbilityBase.h"
 #include "TPPMovementComponent.h"
 #include "Engine.h"
 #include "TPPPlayerController.h"
@@ -63,7 +63,7 @@ void ATPPPlayerCharacter::BeginPlay()
 {
 	CurrentAnimationBlendSlot = EAnimationBlendSlot::None;
 
-	CurrentAbility = MovementAbilityClass ? NewObject<UBaseAbility>(this, MovementAbilityClass) : nullptr;
+	CurrentAbility = MovementAbilityClass ? NewObject<UTPPAbilityBase>(this, MovementAbilityClass) : nullptr;
 	if (CurrentAbility)
 	{
 		CurrentAbility->SetOwningCharacter(this);
@@ -570,6 +570,11 @@ void ATPPPlayerCharacter::BeginRagdoll()
 		{
 			BI->SetLinearVelocity(FVector::ZeroVector, false);
 		}
-		SetRootComponent(SkeletalMesh);
+		
+		UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+		if (MovementComp)
+		{
+			MovementComp->SetMovementMode(EMovementMode::MOVE_None);
+		}
 	}
 }

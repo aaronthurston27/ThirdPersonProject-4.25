@@ -9,7 +9,7 @@
 #include "Components/AudioComponent.h"
 #include "Components/TimelineComponent.h"
 #include "Engine/DataTable.h"
-#include "BaseAbility.h"
+#include "TPPAbilityBase.h"
 #include "TPPWeaponBase.h"
 #include "TPPHealthComponent.h"
 #include "TPPSpecialMove.h"
@@ -146,7 +146,7 @@ public:
 
 	/** Ability to activate for special movement key */
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UBaseAbility> MovementAbilityClass;
+	TSubclassOf<UTPPAbilityBase> MovementAbilityClass;
 
 protected:
 
@@ -212,7 +212,7 @@ protected:
 
 	/** Ability being used */
 	UPROPERTY(Transient)
-	UBaseAbility* CurrentAbility;
+	UTPPAbilityBase* CurrentAbility;
 
 	/** Current special move to track */
 	UPROPERTY(Transient)
@@ -228,7 +228,7 @@ public:
 
 	/** Gets current ability */
 	UFUNCTION(BlueprintPure)
-	UBaseAbility* GetCurrentAbility() const { return CurrentAbility;  }
+	UTPPAbilityBase* GetCurrentAbility() const { return CurrentAbility;  }
 
 	void OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove);
 

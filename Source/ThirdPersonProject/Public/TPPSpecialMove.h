@@ -104,4 +104,7 @@ protected:
 
 	UFUNCTION()
 	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+	virtual void OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
 };

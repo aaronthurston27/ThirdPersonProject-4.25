@@ -34,9 +34,13 @@ void UTPP_SPM_Defeated::EndSpecialMove_Implementation()
 
 void UTPP_SPM_Defeated::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted = false)
 {
+	EndSpecialMove();
+}
+
+void UTPP_SPM_Defeated::OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
+{
 	if (Montage == DeathAnim && !bInterrupted)
 	{
 		OwningCharacter->OnDeath();
-		EndSpecialMove();
 	}
 }

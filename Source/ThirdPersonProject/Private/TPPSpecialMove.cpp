@@ -38,6 +38,7 @@ void UTPPSpecialMove::BeginSpecialMove_Implementation()
 	if (AnimInstance)
 	{
 		AnimInstance->OnMontageEnded.AddDynamic(this, &UTPPSpecialMove::OnMontageEnded);
+		AnimInstance->OnMontageBlendingOut.AddDynamic(this, &UTPPSpecialMove::OnMontageBlendOut);
 	}
 
 	if (bDisablesMovementInput)
@@ -120,6 +121,11 @@ void UTPPSpecialMove::SetAnimRootMotionMode(TEnumAsByte<ERootMotionMode::Type> N
 }
 
 void UTPPSpecialMove::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+
+}
+
+void UTPPSpecialMove::OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
 {
 
 }

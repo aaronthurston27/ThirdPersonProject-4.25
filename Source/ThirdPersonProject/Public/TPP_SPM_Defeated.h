@@ -32,4 +32,6 @@ protected:
 
 	/** Called when death montage ends */
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	void OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
 };
