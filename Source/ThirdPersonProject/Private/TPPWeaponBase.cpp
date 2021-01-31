@@ -89,24 +89,24 @@ void ATPPWeaponBase::InterruptReload()
 
 }
 
-void ATPPWeaponBase::OnWeaponHit_Implementation(const FHitResult& HitResult)
+void ATPPWeaponBase::OnWeaponHit_Implementation(const FHitResult& HitResult, FDamageEvent& DamageEvent)
 {
 	if (HitResult.bBlockingHit && HitResult.Component != nullptr && CharacterOwner)
 	{
-
 		ATPPPlayerCharacter* CharacterHit = Cast<ATPPPlayerCharacter>(HitResult.Actor.Get());
 		if (CharacterHit && CharacterHit->IsCharacterAlive())
 		{
-			FDamageEvent DamageEvent;
-			DamageEvent.DamageTypeClass = HitDamageClass;
+			FPointDamageEvent* PointDamage = static_cast<FPointDamageEvent*>(&DamageEvent);
 			CharacterHit->TakeDamage(BaseWeaponDamage, DamageEvent, CharacterOwner->GetController(), CharacterOwner);
 		}
-
-		UPrimitiveComponent* PrimitiveComp = HitResult.Component.Get();
-		UDecalComponent* Hmm = UTPPBlueprintFunctionLibrary::SpawnDecalWithParameters(PrimitiveComp, ImpactProperties.WeaponHitMaterial, 10.0f, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), ImpactProperties.WeaponHitDecalSize);
-		if (Hmm)
+		else if (!CharacterHit)
 		{
-			Hmm->Activate();
+			UPrimitiveComponent* PrimitiveComp = HitResult.Component.Get();
+			UDecalComponent* Hmm = UTPPBlueprintFunctionLibrary::SpawnDecalWithParameters(PrimitiveComp, ImpactProperties.WeaponHitMaterial, 10.0f, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), ImpactProperties.WeaponHitDecalSize);
+			if (Hmm)
+			{
+				Hmm->Activate();
+			}
 		}
 	}
 }

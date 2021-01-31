@@ -11,6 +11,7 @@
 #include "Engine/DataTable.h"
 #include "BaseAbility.h"
 #include "TPPWeaponBase.h"
+#include "TPPHealthComponent.h"
 #include "TPPSpecialMove.h"
 #include "TPPPlayerCharacter.generated.h"
 
@@ -51,6 +52,21 @@ enum class ELogOutput : uint8 {
 	SCREEN			UMETA(DisplayName = "Screen")
 };
 
+/** Struct defining hit react montages to play upon taking damage */
+USTRUCT(Blueprintable)
+struct FTPPHitReactions
+{
+	GENERATED_BODY()
+
+	/** Hit react to play upon taking damage to the head */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimMontage* HeadHitReactMontage = nullptr;
+
+	/** Hit react to play upon taking damage to upper body */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UAnimMontage* UpperBodyHitReactMontage = nullptr;
+};
+
 #pragma endregion Structs_And_Enums
 
 UCLASS(config=Game,Blueprintable)
@@ -84,6 +100,17 @@ class ATPPPlayerCharacter : public ACharacter
 
 	UPROPERTY(Transient)
 	EAnimationBlendSlot CurrentAnimationBlendSlot;
+
+protected:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health")
+	UTPPHealthComponent* HealthComponent;
+
+public:
+
+	/** Returns the player's health component */
+	UFUNCTION(BlueprintPure)
+	UTPPHealthComponent* GetHealthComponent() const { return HealthComponent; }
 		
 public:
 	ATPPPlayerCharacter(const FObjectInitializer& ObjectInitializer);
@@ -304,30 +331,31 @@ protected:
 
 public:
 
-	/** Max health this player can have */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Gameplay|Health")
-	float MaxHealth;
+	/** Returns true if the character is alive */
+	UFUNCTION(BlueprintPure)
+	bool IsCharacterAlive() const;
 
-	/** Time delay before health begins regenerating */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Gameplay|Health")
-	float HealthRegenDelay;
-
-	/** Health to regenerate per second */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Gameplay|Health")
-	float HealthRegenRate;
+	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 protected:
 
-	/** Current health of the player */
-	UPROPERTY(Transient, VisibleAnywhere)
-	float Health;
+	/** Last damage event that hurt the player */
+	FDamageEvent LastDamageEvent = FDamageEvent();
 
-public:
+	/** Last actor that hurt the player */
+	TWeakObjectPtr<AActor> LastDamageInstigator = nullptr;
 
-	/** Returns true if the character is alive */
-	UFUNCTION(BlueprintPure)
-	bool IsCharacterAlive() const { return Health > 0.0f; }
+	/** Hit react definitions */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character|Gameplay|Damage")
+	FTPPHitReactions HitReactions;
 
-	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+protected:
+
+	/** Called when the player runs out of health */
+	UFUNCTION()
+	void OnPlayerHealthDepleted();
+
+	/** Stop player movement and become inactive */
+	void BecomeDefeated();
 };
 

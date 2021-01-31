@@ -25,7 +25,6 @@ enum class EWeaponAmmoType : uint8
 USTRUCT(Blueprintable)
 struct FTPPWeaponImpactProperties
 {
-
 	GENERATED_BODY()
 
 	/** Weapon hit material to apply */
@@ -89,7 +88,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Hit", BlueprintReadOnly)
 	TSubclassOf<UDamageType> HitDamageClass;
 
-	/** Weapon hit material to apply */
+	/** Properties to use on weapon hit */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Hit", BlueprintReadOnly)
 	FTPPWeaponImpactProperties ImpactProperties;
 
@@ -160,9 +159,9 @@ protected:
 protected:
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnWeaponHit(const FHitResult& HitResult);
+	void OnWeaponHit(const FHitResult& HitResult, FDamageEvent& DamageEvent);
 
-	void OnWeaponHit_Implementation(const FHitResult& HitResult);
+	void OnWeaponHit_Implementation(const FHitResult& HitResult, FDamageEvent& DamageEvent);
 
 public:
 

@@ -50,15 +50,13 @@ ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitial
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	HealthComponent = CreateDefaultSubobject<UTPPHealthComponent>(TEXT("HealthComponent"));
+
 	DefaultRotationRate = 540.f;
 	SprintRotationRate = 220.f;
 	ADSRotationRate = 200.0f;
 	
 	PrimaryActorTick.bCanEverTick = true;
-
-	MaxHealth = 125.0f;
-	HealthRegenDelay = 6.0f;
-	HealthRegenRate = 33.33f;
 }
 
 void ATPPPlayerCharacter::BeginPlay()
@@ -89,7 +87,7 @@ void ATPPPlayerCharacter::BeginPlay()
 		}
 	}
 
-	Health = MaxHealth;
+	HealthComponent->HealthDepleted.AddDynamic(this, &ATPPPlayerCharacter::OnPlayerHealthDepleted);
 
 	Super::BeginPlay();
 }
@@ -497,20 +495,55 @@ void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutpu
 
 float ATPPPlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	if (!CanBeDamaged() || !IsCharacterAlive())
+	UTPPDamageType* DamageType = Cast<UTPPDamageType>(DamageEvent.DamageTypeClass.GetDefaultObject());
+
+	if (!CanBeDamaged() || !IsCharacterAlive() || !DamageType)
 	{
 		return 0.0f;
 	}
 
-	const float OldHealth = Health;
+	bool bWasHitInHead = false;
 	if (EventInstigator && DamageCauser)
 	{
-		UTPPDamageType* DamageType = Cast<UTPPDamageType>(DamageEvent.DamageTypeClass.GetDefaultObject());
-		if (DamageType)
+		static const FName HeadBoneName = FName(TEXT("head"));
+		const FPointDamageEvent* PointDamage = static_cast<const FPointDamageEvent*>(&DamageEvent);
+		if (PointDamage && PointDamage->HitInfo.BoneName == HeadBoneName)
 		{
-			Health = FMath::Max(Health - Damage, 0.0f);
+			bWasHitInHead = true;
+			Damage *= DamageType->DamageHeadshotMultiplier;
 		}
 	}
 
-	return OldHealth - Health;
+	float HealthDamaged = 0.0f;
+
+	if (HealthComponent)
+	{
+		HealthDamaged =  HealthComponent->DamageHealth(Damage, DamageEvent, DamageCauser);
+
+		if (HealthDamaged > 0 && HealthComponent->GetHealth() > 0)
+		{
+			UAnimMontage* HitReactMontage = bWasHitInHead ? HitReactions.HeadHitReactMontage : HitReactions.UpperBodyHitReactMontage;
+			if (HitReactMontage)
+			{
+				PlayAnimMontage(HitReactMontage);
+			}
+		}
+	}
+
+	return HealthDamaged;
+}
+
+void ATPPPlayerCharacter::OnPlayerHealthDepleted()
+{
+	BecomeDefeated();
+}
+
+void ATPPPlayerCharacter::BecomeDefeated()
+{
+	UE_LOG(LogTemp,Warning,TEXT("Player defeated."))
+}
+
+bool ATPPPlayerCharacter::IsCharacterAlive() const
+{
+	return HealthComponent->GetHealth() > 0;
 }
