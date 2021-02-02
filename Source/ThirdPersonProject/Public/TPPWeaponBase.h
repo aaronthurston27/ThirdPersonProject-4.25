@@ -132,7 +132,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void Equip();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void Unequip();
 	
+	UFUNCTION(BlueprintCallable)
+	virtual void Drop(bool bShouldBecomePickup = false);
+
 public:
 
 	UPROPERTY(BlueprintAssignable)

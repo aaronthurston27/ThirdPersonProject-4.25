@@ -71,6 +71,7 @@ void UTPPSpecialMove::EndSpecialMove_Implementation()
 	if (AnimInstance)
 	{
 		AnimInstance->OnMontageEnded.RemoveDynamic(this, &UTPPSpecialMove::OnMontageEnded);
+		AnimInstance->OnMontageBlendingOut.RemoveDynamic(this, &UTPPSpecialMove::OnMontageBlendOut);
 	}
 
 	if (bDisablesMovementInput)

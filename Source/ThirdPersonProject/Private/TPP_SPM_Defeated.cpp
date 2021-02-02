@@ -34,7 +34,10 @@ void UTPP_SPM_Defeated::EndSpecialMove_Implementation()
 
 void UTPP_SPM_Defeated::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted = false)
 {
-	EndSpecialMove();
+	if (Montage == DeathAnim)
+	{
+		EndSpecialMove();
+	}
 }
 
 void UTPP_SPM_Defeated::OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)

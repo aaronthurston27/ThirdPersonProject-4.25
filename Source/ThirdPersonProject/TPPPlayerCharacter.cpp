@@ -540,9 +540,14 @@ void ATPPPlayerCharacter::OnPlayerHealthDepleted()
 
 void ATPPPlayerCharacter::BecomeDefeated()
 {
-	if (DeathSpecialMove)
+	const UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+	if (MovementComp && MovementComp->IsMovingOnGround() && DeathSpecialMove)
 	{
 		ExecuteSpecialMove(DeathSpecialMove);
+	}
+	else
+	{
+		OnDeath();
 	}
 }
 
@@ -553,6 +558,8 @@ bool ATPPPlayerCharacter::IsCharacterAlive() const
 
 void ATPPPlayerCharacter::OnDeath()
 {
+	HealthComponent->PrimaryComponentTick.bCanEverTick = false;
+
 	BeginRagdoll();
 }
 
@@ -562,19 +569,17 @@ void ATPPPlayerCharacter::BeginRagdoll()
 	CapsuleComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 
 	USkeletalMeshComponent* SkeletalMesh = GetMesh();
+	const UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
 	if (SkeletalMesh)
 	{
 		SkeletalMesh->SetCollisionProfileName(FName(TEXT("Ragdoll")));
 		SkeletalMesh->SetAllBodiesBelowSimulatePhysics(FName(TEXT("Root")), true, true);
-		for (FBodyInstance* BI : SkeletalMesh->Bodies)
+		if (MovementComp->IsMovingOnGround())
 		{
-			BI->SetLinearVelocity(FVector::ZeroVector, false);
-		}
-		
-		UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
-		if (MovementComp)
-		{
-			MovementComp->SetMovementMode(EMovementMode::MOVE_None);
+			for (FBodyInstance* BI : SkeletalMesh->Bodies)
+			{
+				BI->SetLinearVelocity(FVector::ZeroVector, false);
+			}
 		}
 	}
 }

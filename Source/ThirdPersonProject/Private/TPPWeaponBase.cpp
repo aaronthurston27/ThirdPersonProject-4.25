@@ -5,6 +5,7 @@
 #include "TPPBlueprintFunctionLibrary.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 #include "Components/DecalComponent.h"
+#include "..\Public\TPPWeaponBase.h"
 
 // Sets default values
 ATPPWeaponBase::ATPPWeaponBase()
@@ -31,6 +32,14 @@ void ATPPWeaponBase::SetWeaponOwner(ATPPPlayerCharacter* NewWeaponOwner)
 void ATPPWeaponBase::Equip()
 {
 
+}
+
+void ATPPWeaponBase::Unequip()
+{
+}
+
+void ATPPWeaponBase::Drop(bool bShouldBecomePickup)
+{
 }
 
 void ATPPWeaponBase::ModifyWeaponAmmo(const int32 ChamberAmmoChange, const int32 PooledAmmoChange)
