@@ -31,7 +31,8 @@ void ATPPWeaponBase::SetWeaponOwner(ATPPPlayerCharacter* NewWeaponOwner)
 
 void ATPPWeaponBase::Equip()
 {
-
+	WeaponMesh->SetCollisionProfileName(FName(TEXT("No Collision")));
+	WeaponMesh->SetSimulatePhysics(false);
 }
 
 void ATPPWeaponBase::Unequip()
@@ -40,6 +41,14 @@ void ATPPWeaponBase::Unequip()
 
 void ATPPWeaponBase::Drop(bool bShouldBecomePickup)
 {
+	WeaponMesh->SetCollisionProfileName(FName(TEXT("WeaponPickup")));
+	WeaponMesh->SetSimulatePhysics(true);
+
+	InterruptReload();
+	SetIsReloading(false);
+	SetWeaponReady(false);
+
+	SetWeaponOwner(nullptr);
 }
 
 void ATPPWeaponBase::ModifyWeaponAmmo(const int32 ChamberAmmoChange, const int32 PooledAmmoChange)

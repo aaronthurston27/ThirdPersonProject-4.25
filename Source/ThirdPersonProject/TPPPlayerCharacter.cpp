@@ -559,6 +559,11 @@ bool ATPPPlayerCharacter::IsCharacterAlive() const
 void ATPPPlayerCharacter::OnDeath()
 {
 	HealthComponent->PrimaryComponentTick.bCanEverTick = false;
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->Drop(true);
+		OnWeaponEquipped.Broadcast(nullptr);
+	}
 
 	BeginRagdoll();
 }
@@ -569,7 +574,7 @@ void ATPPPlayerCharacter::BeginRagdoll()
 	CapsuleComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 
 	USkeletalMeshComponent* SkeletalMesh = GetMesh();
-	const UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
 	if (SkeletalMesh)
 	{
 		SkeletalMesh->SetCollisionProfileName(FName(TEXT("Ragdoll")));
@@ -581,5 +586,7 @@ void ATPPPlayerCharacter::BeginRagdoll()
 				BI->SetLinearVelocity(FVector::ZeroVector, false);
 			}
 		}
+		
+		MovementComp->Deactivate();
 	}
 }

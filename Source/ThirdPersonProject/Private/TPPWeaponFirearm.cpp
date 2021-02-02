@@ -240,8 +240,9 @@ void ATPPWeaponFirearm::ReloadActual()
 
 void ATPPWeaponFirearm::InterruptReload()
 {
-	const UAnimInstance* AnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
-	if (WeaponReloadCharacterMontage && AnimInstance->Montage_IsPlaying(WeaponReloadCharacterMontage))
+	USkeletalMeshComponent* SkeletalMeshComp = CharacterOwner ? CharacterOwner->GetMesh() : nullptr;
+	const UAnimInstance* AnimInstance = SkeletalMeshComp ? SkeletalMeshComp->GetAnimInstance() : nullptr;
+	if (AnimInstance && WeaponReloadCharacterMontage && AnimInstance->Montage_IsPlaying(WeaponReloadCharacterMontage))
 	{
 		CharacterOwner->StopAnimMontage(WeaponReloadCharacterMontage);
 	}
