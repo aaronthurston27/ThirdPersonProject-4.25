@@ -142,7 +142,7 @@ void ATPPWeaponFirearm::HitscanFire()
 	ATPPPlayerController* PlayerController = CharacterOwner ? CharacterOwner->GetTPPPlayerController() : nullptr;
 	const UTPPGameInstance* GameInstance = UTPPGameInstance::Get();
 	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
-	if (!World || !PlayerCamera || !PlayerController || !AimProperties)
+	if (!World || !PlayerCamera || !AimProperties)
 	{
 		return;
 	}
@@ -170,8 +170,10 @@ void ATPPWeaponFirearm::HitscanFire()
 	BurstCount = FMath::Max(BurstCount, 0);
 	
 	const FRotator RecoilRotator = CalculateRecoil();
-	PlayerController->AddCameraRecoil(RecoilRotator.Pitch);
-
+	if (PlayerController)
+	{
+		PlayerController->AddCameraRecoil(RecoilRotator.Pitch);
+	}
 	BurstCount = FMath::Min(++BurstCount, RecoilPatternEntries.Num() - 1);
 	TimeSinceLastShot = TimeInSeconds;
 
@@ -268,5 +270,7 @@ void ATPPWeaponFirearm::Equip()
 	
 	UAnimInstance* AnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
 	AnimInstance->OnMontageEnded.AddDynamic(this, &ATPPWeaponFirearm::OnMontageEnded);
+
+	PrimaryActorTick.bCanEverTick = true;
 }
 

@@ -44,20 +44,23 @@ void UTPPHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 float UTPPHealthComponent::DamageHealth(float HealthDamage, const FDamageEvent& DamageCausedBy, const AActor* Instigator)
 {
 	const float OldHealth = Health;
-	Health = FMath::Max(Health - HealthDamage, 0.0f);
-	HealthDamaged.Broadcast(HealthDamage, DamageCausedBy);
-
-	bShouldRegenHealth = false;
-	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
-	TimerManager.ClearTimer(HealthRegenTimerHandle);
-
-	if (Health <= 0)
+	if (HealthDamage > 0.0f)
 	{
-		HealthDepleted.Broadcast();
-	}
-	else
-	{
-		TimerManager.SetTimer(HealthRegenTimerHandle, this, &UTPPHealthComponent::OnHealthRegenTimerExpired, HealthRegenDelay, false);
+		Health = FMath::Max(Health - HealthDamage, 0.0f);
+		HealthDamaged.Broadcast(HealthDamage, DamageCausedBy);
+
+		bShouldRegenHealth = false;
+		FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+		TimerManager.ClearTimer(HealthRegenTimerHandle);
+
+		if (Health <= 0)
+		{
+			HealthDepleted.Broadcast();
+		}
+		else
+		{
+			TimerManager.SetTimer(HealthRegenTimerHandle, this, &UTPPHealthComponent::OnHealthRegenTimerExpired, HealthRegenDelay, false);
+		}
 	}
 
 	return OldHealth - Health;
@@ -65,9 +68,12 @@ float UTPPHealthComponent::DamageHealth(float HealthDamage, const FDamageEvent& 
 
 void UTPPHealthComponent::GainHealth(float HealthToGain)
 {
-	const float OldHealth = Health;
-	Health = FMath::Min(Health + HealthToGain, MaxHealth);
-	HealthRestored.Broadcast(Health - OldHealth);
+	if (HealthToGain > 0.0f)
+	{
+		const float OldHealth = Health;
+		Health = FMath::Min(Health + HealthToGain, MaxHealth);
+		HealthRestored.Broadcast(Health - OldHealth);
+	}
 }
 
 void UTPPHealthComponent::OnHealthRegenTimerExpired()

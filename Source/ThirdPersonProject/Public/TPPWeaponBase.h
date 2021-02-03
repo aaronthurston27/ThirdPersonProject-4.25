@@ -152,7 +152,7 @@ public:
 
 	virtual bool CanFireWeapon_Implementation() const;
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void FireWeapon();
 
 	virtual void FireWeapon_Implementation();

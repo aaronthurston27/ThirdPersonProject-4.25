@@ -49,6 +49,8 @@ void ATPPWeaponBase::Drop(bool bShouldBecomePickup)
 	SetWeaponReady(false);
 
 	SetWeaponOwner(nullptr);
+
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void ATPPWeaponBase::ModifyWeaponAmmo(const int32 ChamberAmmoChange, const int32 PooledAmmoChange)
@@ -64,7 +66,8 @@ void ATPPWeaponBase::SetWeaponReady(bool bWeaponReady)
 
 bool ATPPWeaponBase::CanFireWeapon_Implementation() const
 {
-	return bIsWeaponReady && LoadedAmmo > 0 && CharacterOwner != nullptr;
+	const bool bIsOwnerAlive = CharacterOwner && CharacterOwner->IsCharacterAlive();
+	return bIsWeaponReady && LoadedAmmo > 0 && bIsOwnerAlive;
 }
 
 void ATPPWeaponBase::FireWeapon_Implementation()
@@ -78,7 +81,8 @@ void ATPPWeaponBase::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 
 bool ATPPWeaponBase::CanReloadWeapon_Implementation()
 {
-	return bIsWeaponReady && !bIsReloading && LoadedAmmo < MaxLoadedAmmo&&
+	const bool bIsOwnerAlive = CharacterOwner && CharacterOwner->IsCharacterAlive();
+	return bIsOwnerAlive && bIsWeaponReady && !bIsReloading && LoadedAmmo < MaxLoadedAmmo &&
 		CurrentAmmoPool > 0;
 }
 
