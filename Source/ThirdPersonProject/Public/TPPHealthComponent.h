@@ -41,9 +41,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health", meta = (EditCondition = "bCanRegenerateHealth"))
 	float HealthRegenDelay;
 
-	/** Health to regenerate per second */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health", meta = (EditCondition = "bCanRegenerateHealth"))
-	float HealthRegenRate;
+	/** Time to regenerate health to max. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health", meta = (EditCondition = "bCanRegenerateHealth"))
+	float HealthRegenTime;
 
 protected:
 
@@ -54,6 +54,10 @@ protected:
 	/** True if regen can begin */
 	UPROPERTY(Transient)
 	bool bShouldRegenHealth = false;
+
+	/** Cached health regen rate */
+	UPROPERTY(Transient)
+	float CachedHealthRegenDelta = 0.0f;
 
 	/** Timer handle for starting health regen */
 	UPROPERTY(Transient)
@@ -66,12 +70,15 @@ protected:
 public:
 
 	/** Health damaged delegate */
+	UPROPERTY(BlueprintAssignable)
 	FOnHealthDamaged HealthDamaged;
 
 	/** Health restored delegated */
+	UPROPERTY(BlueprintAssignable)
 	FOnHealthRestored HealthRestored;
 
 	/** Health depleted delegate */
+	UPROPERTY(BlueprintAssignable)
 	FOnHealthDepleted HealthDepleted;
 
 	/** Returns current health */
