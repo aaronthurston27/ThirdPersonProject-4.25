@@ -92,7 +92,7 @@ void UTPP_SPM_DodgeRoll::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted
 			else
 			{
 				const FVector RelativeControllerDesiredDirection = PlayerController->GetRelativeControllerMovementRotation().Vector();
-				EndVelocity = RelativeControllerDesiredDirection * RollSpeed;
+				EndVelocity = RelativeControllerDesiredDirection * RollSpeed * (RelativeControllerDesiredDirection | CachedRollDirection);
 			}
 			CharacterMovementComponent->Velocity = EndVelocity;
 		}

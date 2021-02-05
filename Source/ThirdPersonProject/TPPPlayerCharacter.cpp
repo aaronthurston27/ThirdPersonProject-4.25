@@ -574,19 +574,12 @@ void ATPPPlayerCharacter::BeginRagdoll()
 	CapsuleComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 
 	USkeletalMeshComponent* SkeletalMesh = GetMesh();
-	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
 	if (SkeletalMesh)
 	{
 		SkeletalMesh->SetCollisionProfileName(FName(TEXT("Ragdoll")));
 		SkeletalMesh->SetAllBodiesBelowSimulatePhysics(FName(TEXT("Root")), true, true);
-		if (MovementComp->IsMovingOnGround())
-		{
-			for (FBodyInstance* BI : SkeletalMesh->Bodies)
-			{
-				BI->SetLinearVelocity(FVector::ZeroVector, false);
-			}
-		}
-		
-		MovementComp->Deactivate();
 	}
+
+	UMovementComponent* MovementComp = GetCharacterMovement();
+	MovementComp->Deactivate();
 }
