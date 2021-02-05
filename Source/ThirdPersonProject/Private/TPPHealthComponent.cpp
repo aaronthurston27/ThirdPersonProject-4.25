@@ -44,7 +44,7 @@ void UTPPHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 float UTPPHealthComponent::DamageHealth(float HealthDamage, const FDamageEvent& DamageCausedBy, const AActor* Instigator)
 {
 	const float OldHealth = Health;
-	if (HealthDamage > 0.0f)
+	if (HealthDamage > 0.0f && OldHealth > 0.0f)
 	{
 		Health = FMath::Max(Health - HealthDamage, 0.0f);
 		HealthDamaged.Broadcast(HealthDamage, DamageCausedBy);
@@ -68,7 +68,7 @@ float UTPPHealthComponent::DamageHealth(float HealthDamage, const FDamageEvent& 
 
 void UTPPHealthComponent::GainHealth(float HealthToGain)
 {
-	if (HealthToGain > 0.0f)
+	if (Health > 0.0f && HealthToGain > 0.0f)
 	{
 		const float OldHealth = Health;
 		Health = FMath::Min(Health + HealthToGain, MaxHealth);
