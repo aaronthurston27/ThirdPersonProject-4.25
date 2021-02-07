@@ -168,6 +168,16 @@ bool ATPPPlayerCharacter::CanSprint() const
 	return !bBlockedBySpecialMove && !bIsAiming && MovementComp->IsMovingOnGround() && !bIsCrouched && PC->GetInputAxisValue(FName("FireWeapon")) < PC->FireWeaponThreshold;
 }
 
+void ATPPPlayerCharacter::TryToDash()
+{
+
+}
+
+bool ATPPPlayerCharacter::CanDash() const
+{
+	return false;
+}
+
 bool ATPPPlayerCharacter::CanCrouch() const
 {
 	return !(CurrentSpecialMove && CurrentSpecialMove->bDisablesCrouch) && Super::CanCrouch();
@@ -243,6 +253,27 @@ bool ATPPPlayerCharacter::CanJumpInternal_Implementation() const
 	UTPPMovementComponent* MovementComponent = GetTPPMovementComponent();
 	const bool bBlockedBySpecialMove = CurrentSpecialMove && CurrentSpecialMove->bDisablesJump;
 	return MovementComponent && !MovementComponent->IsSliding() && !bBlockedBySpecialMove && Super::CanJumpInternal_Implementation();
+}
+
+void ATPPPlayerCharacter::TryJump()
+{
+
+}
+
+bool ATPPPlayerCharacter::CanPlayerWallKick() const
+{
+	const ATPPPlayerController* PC = GetTPPPlayerController();
+	const FVector DesiredMovementDirection = PC ? PC->GetDesiredMovementDirection() : FVector::ZeroVector;
+	if (!PC || DesiredMovementDirection.IsNearlyZero())
+	{
+		return false;
+	}
+
+	FVector ControllerForward = UKismetMathLibrary::Conv_RotatorToVector(GetControlRotation());
+	ControllerForward.Z = 0.0f;
+	const FVector KickoffDirection = -DesiredMovementDirection;
+
+	return false;
 }
 
 void ATPPPlayerCharacter::Landed(const FHitResult& HitResult)

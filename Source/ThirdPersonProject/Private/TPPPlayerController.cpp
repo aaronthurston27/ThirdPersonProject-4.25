@@ -51,6 +51,32 @@ void ATPPPlayerController::SetupInputComponent()
 void ATPPPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	TickKeyHoldTimers(DeltaTime);
+}
+
+void ATPPPlayerController::TickKeyHoldTimers(float DeltaTime)
+{
+	TMap<EPlayerInputAction, float> HoldTimerCopy = KeyHoldTimers;
+	for (auto& HoldTimer : HoldTimerCopy)
+	{
+		const float TimerValue = HoldTimer.Value - DeltaTime;
+		if (TimerValue <= 0.0f)
+		{
+			switch (HoldTimer.Key)
+			{
+				case EPlayerInputAction::Sprint:
+					CachedOwnerCharacter->SetWantsToSprint(true);
+					break;
+			}
+
+			KeyHoldTimers.Remove(HoldTimer.Key);
+		}
+		else
+		{
+			KeyHoldTimers[HoldTimer.Key] = TimerValue;
+		}
+	}
 }
 
 void ATPPPlayerController::UpdateRotation(float DeltaTime)
@@ -166,11 +192,18 @@ void ATPPPlayerController::OnJumpReleased()
 
 void ATPPPlayerController::OnSprintPressed()
 {
-	CachedOwnerCharacter->SetWantsToSprint(true);
+	KeyHoldTimers.FindOrAdd(EPlayerInputAction::Sprint);
+	KeyHoldTimers[EPlayerInputAction::Sprint] = HoldKeyThreshold;
 }
 
 void ATPPPlayerController::OnSprintReleased()
 {
+	float* SprintKeyTimer = KeyHoldTimers.Find(EPlayerInputAction::Sprint);
+	if (SprintKeyTimer && *SprintKeyTimer > 0.0f)
+	{
+		CachedOwnerCharacter->TryToDash();
+		KeyHoldTimers.Remove(EPlayerInputAction::Sprint);
+	}
 	CachedOwnerCharacter->SetWantsToSprint(false);
 }
 

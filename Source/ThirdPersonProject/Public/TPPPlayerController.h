@@ -8,6 +8,19 @@
 
 class ATPPPlayerCharacter;
 
+/** Enum detailing input actions */
+UENUM(BlueprintType)
+enum class EPlayerInputAction : uint8
+{
+	Jump,
+	MovementAbility,
+	Sprint,
+	Crouch,
+	ADS,
+	Reload,
+	Pause
+};
+
 /**
  * 
  */
@@ -30,6 +43,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, meta = (ClampMax = "1.0", UIMax = "1.0", ClampMin = "0.0", UIMin = "0.0"))
 	float FireWeaponThreshold = .8f;
 
+	/** Time to hold key for held button action to register */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0.0", UIMin = "0.0"))
+	float HoldKeyThreshold = .5f;
+
 protected:
 
 	// Direction the player intends to move based on keys held.
@@ -38,6 +55,15 @@ protected:
 
 	UPROPERTY(Transient)
 	bool bIsMovementInputEnabled = true;
+
+	/** Map of keys that are held down */
+	UPROPERTY(Transient)
+	TMap<EPlayerInputAction, float> KeyHoldTimers;
+
+protected:
+
+	/** Ticks all key hold timers */
+	void TickKeyHoldTimers(float DeltaTime);
 
 public:
 

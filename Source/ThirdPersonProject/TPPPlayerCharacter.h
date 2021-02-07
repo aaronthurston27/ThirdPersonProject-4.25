@@ -172,6 +172,18 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintPure)
+	bool CanDash() const;
+
+	void TryToDash();
+
+protected:
+
+	UPROPERTY(Transient)
+	bool bIsDashing = false;
+
+public:
+
 	virtual bool CanCrouch() const override;
 
 	virtual void Crouch(bool bClientSimulation) override;
@@ -196,6 +208,10 @@ public:
 	virtual bool CanJumpInternal_Implementation() const override;
 
 	virtual void Landed(const FHitResult& LandHit) override;
+
+	void TryJump();
+
+	virtual bool CanPlayerWallKick() const;
 
 public:
 
