@@ -63,13 +63,6 @@ void ATPPPlayerController::TickKeyHoldTimers(float DeltaTime)
 		const float TimerValue = HoldTimer.Value - DeltaTime;
 		if (TimerValue <= 0.0f)
 		{
-			switch (HoldTimer.Key)
-			{
-				case EPlayerInputAction::Sprint:
-					CachedOwnerCharacter->SetWantsToSprint(true);
-					break;
-			}
-
 			KeyHoldTimers.Remove(HoldTimer.Key);
 		}
 		else
@@ -182,7 +175,7 @@ void ATPPPlayerController::TurnRate(float value)
 
 void ATPPPlayerController::OnJumpPressed()
 {
-	CachedOwnerCharacter->Jump();
+	CachedOwnerCharacter->TryJump();
 }
 
 void ATPPPlayerController::OnJumpReleased()
@@ -192,18 +185,11 @@ void ATPPPlayerController::OnJumpReleased()
 
 void ATPPPlayerController::OnSprintPressed()
 {
-	KeyHoldTimers.FindOrAdd(EPlayerInputAction::Sprint);
-	KeyHoldTimers[EPlayerInputAction::Sprint] = HoldKeyThreshold;
+	CachedOwnerCharacter->SetWantsToSprint(true);
 }
 
 void ATPPPlayerController::OnSprintReleased()
 {
-	float* SprintKeyTimer = KeyHoldTimers.Find(EPlayerInputAction::Sprint);
-	if (SprintKeyTimer && *SprintKeyTimer > 0.0f)
-	{
-		CachedOwnerCharacter->TryToDash();
-		KeyHoldTimers.Remove(EPlayerInputAction::Sprint);
-	}
 	CachedOwnerCharacter->SetWantsToSprint(false);
 }
 
@@ -273,20 +259,32 @@ ATPPPlayerCharacter* ATPPPlayerController::GetOwnerCharacter()
 	return Cast<ATPPPlayerCharacter>(GetPawn());
 }
 
-FVector ATPPPlayerController::GetControllerRelativeForwardVector() const
+FVector ATPPPlayerController::GetControllerRelativeForwardVector(bool bIncludeVertical) const
 {
 	const FRotator CurrentRotation = GetControlRotation();
 	const FRotationMatrix RotMatrix = FRotationMatrix(CurrentRotation);
 
-	return RotMatrix.GetUnitAxis(EAxis::X);
+	FVector ForwardVec = RotMatrix.GetUnitAxis(EAxis::X);
+	if (!bIncludeVertical)
+	{
+		ForwardVec.Z = 0.0f;
+	}
+
+	return ForwardVec;
 }
 
-FVector ATPPPlayerController::GetControllerRelativeRightVector() const
+FVector ATPPPlayerController::GetControllerRelativeRightVector(bool bIncludeVertical) const
 {
 	const FRotator CurrentRotation = GetControlRotation();
 	const FRotationMatrix RotMatrix = FRotationMatrix(CurrentRotation);
 
-	return RotMatrix.GetUnitAxis(EAxis::Y);
+	FVector RightVec = RotMatrix.GetUnitAxis(EAxis::Y);
+	if (!bIncludeVertical)
+	{
+		RightVec.Z = 0.0f;
+	}
+
+	return RightVec;
 }
 
 FVector ATPPPlayerController::GetControllerRelativeUpVector() const

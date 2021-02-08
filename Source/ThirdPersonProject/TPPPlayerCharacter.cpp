@@ -20,6 +20,7 @@
 #include "TPPWeaponFirearm.h"
 #include "TPPHUD.h"
 #include "TPPDamageType.h"
+#include "DrawDebugHelpers.h"
 #include "GameFramework/SpringArmComponent.h"
 
 ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitialzer) :
@@ -95,7 +96,7 @@ void ATPPPlayerCharacter::BeginPlay()
 void ATPPPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	if (CurrentSpecialMove)
 	{
 		CurrentSpecialMove->Tick(DeltaTime);
@@ -117,6 +118,12 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 	else if (bIsSprinting && !bWantsToSprint)
 	{
 		StopSprint();
+	}
+
+	FHitResult HitResult;
+	if (!GetTPPMovementComponent()->IsMovingOnGround())
+	{
+		CanPlayerWallKick(HitResult);
 	}
 }
 
@@ -257,23 +264,153 @@ bool ATPPPlayerCharacter::CanJumpInternal_Implementation() const
 
 void ATPPPlayerCharacter::TryJump()
 {
-
+	UCharacterMovementComponent* MovementComp = GetCharacterMovement();
+	if (MovementComp->IsMovingOnGround())
+	{
+		Jump();
+	}
+	else
+	{
+		FHitResult WallKickHitResult;
+		bool bCanPlayerKickOffWall = CanPlayerWallKick(WallKickHitResult);
+	}
 }
 
-bool ATPPPlayerCharacter::CanPlayerWallKick() const
+bool ATPPPlayerCharacter::CanPlayerWallKick(FHitResult& OutKickoffHitResult) const
+{
+	const ATPPPlayerController* PC = GetTPPPlayerController();
+	const EWallKickDirection WallKickDirection = GetWallKickDirection();
+	if (WallKickDirection == EWallKickDirection::None || !PC)
+	{
+		return false;
+	}
+
+	const FVector ControllerForwardVector = PC->GetControllerRelativeForwardVector(false);
+	const FVector ControllerBackwardVector = -ControllerForwardVector;
+	const FVector ControllerRightVector = PC->GetControllerRelativeRightVector(false);
+	const FVector ControllerLeftVector = -ControllerRightVector;
+
+	const float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	const FVector FeetLocation = GetActorLocation() - FVector(0.0f, 0.0f, 10.0f);
+
+	bool bCheckWallForward = WallKickDirection == EWallKickDirection::Backwards;
+	bool bCheckWallBehind = WallKickDirection == EWallKickDirection::Forward;
+	bool bCheckLeftWall = bCheckWallBehind || WallKickDirection == EWallKickDirection::Right || WallKickDirection == EWallKickDirection::ForwardRight;
+	bool bCheckRightWall = bCheckWallBehind || WallKickDirection == EWallKickDirection::Left || WallKickDirection == EWallKickDirection::ForwardLeft;
+
+	UWorld* World = GetWorld();
+	TArray<FHitResult> HitResults;
+	FCollisionQueryParams QueryParams;
+	QueryParams.MobilityType = EQueryMobilityType::Static;
+	FCollisionObjectQueryParams ObjectQueryParams;
+
+	if (bCheckRightWall)
+	{
+		const FVector EndTraceLocation = FeetLocation + (ControllerRightVector * WallKickMaxDistance);
+		World->LineTraceMultiByObjectType(HitResults, FeetLocation, EndTraceLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
+		//DrawDebugLine(World, FeetLocation, EndTraceLocation, FColor::Red, false, .8f, 0, .8f);
+		for (const FHitResult& HitResult : HitResults)
+		{
+			if (HitResult.bBlockingHit)
+			{
+				OutKickoffHitResult = HitResult;
+				//DrawDebugSphere(World, OutKickoffHitResult.Location, 11.0f, 4.0f, FColor::Red, false, 4.0f, 0, .8f);
+				//DrawDebugLine(World, OutKickoffHitResult.Location, OutKickoffHitResult.Location + (OutKickoffHitResult.ImpactNormal * WallKickMaxDistance), FColor::Black, false, 2.0f, 0, .8f);
+
+				const FVector FeetToWallVec = (OutKickoffHitResult.Location - FeetLocation).GetSafeNormal2D();
+				const float FeetWallNormalDot = FVector::DotProduct(FeetToWallVec, OutKickoffHitResult.ImpactNormal);
+				if (FeetWallNormalDot >= WallKickNormalMinDot)
+				{
+					return true;
+				}
+			}
+		}
+
+		HitResults.Empty();
+	}
+
+	if (bCheckLeftWall)
+	{
+		const FVector EndTraceLocation = FeetLocation + (ControllerLeftVector * WallKickMaxDistance);
+		World->LineTraceMultiByObjectType(HitResults, FeetLocation, EndTraceLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
+
+		for (const FHitResult& HitResult : HitResults)
+		{
+			if (HitResult.bBlockingHit)
+			{
+				OutKickoffHitResult = HitResult;
+				//DrawDebugSphere(World, OutKickoffHitResult.Location, 11.0f, 4.0f, FColor::Green, false, 4.0f, 0, .8f);
+				//DrawDebugLine(World, OutKickoffHitResult.Location, OutKickoffHitResult.Location + (OutKickoffHitResult.ImpactNormal * WallKickMaxDistance), FColor::Black, false, 2.0f, 0, .8f);
+
+				const FVector FeetToWallVec = (OutKickoffHitResult.Location - FeetLocation).GetSafeNormal2D();
+				const float FeetWallNormalDot = FVector::DotProduct(FeetToWallVec,OutKickoffHitResult.ImpactNormal);
+				if (FeetWallNormalDot >= WallKickNormalMinDot)
+				{
+					return true;
+				}
+			}
+		}
+
+		HitResults.Empty();
+	}
+
+	if (bCheckWallBehind)
+	{
+		const FVector EndTraceLocation = FeetLocation + (ControllerBackwardVector * WallKickMaxDistance);
+		World->LineTraceMultiByObjectType(HitResults, FeetLocation, EndTraceLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
+
+		for (const FHitResult& HitResult : HitResults)
+		{
+			if (HitResult.bBlockingHit)
+			{
+				OutKickoffHitResult = HitResult;
+				//DrawDebugSphere(World, OutKickoffHitResult.Location, 11.0f, 4.0f, FColor::Blue, false, 4.0f, 0, .8f);
+				//DrawDebugLine(World, OutKickoffHitResult.Location, OutKickoffHitResult.Location + (OutKickoffHitResult.ImpactNormal * WallKickMaxDistance), FColor::Black, false, 2.0f, 0, .8f);
+
+				const FVector FeetToWallVec = (OutKickoffHitResult.Location - FeetLocation).GetSafeNormal2D();
+				const float FeetWallNormalDot = FVector::DotProduct(FeetToWallVec, OutKickoffHitResult.ImpactNormal);
+				if (FeetWallNormalDot >= WallKickNormalMinDot)
+				{
+					return true;
+				}
+			}
+		}
+
+		HitResults.Empty();
+	}
+
+
+	return false;
+}
+
+EWallKickDirection ATPPPlayerCharacter::GetWallKickDirection() const
 {
 	const ATPPPlayerController* PC = GetTPPPlayerController();
 	const FVector DesiredMovementDirection = PC ? PC->GetDesiredMovementDirection() : FVector::ZeroVector;
 	if (!PC || DesiredMovementDirection.IsNearlyZero())
 	{
-		return false;
+		return EWallKickDirection::None;
 	}
 
-	FVector ControllerForward = UKismetMathLibrary::Conv_RotatorToVector(GetControlRotation());
-	ControllerForward.Z = 0.0f;
-	const FVector KickoffDirection = -DesiredMovementDirection;
+	EWallKickDirection YDirection = EWallKickDirection::None;
+	if (!FMath::IsNearlyZero(DesiredMovementDirection.Y))
+	{
+		YDirection = DesiredMovementDirection.Y > 0.0f ? EWallKickDirection::Right : EWallKickDirection::Left;
+	}
 
-	return false;
+	EWallKickDirection XDirection = EWallKickDirection::None;
+	if (!FMath::IsNearlyZero(DesiredMovementDirection.X))
+	{
+		XDirection = DesiredMovementDirection.X > 0.0f ? EWallKickDirection::Forward : EWallKickDirection::Backwards;
+	}
+
+	const uint8 FinalEnum = (uint8)(YDirection) + (uint8)(XDirection);
+	return FMath::Min((EWallKickDirection)FinalEnum, EWallKickDirection::Backwards);
+}
+
+void ATPPPlayerCharacter::DrawWallKickDebug() const
+{
+
 }
 
 void ATPPPlayerCharacter::Landed(const FHitResult& HitResult)

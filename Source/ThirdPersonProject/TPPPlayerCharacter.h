@@ -37,6 +37,26 @@ enum class EAnimationBlendSlot : uint8
 	/** Full body animation */
 };
 
+/** Directions for wall kicking */
+UENUM()
+enum class EWallKickDirection : uint8
+{
+	/** No valid direction */
+	None,
+	/** Wall kick left. Requires a kick-off point to the right */
+	Left,
+	/** Wall kick right. Requires a kick-off point to the left */
+	Right,
+	/** Wall kick in the direction we are going. Requires a kick off point behind or to the side */
+	Forward,
+	/** Wall kick forward and to the left. Requires a kick-off point to the right */
+	ForwardLeft, 
+	/** Wall kick forward and to the right. Requires a kick-off point to the left */
+	ForwardRight,
+	/** Wall kick in the oppposite direction. Requres a kick-off point in front of us. */
+	Backwards,
+};
+
 UENUM(BlueprintType)
 enum class ELogLevel : uint8 {
 	TRACE			UMETA(DisplayName = "Trace"),
@@ -142,6 +162,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
 	float ADSRotationRate;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
+	float WallKickMaxDistance = 50.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement", meta = (ClampMax = "1.0", UIMax = "1.0", ClampMin = "0.0", UIMin = "0.0"))
+	float WallKickNormalMinDot = .65f;
+
 public:
 
 	/** Ability to activate for special movement key */
@@ -211,7 +237,14 @@ public:
 
 	void TryJump();
 
-	virtual bool CanPlayerWallKick() const;
+	virtual bool CanPlayerWallKick(FHitResult& OutKickoffHitResult) const;
+
+protected:
+
+	EWallKickDirection GetWallKickDirection() const;
+
+	UFUNCTION(BlueprintCallable)
+	void DrawWallKickDebug() const;
 
 public:
 

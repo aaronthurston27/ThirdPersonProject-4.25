@@ -141,11 +141,11 @@ public:
 
 	/** Gets the forward vector of the controller relative to its current rotation */
 	UFUNCTION(BlueprintPure)
-	FVector GetControllerRelativeForwardVector() const;
+	FVector GetControllerRelativeForwardVector(bool bIncludeVertical = true) const;
 	
 	/** Gets the right vector of the controller relative to its current rotation */
 	UFUNCTION(BlueprintPure)
-	FVector GetControllerRelativeRightVector() const;
+	FVector GetControllerRelativeRightVector(bool bIncludeVertical = true) const;
 
 	/** Gets the up vector of the controller relative to its current rotation */
 	UFUNCTION(BlueprintPure)
