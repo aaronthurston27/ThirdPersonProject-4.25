@@ -24,6 +24,20 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ATPPWeaponBase*, 
 #pragma region Structs_And_Enums
 
 UENUM(BlueprintType)
+enum class EAnimationBlendSlot : uint8
+{
+	/** No blending. Should use the default pose */
+	None = 0,
+	/** No blending in Anim Instance, but use defaut slot for full body anim */
+	FullBody = 1,
+	/** Blend lower body only */
+	LowerBody = 2,
+	/** Blend the upper body only */
+	UpperBody = 3,
+	/** Full body animation */
+};
+
+UENUM(BlueprintType)
 enum class ELogLevel : uint8 {
 	TRACE			UMETA(DisplayName = "Trace"),
 	DEBUG			UMETA(DisplayName = "Debug"),

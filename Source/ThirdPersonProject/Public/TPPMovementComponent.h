@@ -96,6 +96,8 @@ public:
 
 	virtual void UnCrouch(bool bClientSimulation) override;
 
+	virtual bool CanCrouchInCurrentState() const override;
+
 public:
 
 	virtual bool IsMovingOnGround() const override;

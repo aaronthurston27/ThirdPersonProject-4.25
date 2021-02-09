@@ -179,6 +179,11 @@ void UTPPMovementComponent::UnCrouch(bool bClientSimulation)
 	}
 }
 
+bool UTPPMovementComponent::CanCrouchInCurrentState() const
+{
+	return (CanEverCrouch() && IsMovingOnGround()) && UpdatedComponent && !UpdatedComponent->IsSimulatingPhysics();
+}
+
 bool UTPPMovementComponent::IsMovingOnGround() const
 {
 	return Super::IsMovingOnGround() || IsSliding();
