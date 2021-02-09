@@ -22,7 +22,12 @@ public:
 
 	static UTPPAimProperties* GetAimProperties();
 
+public:
+
 	static UDecalComponent* SpawnDecalWithParameters(UPrimitiveComponent* ComponentTarget, UMaterial* Material, const float Lifetime = 10.f,
 		const FVector& AttachLocation = FVector::ZeroVector, const FRotator& Rotation = FRotator::ZeroRotator, const FVector& Scale = FVector::OneVector);
-	
+
+public:
+
+	static FVector ReflectVectorOverNormal(const FVector& VectorToReflect, const FVector& NormalVector);
 };

@@ -24,40 +24,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ATPPWeaponBase*, 
 #pragma region Structs_And_Enums
 
 UENUM(BlueprintType)
-enum class EAnimationBlendSlot : uint8
-{
-	/** No blending. Should use the default pose */
-	None = 0,
-	/** No blending in Anim Instance, but use defaut slot for full body anim */
-	FullBody = 1,
-	/** Blend lower body only */
-	LowerBody = 2,
-	/** Blend the upper body only */
-	UpperBody = 3,
-	/** Full body animation */
-};
-
-/** Directions for wall kicking */
-UENUM()
-enum class EWallKickDirection : uint8
-{
-	/** No valid direction */
-	None,
-	/** Wall kick left. Requires a kick-off point to the right */
-	Left,
-	/** Wall kick right. Requires a kick-off point to the left */
-	Right,
-	/** Wall kick in the direction we are going. Requires a kick off point behind or to the side */
-	Forward,
-	/** Wall kick forward and to the left. Requires a kick-off point to the right */
-	ForwardLeft, 
-	/** Wall kick forward and to the right. Requires a kick-off point to the left */
-	ForwardRight,
-	/** Wall kick in the oppposite direction. Requres a kick-off point in front of us. */
-	Backwards,
-};
-
-UENUM(BlueprintType)
 enum class ELogLevel : uint8 {
 	TRACE			UMETA(DisplayName = "Trace"),
 	DEBUG			UMETA(DisplayName = "Debug"),
@@ -168,6 +134,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement", meta = (ClampMax = "1.0", UIMax = "1.0", ClampMin = "0.0", UIMin = "0.0"))
 	float WallKickNormalMinDot = .65f;
 
+	/** Velocity to add to the player when kicking off the wall. Multiplied by the direction of the walls normal. */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
+	FVector MinWallKickoffVelocity = FVector(700.0f, 700.0f, 500.0f);
+
 public:
 
 	/** Ability to activate for special movement key */
@@ -241,10 +211,10 @@ public:
 
 protected:
 
-	EWallKickDirection GetWallKickDirection() const;
+	/** Calculates the actual vector that player will travel when kicking the wall */
+	FVector CalculateWallKickDirection(const FHitResult& WallHitResutlt) const;
 
-	UFUNCTION(BlueprintCallable)
-	void DrawWallKickDebug() const;
+	void DoWallKick(const FHitResult& WallKickHitResult);
 
 public:
 

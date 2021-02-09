@@ -18,6 +18,8 @@ UTPPMovementComponent::UTPPMovementComponent(const FObjectInitializer& ObjectIni
 	SprintingSpeed = 1150.f;
 	MaxWalkSpeedCrouched = 250.f;
 	CrouchingADSSpeed = 200.f;
+
+	MaxFallingSpeed = 1100.0f;
 }
 
 void UTPPMovementComponent::BeginPlay()
@@ -190,6 +192,11 @@ float UTPPMovementComponent::GetMaxSpeed() const
 		return 0.0f;
 	}
 
+	if (MovementMode == EMovementMode::MOVE_Falling)
+	{
+		return MaxFallingSpeed;
+	}
+
 	if (TPPCharacter->IsPlayerAiming())
 	{
 		return IsCrouching() ? CrouchingADSSpeed : ADSWalkSpeed;
@@ -198,6 +205,7 @@ float UTPPMovementComponent::GetMaxSpeed() const
 	{
 		return SprintingSpeed;
 	}
+
 	return Super::GetMaxSpeed();
 
 }

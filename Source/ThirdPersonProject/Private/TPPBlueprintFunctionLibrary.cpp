@@ -28,3 +28,10 @@ UDecalComponent* UTPPBlueprintFunctionLibrary::SpawnDecalWithParameters(UPrimiti
 
 	return nullptr;
 }
+
+FVector UTPPBlueprintFunctionLibrary::ReflectVectorOverNormal(const FVector& VectorToReflect, const FVector& NormalVector)
+{
+	const float VectorNormalDot = FVector::DotProduct(VectorToReflect.GetSafeNormal(), NormalVector.GetSafeNormal());
+	const FVector VectorNormalProj = VectorNormalDot * NormalVector.GetSafeNormal();
+	return VectorToReflect - (2 * VectorNormalProj);
+}
