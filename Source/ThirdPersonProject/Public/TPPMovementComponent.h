@@ -36,9 +36,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
 	float CrouchingADSSpeed;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character Movement|Falling")
-	float MaxFallingSpeed;
-
 public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "CustomMovement|Sliding")
@@ -119,5 +116,8 @@ protected:
 
 	UPROPERTY(Transient)
 	float CachedBrakingDeceleration;
+
+	UPROPERTY(EditDefaultsOnly)
+	float CachedMaxAirSpeed = MaxWalkSpeed;
 	
 };

@@ -18,8 +18,6 @@ UTPPMovementComponent::UTPPMovementComponent(const FObjectInitializer& ObjectIni
 	SprintingSpeed = 1150.f;
 	MaxWalkSpeedCrouched = 250.f;
 	CrouchingADSSpeed = 200.f;
-
-	MaxFallingSpeed = 1100.0f;
 }
 
 void UTPPMovementComponent::BeginPlay()
@@ -41,6 +39,12 @@ void UTPPMovementComponent::BeginPlay()
 void UTPPMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (MovementMode == EMovementMode::MOVE_Falling)
+	{
+		// If the player decelerates lateraly while in the air, decrease their max air speed to prevent speeding back up to their original speed.
+		// Momentum should be preserved in the air unless the player decelerates through directional influence.
+		CachedMaxAirSpeed = FMath::Max(Velocity.Size2D() , MaxWalkSpeed);
+	}
 }
 
 void UTPPMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
@@ -52,12 +56,16 @@ void UTPPMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovement
 		{
 			return;
 		}
+	case EMovementMode::MOVE_Falling:
+		// When the character jumps or begins falling, set their max air speed to their speed before they left the ground so that momentum is preserved.
+		CachedMaxAirSpeed = Velocity.Size2D();
 	default:
 		if (PreviousMovementMode == EMovementMode::MOVE_Custom && PreviousCustomMode == (uint8)ECustomMovementMode::Sliding)
 		{
 			bWantsToSlide = false;
 			SlideEnded();
 		}
+
 	}
 	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
 }
@@ -103,7 +111,7 @@ void UTPPMovementComponent::OnMovementUpdated(float DeltaSeconds, const FVector&
 		{
 			bWantsToSlide = false;
 		}
-		else if (!IsInCustomMovementMode(ECustomMovementMode::Sliding))
+		else if (!IsInCustomMovementMode(ECustomMovementMode::Sliding) && IsMovingOnGround())
 		{
 			SetMovementMode(EMovementMode::MOVE_Custom, (uint8)ECustomMovementMode::Sliding);
 		}
@@ -114,8 +122,7 @@ bool UTPPMovementComponent::CanSlide() const
 {
 	const float Velocity2D = Velocity.SizeSquared2D();
 	const bool bIsSliding = IsSliding();
-	// If currently sliding, end slide when threshold speed reached
-	return (IsMovingOnGround() || IsInCustomMovementMode(ECustomMovementMode::Sliding)) && Velocity2D >= (!bIsSliding ? Cached2DMinimumSlidingSpeed : CachedEndSlideSpeed);
+	return Velocity2D >= (!bIsSliding ? Cached2DMinimumSlidingSpeed : CachedEndSlideSpeed);
 }
 
 void UTPPMovementComponent::SlideStarted()
@@ -199,7 +206,7 @@ float UTPPMovementComponent::GetMaxSpeed() const
 
 	if (MovementMode == EMovementMode::MOVE_Falling)
 	{
-		return MaxFallingSpeed;
+		return CachedMaxAirSpeed;
 	}
 
 	if (TPPCharacter->IsPlayerAiming())

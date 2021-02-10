@@ -231,9 +231,11 @@ bool ATPPPlayerCharacter::CanSlide() const
 	UTPPMovementComponent* MovementComponent = Cast<UTPPMovementComponent>(GetCharacterMovement());
 	ATPPPlayerController* PlayerController = GetTPPPlayerController();
 	if (MovementComponent && PlayerController)
-	{		
+	{	
+		const FVector DesiredMovementDirection = PlayerController->GetRelativeControllerMovementRotation().Vector();
+		const float VelocityLookDotProduct = FVector::DotProduct(DesiredMovementDirection, MovementComponent->Velocity.GetSafeNormal2D());
 		return MovementComponent->CanSlide() && !PlayerController->GetDesiredMovementDirection().IsNearlyZero() &&
-			!(CurrentSpecialMove && CurrentSpecialMove->bDisablesCrouch);
+			!(CurrentSpecialMove && CurrentSpecialMove->bDisablesCrouch) && VelocityLookDotProduct >= .85f;
 	}
 
 	return false;
