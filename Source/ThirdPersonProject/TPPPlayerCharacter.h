@@ -152,6 +152,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
 	FVector MinWallKickoffVelocity = FVector(700.0f, 700.0f, 500.0f);
 
+	/** Time that wall kick will be disabled after using it */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
+	float WallKickCooldownTime = .9f;
+
 public:
 
 	/** Ability to activate for special movement key */
@@ -222,6 +226,24 @@ public:
 	void TryJump();
 
 	virtual bool CanPlayerWallKick(FHitResult& OutKickoffHitResult) const;
+
+protected:
+
+	/** Set to true if the player has wall kicked while in the air. */
+	UPROPERTY(Transient)
+	bool bHasWallKicked = false;
+
+	/** Wallkick cooldown timer handle */
+	UPROPERTY(Transient)
+	FTimerHandle WallKickCooldownTimerHandle;
+
+	/** Returns if the player has wall kicked while in the air */
+	UFUNCTION(BlueprintPure)
+	bool HasPlayerWallKicked() const { return bHasWallKicked; }
+
+	/** Reset wallkick flag */
+	UFUNCTION()
+	void OnWallKickTimerExpired();
 
 protected:
 

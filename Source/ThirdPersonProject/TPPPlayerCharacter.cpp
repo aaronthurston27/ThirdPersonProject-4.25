@@ -248,7 +248,6 @@ void ATPPPlayerCharacter::OnStartSlide()
 
 void ATPPPlayerCharacter::OnEndSlide()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Ending slide"));
 	GetTPPPlayerController()->SetMovementInputEnabled(true);
 }
 
@@ -434,6 +433,30 @@ void ATPPPlayerCharacter::DoWallKick(const FHitResult& WallKickHitResult)
 			MovementComp->Velocity.Y + WallKickVelocity.Y,
 			WallKickVelocity.Z);
 		MovementComp->Velocity = NewVelocity;
+
+		bHasWallKicked = true;
+
+		// Don't rotate the character mesh if we are aiming.
+		if (!bIsAiming)
+		{
+			const FVector DirectionNormalizedVec = NewVelocity.GetSafeNormal2D();
+			const FRotator Rotator = FRotator(0.0f, DirectionNormalizedVec.ToOrientationRotator().Yaw, 0.0f);
+			SetActorRotation(Rotator);
+
+			MovementComp->RotationRate = FRotator::ZeroRotator;
+		}
+
+		GetWorldTimerManager().SetTimer(WallKickCooldownTimerHandle, this, &ATPPPlayerCharacter::OnWallKickTimerExpired, WallKickCooldownTime, false);
+	}
+}
+
+void ATPPPlayerCharacter::OnWallKickTimerExpired()
+{
+	bHasWallKicked = false;
+	UTPPMovementComponent* MovementComponent = GetTPPMovementComponent();
+	if (MovementComponent && !bIsAiming && IsCharacterAlive())
+	{
+		MovementComponent->RotationRate = FRotator(0.0f, DefaultRotationRate, 0.0f);
 	}
 }
 
@@ -444,6 +467,13 @@ void ATPPPlayerCharacter::Landed(const FHitResult& HitResult)
 	{
 		MovementComponent->bWantsToCrouch = false;
 		MovementComponent->bWantsToSlide = true;
+	}
+
+	bHasWallKicked = false;
+	GetWorldTimerManager().ClearTimer(WallKickCooldownTimerHandle);
+	if (!bIsAiming && IsCharacterAlive())
+	{
+		MovementComponent->RotationRate = FRotator(0.0f, DefaultRotationRate, 0.0f);
 	}
 
 	Super::Landed(HitResult);
