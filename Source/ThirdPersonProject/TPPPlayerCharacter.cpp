@@ -805,3 +805,9 @@ void ATPPPlayerCharacter::BeginRagdoll()
 	UMovementComponent* MovementComp = GetCharacterMovement();
 	MovementComp->Deactivate();
 }
+
+ATPPHUD* ATPPPlayerCharacter::GetCharacterHUD() const
+{
+	const ATPPPlayerController* PC = GetTPPPlayerController();
+	return PC ? Cast<ATPPHUD>(PC->GetHUD()) : nullptr;
+}

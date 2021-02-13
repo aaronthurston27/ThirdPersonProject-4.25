@@ -25,6 +25,11 @@ void UTPPWeaponInfoWidget::OnWeaponReloaded_Implementation()
 
 }
 
+void UTPPWeaponInfoWidget::OnWeaponHit_Implementation(const FHitResult& HitResult, const float DamageApplied)
+{
+
+}
+
 void UTPPWeaponInfoWidget::AssignWeaponDelegates(ATPPWeaponBase* Weapon)
 {
 	if (Weapon)

@@ -18,6 +18,7 @@
 
 class ATPPPlayerController;
 class UTPPMovementComponent;
+class TPPHUD;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ATPPWeaponBase*, WeaponEquipped);
 
@@ -422,5 +423,10 @@ public:
 	void OnDeath();
 
 	void BeginRagdoll();
+
+public:
+
+	UFUNCTION(BlueprintPure)
+	ATPPHUD* GetCharacterHUD() const;
 };
 

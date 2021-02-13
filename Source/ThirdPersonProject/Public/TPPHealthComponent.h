@@ -30,15 +30,15 @@ public:
 public:
 
 	/** Max health this player can have */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health")
 	float MaxHealth;
 
 	/** True if this component can regenerate health */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health")
 	bool bCanRegenerateHealth = true;
 
 	/** Time delay before health begins regenerating */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Health", meta = (EditCondition = "bCanRegenerateHealth"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health", meta = (EditCondition = "bCanRegenerateHealth"))
 	float HealthRegenDelay;
 
 	/** Time to regenerate health to max. */

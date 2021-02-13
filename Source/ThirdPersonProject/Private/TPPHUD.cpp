@@ -49,3 +49,12 @@ void ATPPHUD::OnPlayerEquippedWeapon(ATPPWeaponBase* WeaponEquipped)
 		WeaponInfoWidget->SetObservedWeapon(WeaponEquipped);
 	}
 }
+
+void ATPPHUD::OnWeaponHit(const ATPPWeaponBase* WeaponUsed, const FHitResult& HitResult, const float DamageApplied)
+{
+	if (WeaponUsed && DamageApplied)
+	{
+		ITPPWeaponObserver::Execute_OnWeaponHit(CrosshairWidget, HitResult, DamageApplied);
+		ITPPWeaponObserver::Execute_OnWeaponHit(WeaponInfoWidget, HitResult, DamageApplied);
+	}
+}

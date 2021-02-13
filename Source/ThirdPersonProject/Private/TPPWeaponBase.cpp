@@ -5,6 +5,7 @@
 #include "TPPBlueprintFunctionLibrary.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 #include "Components/DecalComponent.h"
+#include "TPPHUD.h"
 #include "..\Public\TPPWeaponBase.h"
 
 // Sets default values
@@ -119,7 +120,15 @@ void ATPPWeaponBase::OnWeaponHit_Implementation(const FHitResult& HitResult, FDa
 		if (CharacterHit && CharacterHit->IsCharacterAlive())
 		{
 			FPointDamageEvent* PointDamage = static_cast<FPointDamageEvent*>(&DamageEvent);
-			CharacterHit->TakeDamage(BaseWeaponDamage, DamageEvent, CharacterOwner->GetController(), CharacterOwner);
+			const float DamageApplied = CharacterHit->TakeDamage(BaseWeaponDamage, DamageEvent, CharacterOwner->GetController(), CharacterOwner);
+			if (DamageApplied > 0.0f)
+			{
+				ATPPHUD* TPPHUD = CharacterOwner->GetCharacterHUD();
+				if (TPPHUD)
+				{
+					TPPHUD->OnWeaponHit(this, HitResult, DamageApplied);
+				}
+			}
 		}
 		else if (!CharacterHit)
 		{

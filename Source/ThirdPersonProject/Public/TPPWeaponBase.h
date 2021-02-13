@@ -10,6 +10,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFired);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloaded);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponDamageActor, const FHitResult&, HitResult, const float, DamageApplied);
 
 class ATPPPlayerCharacter;
 
@@ -143,6 +144,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnWeaponFired OnWeaponFired;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnWeaponDamageActor OnWeaponDamageActor;
 
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponReady(bool bWeaponReady);

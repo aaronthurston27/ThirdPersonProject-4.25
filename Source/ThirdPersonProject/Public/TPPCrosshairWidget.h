@@ -35,6 +35,8 @@ protected:
 
 	virtual void OnWeaponReloaded_Implementation();
 
+	virtual void OnWeaponHit_Implementation(const FHitResult& HitResult, const float DamageApplied);
+
 	virtual void AssignWeaponDelegates(ATPPWeaponBase* Weapon);
 
 	virtual void RemoveWeaponDelegates(ATPPWeaponBase* Weapon);

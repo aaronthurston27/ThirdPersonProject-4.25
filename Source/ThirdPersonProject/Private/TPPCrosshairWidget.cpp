@@ -25,6 +25,11 @@ void UTPPCrosshairWidget::OnWeaponReloaded_Implementation()
 
 }
 
+void UTPPCrosshairWidget::OnWeaponHit_Implementation(const FHitResult& HitResult, const float DamageApplied)
+{
+
+}
+
 void UTPPCrosshairWidget::AssignWeaponDelegates(ATPPWeaponBase* Weapon)
 {
 	if (Weapon)

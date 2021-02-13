@@ -27,17 +27,22 @@ public:
 
 	virtual void SetObservedWeapon(ATPPWeaponBase* Weapon) = 0;
 
+	UFUNCTION(BlueprintNativeEvent)
+	void OnWeaponHit(const FHitResult& HitResult, const float DamageApplied);
+
+	virtual void OnWeaponHit_Implementation(const FHitResult& HitResult, const float DamageApplied);
+
 protected:
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnWeaponFired();
 
-	virtual void OnWeaponFired_Implementation() = 0;
+	virtual void OnWeaponFired_Implementation();
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnWeaponReloaded();
 
-	virtual void OnWeaponReloaded_Implementation() = 0;
+	virtual void OnWeaponReloaded_Implementation();
 
 	virtual void AssignWeaponDelegates(ATPPWeaponBase* Weapon) = 0;
 

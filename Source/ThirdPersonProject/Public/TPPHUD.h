@@ -50,5 +50,10 @@ protected:
 
 	UFUNCTION()
 	void OnPlayerEquippedWeapon(ATPPWeaponBase* WeaponEquipped);
+
+public:
+	// Called when a player equipped weapon makes contact and applies damage. This can be called publicly without a delegate due to some weapons applying damage without being equipped at the time of impact (e.g. projectiles, grenades) */
+	UFUNCTION()
+	void OnWeaponHit(const ATPPWeaponBase* UsedWeapon, const FHitResult& HitResult, const float DamageApplied);
 	
 };
