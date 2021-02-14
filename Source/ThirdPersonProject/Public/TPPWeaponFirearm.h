@@ -55,7 +55,7 @@ public:
 	float ADSAimMultiplier = .40f;
 
 	/** Inaccuracy angle to use when standing */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Spread", BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, Category = "Weapon|Firing|Spread", BlueprintReadWrite)
 	float StandingAimSpreadAngle = 1.1;
 
 	/** Inaccuracy angle to use when the player is crouching */

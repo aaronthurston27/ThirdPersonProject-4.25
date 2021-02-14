@@ -201,7 +201,7 @@ void ATPPWeaponFirearm::HitscanFire()
 	if (TraceResults.Num() > 0)
 	{
 		const FHitResult HitTrace = TraceResults[0];
-		DrawDebugSphere(World, HitTrace.Location, 25.f, 2, FColor::Green, false, 10.5f, 0, 1.5f);
+		DrawDebugSphere(World, HitTrace.Location, 15.f, 2, FColor::Green, false, 3.5f, 0, 1.5f);
 
 		FPointDamageEvent PointDamage;
 		PointDamage.ShotDirection = StartingLocation;
