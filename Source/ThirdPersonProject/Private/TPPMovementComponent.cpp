@@ -18,6 +18,8 @@ UTPPMovementComponent::UTPPMovementComponent(const FObjectInitializer& ObjectIni
 	SprintingSpeed = 1150.f;
 	MaxWalkSpeedCrouched = 250.f;
 	CrouchingADSSpeed = 200.f;
+
+	AirFriction = .5f;
 }
 
 void UTPPMovementComponent::BeginPlay()
@@ -43,12 +45,18 @@ void UTPPMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	{
 		// If the player decelerates lateraly while in the air, decrease their max air speed to prevent speeding back up to their original speed.
 		// Momentum should be preserved in the air unless the player decelerates through directional influence.
-		CachedMaxAirSpeed = FMath::Max(Velocity.Size2D() , MaxWalkSpeed);
+		CachedMaxAirSpeed = FMath::Max(Velocity.Size2D(), MaxWalkSpeed);
 	}
 }
 
 void UTPPMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
 {
+	if (PreviousMovementMode == EMovementMode::MOVE_Custom && PreviousCustomMode == (uint8)ECustomMovementMode::Sliding)
+	{
+		bWantsToSlide = false;
+		SlideEnded();
+	}
+
 	switch (MovementMode)
 	{
 	case EMovementMode::MOVE_Custom:
@@ -57,15 +65,12 @@ void UTPPMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovement
 			return;
 		}
 	case EMovementMode::MOVE_Falling:
-		// When the character jumps or begins falling, set their max air speed to their speed before they left the ground so that momentum is preserved.
+		BrakingFriction = AirFriction;
 		CachedMaxAirSpeed = Velocity.Size2D();
-	default:
-		if (PreviousMovementMode == EMovementMode::MOVE_Custom && PreviousCustomMode == (uint8)ECustomMovementMode::Sliding)
-		{
-			bWantsToSlide = false;
-			SlideEnded();
-		}
-
+		break;
+	case EMovementMode::MOVE_Walking:
+		BrakingFriction = 1.0;
+		break;
 	}
 	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
 }

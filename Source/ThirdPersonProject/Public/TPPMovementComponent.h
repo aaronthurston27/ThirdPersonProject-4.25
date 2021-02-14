@@ -24,16 +24,16 @@ class THIRDPERSONPROJECT_API UTPPMovementComponent : public UCharacterMovementCo
 
 public:
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
+	UPROPERTY(EditDefaultsOnly, Category = "Character Movement|Movement Speed")
 	float DefaultWalkSpeed;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
+	UPROPERTY(EditDefaultsOnly, Category = "Character Movement|Movement Speed")
 	float SprintingSpeed;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
+	UPROPERTY(EditDefaultsOnly, Category = "Character Movement|Movement Speed")
 	float ADSWalkSpeed;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character Movement")
+	UPROPERTY(EditDefaultsOnly, Category = "Character Movement|Movement Speed")
 	float CrouchingADSSpeed;
 
 public:
@@ -47,6 +47,12 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "CustomMovement|Sliding")
 	float SlidingFriction;
+
+public:
+
+	/** Friction (Air drag) value */
+	UPROPERTY(EditDefaultsOnly, meta = (UIMin = "0.0", ClampMin = "0.0"), Category = "Character Movement|Air Movement")
+	float AirFriction;
 
 public:
 
@@ -117,7 +123,7 @@ protected:
 	UPROPERTY(Transient)
 	float CachedBrakingDeceleration;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(Transient)
 	float CachedMaxAirSpeed = MaxWalkSpeed;
 	
 };
