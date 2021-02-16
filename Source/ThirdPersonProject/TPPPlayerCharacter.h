@@ -24,6 +24,19 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ATPPWeaponBase*, 
 
 #pragma region Structs_And_Enums
 
+/** Wall run direction */
+UENUM(BlueprintType)
+enum class EWallRunDirection : uint8
+{
+	/** Running along wall to the players left */
+	Left = 0,
+	/** Running along wall to the players right */
+	Right = 1,
+	/** Running upwards along wall */
+	Up = 2,
+	MAX UMETA(Hidden)
+};
+
 UENUM(BlueprintType)
 enum class EAnimationBlendSlot : uint8
 {
@@ -226,33 +239,6 @@ public:
 
 	void TryJump();
 
-	virtual bool CanPlayerWallKick(FHitResult& OutKickoffHitResult) const;
-
-protected:
-
-	/** Set to true if the player has wall kicked while in the air. */
-	UPROPERTY(Transient)
-	bool bHasWallKicked = false;
-
-	/** Wallkick cooldown timer handle */
-	UPROPERTY(Transient)
-	FTimerHandle WallKickCooldownTimerHandle;
-
-	/** Returns if the player has wall kicked while in the air */
-	UFUNCTION(BlueprintPure)
-	bool HasPlayerWallKicked() const { return bHasWallKicked; }
-
-	/** Reset wallkick flag */
-	UFUNCTION()
-	void OnWallKickTimerExpired();
-
-protected:
-
-	/** Calculates the actual vector that player will travel when kicking the wall */
-	FVector CalculateWallKickDirection(const FHitResult& WallHitResutlt) const;
-
-	void DoWallKick(const FHitResult& WallKickHitResult);
-
 public:
 
 	UFUNCTION(BlueprintPure)
@@ -428,5 +414,50 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	ATPPHUD* GetCharacterHUD() const;
+
+protected:
+
+	/** Set to true if the player has wall kicked while in the air. */
+	UPROPERTY(Transient)
+	bool bHasWallKicked = false;
+
+	/** Wallkick cooldown timer handle */
+	UPROPERTY(Transient)
+	FTimerHandle WallKickCooldownTimerHandle;
+
+protected:
+
+	/** Returns if the player has wall kicked while in the air */
+	UFUNCTION(BlueprintPure)
+	bool HasPlayerWallKicked() const { return bHasWallKicked; }
+
+	/** Reset wallkick flag */
+	UFUNCTION()
+	void OnWallKickTimerExpired();
+
+	bool CanPlayerWallKick(FHitResult& OutKickoffHitResult) const;
+
+	/** Calculates the actual vector that player will travel when kicking the wall */
+	FVector CalculateWallKickDirection(const FHitResult& WallHitResutlt) const;
+
+	void DoWallKick(const FHitResult& WallKickHitResult);
+
+protected:
+
+	/** Distance in front of the player that the wall cling sweep capsule will be projected. */
+	UPROPERTY(EditDefaultsOnly)
+	float WallClingSweepDistance = 10.0f;
+
+	/** Time the player can cling to the wall before falling */
+	UPROPERTY(EditDefaultsOnly)
+	float WallClingTime = 1.2f;
+
+	/** True if the player is clinging to the wall */
+	UPROPERTY(Transient)
+	bool bIsClingingToWall;
+
+	/** Returns true if the player has a valid wall to cling to */
+	UFUNCTION(BlueprintPure)
+	bool CanStartWallCling() const;
 };
 

@@ -120,6 +120,11 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 	{
 		StopSprint();
 	}
+
+	if (GetCharacterMovement()->IsFalling())
+	{
+		CanStartWallCling();
+	}
 }
 
 void ATPPPlayerCharacter::OnResetVR()
@@ -271,190 +276,6 @@ void ATPPPlayerCharacter::TryJump()
 		{
 			DoWallKick(WallKickHitResult);
 		}
-	}
-}
-
-bool ATPPPlayerCharacter::CanPlayerWallKick(FHitResult& OutKickoffHitResult) const
-{
-	const ATPPPlayerController* PC = GetTPPPlayerController();
-	if (!PC)
-	{
-		return false;
-	}
-
-	const FVector ControllerForwardVector = PC->GetControllerRelativeForwardVector(false);
-	const FVector ControllerBackwardVector = -ControllerForwardVector;
-	const FVector ControllerRightVector = PC->GetControllerRelativeRightVector(false);
-	const FVector ControllerLeftVector = -ControllerRightVector;
-
-	const float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-	const FVector FeetLocation = GetActorLocation() - FVector(0.0f, 0.0f, 10.0f);
-
-	UWorld* World = GetWorld();
-	TArray<FHitResult> HitResults;
-	FCollisionQueryParams QueryParams;
-	QueryParams.MobilityType = EQueryMobilityType::Static;
-	FCollisionObjectQueryParams ObjectQueryParams;
-	
-	// Check wall in front first
-	{
-		const FVector EndTraceLocation = FeetLocation + (ControllerForwardVector * WallKickMaxDistance);
-		World->LineTraceMultiByObjectType(HitResults, FeetLocation, EndTraceLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
-		//DrawDebugLine(World, FeetLocation, EndTraceLocation, FColor::Red, false, .8f, 0, .8f);
-		for (const FHitResult& HitResult : HitResults)
-		{
-			if (HitResult.bBlockingHit)
-			{
-				//DrawDebugSphere(World, OutKickoffHitResult.Location, 11.0f, 4.0f, FColor::Red, false, 4.0f, 0, .8f);
-				//DrawDebugLine(World, OutKickoffHitResult.Location, OutKickoffHitResult.Location + (OutKickoffHitResult.ImpactNormal * WallKickMaxDistance), FColor::Black, false, 2.0f, 0, .8f);
-
-				const FVector FeetToWallVec = (HitResult.Location - FeetLocation).GetSafeNormal2D();
-				// Take negative dot since normal and vector to kick-off should be in opposite directions
-				const float FeetWallNormalDot = -FVector::DotProduct(FeetToWallVec, HitResult.ImpactNormal);
-				if (FeetWallNormalDot >= WallKickNormalMinDot)
-				{
-					OutKickoffHitResult = HitResult;
-					return true;
-				}
-			}
-		}
-
-		HitResults.Empty();
-	}
-
-	// Check wall behind.
-	{
-		const FVector EndTraceLocation = FeetLocation + (ControllerBackwardVector * WallKickMaxDistance);
-		World->LineTraceMultiByObjectType(HitResults, FeetLocation, EndTraceLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
-
-		for (const FHitResult& HitResult : HitResults)
-		{
-			if (HitResult.bBlockingHit)
-			{
-				//DrawDebugSphere(World, OutKickoffHitResult.Location, 11.0f, 4.0f, FColor::Red, false, 4.0f, 0, .8f);
-				//DrawDebugLine(World, OutKickoffHitResult.Location, OutKickoffHitResult.Location + (OutKickoffHitResult.ImpactNormal * WallKickMaxDistance), FColor::Black, false, 2.0f, 0, .8f);
-
-				const FVector FeetToWallVec = (HitResult.Location - FeetLocation).GetSafeNormal2D();
-				// Take negative dot since normal and vector to kick-off should be in opposite directions
-				const float FeetWallNormalDot = -FVector::DotProduct(FeetToWallVec, HitResult.ImpactNormal);
-				if (FeetWallNormalDot >= WallKickNormalMinDot)
-				{
-					OutKickoffHitResult = HitResult;
-					return true;
-				}
-			}
-		}
-
-		HitResults.Empty();
-	}
-
-	// Check wall to the right
-	{
-		const FVector EndTraceLocation = FeetLocation + (ControllerRightVector * WallKickMaxDistance);
-		World->LineTraceMultiByObjectType(HitResults, FeetLocation, EndTraceLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
-		//DrawDebugLine(World, FeetLocation, EndTraceLocation, FColor::Red, false, .8f, 0, .8f);
-		for (const FHitResult& HitResult : HitResults)
-		{
-			if (HitResult.bBlockingHit)
-			{
-				//DrawDebugSphere(World, OutKickoffHitResult.Location, 11.0f, 4.0f, FColor::Red, false, 4.0f, 0, .8f);
-				//DrawDebugLine(World, OutKickoffHitResult.Location, OutKickoffHitResult.Location + (OutKickoffHitResult.ImpactNormal * WallKickMaxDistance), FColor::Black, false, 2.0f, 0, .8f);
-
-				const FVector FeetToWallVec = (HitResult.Location - FeetLocation).GetSafeNormal2D();
-				// Take negative dot since normal and vector to kick-off should be in opposite directions
-				const float FeetWallNormalDot = -FVector::DotProduct(FeetToWallVec, HitResult.ImpactNormal);
-				if (FeetWallNormalDot >= WallKickNormalMinDot)
-				{
-					OutKickoffHitResult = HitResult;
-					return true;
-				}
-			}
-		}
-
-		HitResults.Empty();
-	}
-
-	// Check wall to the left
-	{
-		const FVector EndTraceLocation = FeetLocation + (ControllerLeftVector * WallKickMaxDistance);
-		World->LineTraceMultiByObjectType(HitResults, FeetLocation, EndTraceLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
-
-		for (const FHitResult& HitResult : HitResults)
-		{
-			if (HitResult.bBlockingHit)
-			{
-				//DrawDebugSphere(World, OutKickoffHitResult.Location, 11.0f, 4.0f, FColor::Red, false, 4.0f, 0, .8f);
-				//DrawDebugLine(World, OutKickoffHitResult.Location, OutKickoffHitResult.Location + (OutKickoffHitResult.ImpactNormal * WallKickMaxDistance), FColor::Black, false, 2.0f, 0, .8f);
-
-				const FVector FeetToWallVec = (HitResult.Location - FeetLocation).GetSafeNormal2D();
-				// Take negative dot since normal and vector to kick-off should be in opposite directions
-				const float FeetWallNormalDot = -FVector::DotProduct(FeetToWallVec, HitResult.ImpactNormal);
-				if (FeetWallNormalDot >= WallKickNormalMinDot)
-				{
-					OutKickoffHitResult = HitResult;
-					return true;
-				}
-			}
-		}
-	}
-
-
-	return false;
-}
-
-FVector ATPPPlayerCharacter::CalculateWallKickDirection(const FHitResult& HitResult) const
-{
-	return HitResult.ImpactNormal;
-}
-
-void ATPPPlayerCharacter::DoWallKick(const FHitResult& WallKickHitResult)
-{
-	FVector WallKickOffDirection = CalculateWallKickDirection(WallKickHitResult);
-
-	const ATPPPlayerController* PC = GetTPPPlayerController();
-	FVector DesiredMoveDirection = FVector::ZeroVector;
-	if (PC && !PC->GetDesiredMovementDirection().IsNearlyZero())
-	{
-		DesiredMoveDirection = PC->GetRelativeControllerMovementRotation().Vector();
-	}
-	// Set a z of 1 so that we can kick with some vertical velocity.
-	DesiredMoveDirection.Z = 1.0f;
-
-	const FVector FinalWallKickDirection = WallKickOffDirection + DesiredMoveDirection;
-
-	UCharacterMovementComponent* MovementComp = GetCharacterMovement();
-	if (MovementComp)
-	{
-		// Set the new velocity.
-		const FVector WallKickVelocity = FinalWallKickDirection * MinWallKickoffVelocity;
-		const FVector NewVelocity = FVector(MovementComp->Velocity.X + WallKickVelocity.X,
-			MovementComp->Velocity.Y + WallKickVelocity.Y,
-			WallKickVelocity.Z);
-		MovementComp->Velocity = NewVelocity;
-
-		bHasWallKicked = true;
-
-		// Don't rotate the character mesh if we are aiming.
-		if (!bIsAiming)
-		{
-			const FVector DirectionNormalizedVec = NewVelocity.GetSafeNormal2D();
-			const FRotator Rotator = FRotator(0.0f, DirectionNormalizedVec.ToOrientationRotator().Yaw, 0.0f);
-			SetActorRotation(Rotator);
-
-			MovementComp->RotationRate = FRotator::ZeroRotator;
-		}
-
-		GetWorldTimerManager().SetTimer(WallKickCooldownTimerHandle, this, &ATPPPlayerCharacter::OnWallKickTimerExpired, WallKickCooldownTime, false);
-	}
-}
-
-void ATPPPlayerCharacter::OnWallKickTimerExpired()
-{
-	bHasWallKicked = false;
-	UTPPMovementComponent* MovementComponent = GetTPPMovementComponent();
-	if (MovementComponent && !bIsAiming && IsCharacterAlive())
-	{
-		MovementComponent->RotationRate = FRotator(0.0f, DefaultRotationRate, 0.0f);
 	}
 }
 
@@ -808,4 +629,256 @@ ATPPHUD* ATPPPlayerCharacter::GetCharacterHUD() const
 {
 	const ATPPPlayerController* PC = GetTPPPlayerController();
 	return PC ? Cast<ATPPHUD>(PC->GetHUD()) : nullptr;
+}
+
+bool ATPPPlayerCharacter::CanPlayerWallKick(FHitResult& OutKickoffHitResult) const
+{
+	const ATPPPlayerController* PC = GetTPPPlayerController();
+	if (!PC)
+	{
+		return false;
+	}
+
+	const FVector ControllerForwardVector = PC->GetControllerRelativeForwardVector(false);
+	const FVector ControllerBackwardVector = -ControllerForwardVector;
+	const FVector ControllerRightVector = PC->GetControllerRelativeRightVector(false);
+	const FVector ControllerLeftVector = -ControllerRightVector;
+
+	const float CapsuleHalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	const FVector FeetLocation = GetActorLocation() - FVector(0.0f, 0.0f, 10.0f);
+
+	UWorld* World = GetWorld();
+	TArray<FHitResult> HitResults;
+	FCollisionQueryParams QueryParams;
+	QueryParams.MobilityType = EQueryMobilityType::Static;
+	FCollisionObjectQueryParams ObjectQueryParams;
+
+	// Check wall in front first
+	{
+		const FVector EndTraceLocation = FeetLocation + (ControllerForwardVector * WallKickMaxDistance);
+		World->LineTraceMultiByObjectType(HitResults, FeetLocation, EndTraceLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
+		//DrawDebugLine(World, FeetLocation, EndTraceLocation, FColor::Red, false, .8f, 0, .8f);
+		for (const FHitResult& HitResult : HitResults)
+		{
+			if (HitResult.bBlockingHit)
+			{
+				//DrawDebugSphere(World, OutKickoffHitResult.Location, 11.0f, 4.0f, FColor::Red, false, 4.0f, 0, .8f);
+				//DrawDebugLine(World, OutKickoffHitResult.Location, OutKickoffHitResult.Location + (OutKickoffHitResult.ImpactNormal * WallKickMaxDistance), FColor::Black, false, 2.0f, 0, .8f);
+
+				const FVector FeetToWallVec = (HitResult.Location - FeetLocation).GetSafeNormal2D();
+				// Take negative dot since normal and vector to kick-off should be in opposite directions
+				const float FeetWallNormalDot = -FVector::DotProduct(FeetToWallVec, HitResult.ImpactNormal);
+				if (FeetWallNormalDot >= WallKickNormalMinDot)
+				{
+					OutKickoffHitResult = HitResult;
+					return true;
+				}
+			}
+		}
+
+		HitResults.Empty();
+	}
+
+	// Check wall behind.
+	{
+		const FVector EndTraceLocation = FeetLocation + (ControllerBackwardVector * WallKickMaxDistance);
+		World->LineTraceMultiByObjectType(HitResults, FeetLocation, EndTraceLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
+
+		for (const FHitResult& HitResult : HitResults)
+		{
+			if (HitResult.bBlockingHit)
+			{
+				//DrawDebugSphere(World, OutKickoffHitResult.Location, 11.0f, 4.0f, FColor::Red, false, 4.0f, 0, .8f);
+				//DrawDebugLine(World, OutKickoffHitResult.Location, OutKickoffHitResult.Location + (OutKickoffHitResult.ImpactNormal * WallKickMaxDistance), FColor::Black, false, 2.0f, 0, .8f);
+
+				const FVector FeetToWallVec = (HitResult.Location - FeetLocation).GetSafeNormal2D();
+				// Take negative dot since normal and vector to kick-off should be in opposite directions
+				const float FeetWallNormalDot = -FVector::DotProduct(FeetToWallVec, HitResult.ImpactNormal);
+				if (FeetWallNormalDot >= WallKickNormalMinDot)
+				{
+					OutKickoffHitResult = HitResult;
+					return true;
+				}
+			}
+		}
+
+		HitResults.Empty();
+	}
+
+	// Check wall to the right
+	{
+		const FVector EndTraceLocation = FeetLocation + (ControllerRightVector * WallKickMaxDistance);
+		World->LineTraceMultiByObjectType(HitResults, FeetLocation, EndTraceLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
+		//DrawDebugLine(World, FeetLocation, EndTraceLocation, FColor::Red, false, .8f, 0, .8f);
+		for (const FHitResult& HitResult : HitResults)
+		{
+			if (HitResult.bBlockingHit)
+			{
+				//DrawDebugSphere(World, OutKickoffHitResult.Location, 11.0f, 4.0f, FColor::Red, false, 4.0f, 0, .8f);
+				//DrawDebugLine(World, OutKickoffHitResult.Location, OutKickoffHitResult.Location + (OutKickoffHitResult.ImpactNormal * WallKickMaxDistance), FColor::Black, false, 2.0f, 0, .8f);
+
+				const FVector FeetToWallVec = (HitResult.Location - FeetLocation).GetSafeNormal2D();
+				// Take negative dot since normal and vector to kick-off should be in opposite directions
+				const float FeetWallNormalDot = -FVector::DotProduct(FeetToWallVec, HitResult.ImpactNormal);
+				if (FeetWallNormalDot >= WallKickNormalMinDot)
+				{
+					OutKickoffHitResult = HitResult;
+					return true;
+				}
+			}
+		}
+
+		HitResults.Empty();
+	}
+
+	// Check wall to the left
+	{
+		const FVector EndTraceLocation = FeetLocation + (ControllerLeftVector * WallKickMaxDistance);
+		World->LineTraceMultiByObjectType(HitResults, FeetLocation, EndTraceLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
+
+		for (const FHitResult& HitResult : HitResults)
+		{
+			if (HitResult.bBlockingHit)
+			{
+				//DrawDebugSphere(World, OutKickoffHitResult.Location, 11.0f, 4.0f, FColor::Red, false, 4.0f, 0, .8f);
+				//DrawDebugLine(World, OutKickoffHitResult.Location, OutKickoffHitResult.Location + (OutKickoffHitResult.ImpactNormal * WallKickMaxDistance), FColor::Black, false, 2.0f, 0, .8f);
+
+				const FVector FeetToWallVec = (HitResult.Location - FeetLocation).GetSafeNormal2D();
+				// Take negative dot since normal and vector to kick-off should be in opposite directions
+				const float FeetWallNormalDot = -FVector::DotProduct(FeetToWallVec, HitResult.ImpactNormal);
+				if (FeetWallNormalDot >= WallKickNormalMinDot)
+				{
+					OutKickoffHitResult = HitResult;
+					return true;
+				}
+			}
+		}
+	}
+
+
+	return false;
+}
+
+FVector ATPPPlayerCharacter::CalculateWallKickDirection(const FHitResult& HitResult) const
+{
+	return HitResult.ImpactNormal;
+}
+
+void ATPPPlayerCharacter::DoWallKick(const FHitResult& WallKickHitResult)
+{
+	FVector WallKickOffDirection = CalculateWallKickDirection(WallKickHitResult);
+
+	const ATPPPlayerController* PC = GetTPPPlayerController();
+	FVector DesiredMoveDirection = FVector::ZeroVector;
+	if (PC && !PC->GetDesiredMovementDirection().IsNearlyZero())
+	{
+		DesiredMoveDirection = PC->GetRelativeControllerMovementRotation().Vector();
+	}
+	// Set a z of 1 so that we can kick with some vertical velocity.
+	DesiredMoveDirection.Z = 1.0f;
+
+	const FVector FinalWallKickDirection = WallKickOffDirection + DesiredMoveDirection;
+
+	UCharacterMovementComponent* MovementComp = GetCharacterMovement();
+	if (MovementComp)
+	{
+		// Set the new velocity.
+		const FVector WallKickVelocity = FinalWallKickDirection * MinWallKickoffVelocity;
+		const FVector NewVelocity = FVector(MovementComp->Velocity.X + WallKickVelocity.X,
+			MovementComp->Velocity.Y + WallKickVelocity.Y,
+			WallKickVelocity.Z);
+		MovementComp->Velocity = NewVelocity;
+
+		bHasWallKicked = true;
+
+		// Don't rotate the character mesh if we are aiming.
+		if (!bIsAiming)
+		{
+			const FVector DirectionNormalizedVec = NewVelocity.GetSafeNormal2D();
+			const FRotator Rotator = FRotator(0.0f, DirectionNormalizedVec.ToOrientationRotator().Yaw, 0.0f);
+			SetActorRotation(Rotator);
+
+			MovementComp->RotationRate = FRotator::ZeroRotator;
+		}
+
+		GetWorldTimerManager().SetTimer(WallKickCooldownTimerHandle, this, &ATPPPlayerCharacter::OnWallKickTimerExpired, WallKickCooldownTime, false);
+	}
+}
+
+void ATPPPlayerCharacter::OnWallKickTimerExpired()
+{
+	bHasWallKicked = false;
+	UTPPMovementComponent* MovementComponent = GetTPPMovementComponent();
+	if (MovementComponent && !bIsAiming && IsCharacterAlive())
+	{
+		MovementComponent->RotationRate = FRotator(0.0f, DefaultRotationRate, 0.0f);
+	}
+}
+
+bool ATPPPlayerCharacter::CanStartWallCling() const
+{
+	const UCapsuleComponent* PlayerCapsule = GetCapsuleComponent();
+	const ATPPPlayerController* PlayerController = GetTPPPlayerController();
+	UWorld* World = GetWorld();
+	if (!World || !PlayerCapsule || !PlayerController || PlayerController->GetDesiredMovementDirection().IsNearlyZero())
+	{
+		return false;
+	}
+
+	const FVector WallClingDesiredDirection = PlayerController->GetRelativeControllerMovementRotation().Vector();
+	const FVector StartLocation = GetActorLocation() - FVector(0.0f,0.0f,10.0f);
+	const FVector TraceEndLocation = StartLocation + (WallClingDesiredDirection * WallKickMaxDistance);
+
+	// TODO: Replace line trace with sphere sweep. Proceed if colliding with wall and only wall. No other actors can be hit.
+	FHitResult TraceResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+	World->LineTraceSingleByObjectType(TraceResult, StartLocation, TraceEndLocation, ECollisionChannel::ECC_WorldStatic, QueryParams);
+	//DrawDebugLine(GetWorld(), StartLocation, TraceEndLocation, FColor::Green, false, .8f, 0, .5f);
+	if (TraceResult.bBlockingHit && TraceResult.Actor.IsValid())
+	{
+		DrawDebugSphere(World, TraceResult.ImpactPoint, 10.0f, 5, FColor::Purple, false, 1.0f, 0, .8f);
+		//DrawDebugLine(World, TraceResult.ImpactPoint, TraceResult.ImpactPoint + (TraceResult.ImpactNormal * 30.0f), FColor::Purple, false, .8f, 0, .5f);
+
+		const float WallClingNormalDot = FVector::DotProduct(WallClingDesiredDirection, TraceResult.ImpactNormal);
+		// Negate the dot product since the desired direction should be going into the wall.
+		if (-WallClingNormalDot < WallKickNormalMinDot)
+		{
+			return false;
+		}
+
+		const AActor* TraceActor = TraceResult.Actor.Get();
+		TArray<FHitResult> HitResults;
+		FCollisionShape CapsuleShape;
+		CapsuleShape.SetCapsule(PlayerCapsule->GetUnscaledCapsuleRadius(), PlayerCapsule->GetUnscaledCapsuleHalfHeight());
+		QueryParams.AddIgnoredActor(TraceActor);
+
+		// The capsule doesn't have to perfectly interset with the wall, so subtract the radius so that the capsule is just touching the wall. 
+		const FVector SweepEndLocation = TraceResult.ImpactPoint - (WallClingDesiredDirection * (PlayerCapsule->GetUnscaledCapsuleRadius() - 2.0f));
+
+		World->SweepMultiByProfile(HitResults, StartLocation, SweepEndLocation, GetActorRotation().Quaternion(), PlayerCapsule->GetCollisionProfileName(), CapsuleShape, QueryParams);
+		//DrawDebugCapsule(World, SweepEndLocation, PlayerCapsule->GetUnscaledCapsuleHalfHeight(), PlayerCapsule->GetUnscaledCapsuleRadius(), GetActorRotation().Quaternion(), FColor::Green, false, .9f, 0, .4f);
+		for (const FHitResult& HitResult : HitResults)
+		{
+ 			if (HitResult.bBlockingHit)
+			{
+				// No clear path to wall we want to cling to.
+				return false;
+			}
+		}
+
+		const FVector CapsuleDownwardSweepStart = SweepEndLocation + (FVector::UpVector * 1000.0f);
+		FCollisionQueryParams WallHeightQueryParams;
+		WallHeightQueryParams.AddIgnoredActor(this);
+		FHitResult SweepResult;
+		World->SweepSingleByChannel(SweepResult, CapsuleDownwardSweepStart, SweepEndLocation, GetActorRotation().Quaternion(), ECollisionChannel::ECC_WorldDynamic, CapsuleShape, WallHeightQueryParams);
+		//DrawDebugSphere(World, CapsuleDownwardSweepStart, 7.0f, 4, FColor::Blue, false, 2.0f, 0, .7f);
+		if (SweepResult.Actor.Get() == TraceActor)
+		{
+			const FVector HitLocation = SweepResult.ImpactPoint;
+			DrawDebugSphere(World, HitLocation, 7.0f, 4, FColor::Yellow, false, 2.0f, 0, .7f);
+		}
+	}
+
+	return false;
 }
