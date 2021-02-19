@@ -121,9 +121,48 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 		StopSprint();
 	}
 
-	if (GetCharacterMovement()->IsFalling())
+	if (GetCharacterMovement()->IsFalling() && !CurrentSpecialMove && WallMovementState == EWallMovementState::None)
 	{
-		CanStartWallCling();
+		FHitResult WallImpactResult;
+		FVector WallAttachPoint;
+		const float WallLedgeHeight = GetDesiredWallLedgeHeight(WallImpactResult, WallAttachPoint);
+		if (WallLedgeHeight > 0.0f && !WallImpactResult.ImpactNormal.IsNearlyZero())
+		{
+			if (WallLedgeHeight <= AutoLedgeClimbMaxHeight && AutoLedgeClimbClass)
+			{
+				FVector ClimbExitPoint;
+				bool bCanClimbLedge = CanClimbUpLedge(WallImpactResult, WallAttachPoint, ClimbExitPoint);
+				UTPP_SPM_LedgeClimb* LedgeClimbSPM = bCanClimbLedge ? NewObject<UTPP_SPM_LedgeClimb>(this, AutoLedgeClimbClass) : nullptr;
+
+				if (LedgeClimbSPM)
+				{
+					LedgeClimbSPM->SetLedgeClimbParameters(WallImpactResult, WallAttachPoint, ClimbExitPoint);
+					ExecuteSpecialMove(LedgeClimbSPM);
+				}
+			}
+			else if (WallLedgeHeight > AutoLedgeClimbMaxHeight && WallLedgeHeight <= LedgeGrabMaxHeight)
+			{
+				BeginWallLedgeGrab(WallImpactResult, WallAttachPoint);
+			}
+			else if (WallLedgeHeight > LedgeGrabMaxHeight)
+			{
+				// TODO: Wall run logic? Idk, I'm fucking tired.
+			}
+		}
+	}
+	else if (WallMovementState != EWallMovementState::None)
+	{
+		ATPPPlayerController* PC = GetTPPPlayerController();
+		switch (WallMovementState)
+		{
+			case EWallMovementState::WallCling:
+				const FVector DesiredMovementDirection = PC->GetRelativeControllerMovementRotation().Vector();
+				if (FVector::DotProduct(DesiredMovementDirection, GetActorRotation().Vector()) >= .8f && !CurrentSpecialMove)
+				{
+					//ExecuteSpecialMoveByClass(LedgeClimbClass);
+				}
+				break;
+		}
 	}
 }
 
@@ -268,14 +307,9 @@ void ATPPPlayerCharacter::TryJump()
 	{
 		Jump();
 	}
-	else
+	else if (WallMovementState == EWallMovementState::WallCling)
 	{
-		FHitResult WallKickHitResult;
-		bool bCanPlayerKickOffWall = CanPlayerWallKick(WallKickHitResult);
-		if (bCanPlayerKickOffWall)
-		{
-			DoWallKick(WallKickHitResult);
-		}
+		EndWallLedgeGrab();
 	}
 }
 
@@ -331,16 +365,25 @@ void ATPPPlayerCharacter::BeginMovementAbility()
 	}
 }
 
-void ATPPPlayerCharacter::ExecuteSpecialMove(TSubclassOf<UTPPSpecialMove> SpecialMoveToExecute)
+void ATPPPlayerCharacter::ExecuteSpecialMoveByClass(TSubclassOf<UTPPSpecialMove> SpecialMoveClass)
 {
-	if (SpecialMoveToExecute)
+	if (SpecialMoveClass)
 	{
-		CurrentSpecialMove = NewObject<UTPPSpecialMove>(this, SpecialMoveToExecute);
-		if (CurrentSpecialMove)
+		UTPPSpecialMove* SpecialMove = NewObject<UTPPSpecialMove>(this, SpecialMoveClass);
+		if (SpecialMove)
 		{
-			CurrentSpecialMove->OwningCharacter = this;
-			CurrentSpecialMove->BeginSpecialMove();
+			ExecuteSpecialMove(SpecialMove);
 		}
+	}
+}
+
+void ATPPPlayerCharacter::ExecuteSpecialMove(UTPPSpecialMove* SpecialMove)
+{
+	if (SpecialMove)
+	{
+		CurrentSpecialMove = SpecialMove;
+		CurrentSpecialMove->OwningCharacter = this;
+		CurrentSpecialMove->BeginSpecialMove();
 	}
 }
 
@@ -584,7 +627,7 @@ void ATPPPlayerCharacter::BecomeDefeated()
 	const UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
 	if (MovementComp && MovementComp->IsMovingOnGround() && DeathSpecialMove)
 	{
-		ExecuteSpecialMove(DeathSpecialMove);
+		ExecuteSpecialMoveByClass(DeathSpecialMove);
 	}
 	else
 	{
@@ -815,14 +858,14 @@ void ATPPPlayerCharacter::OnWallKickTimerExpired()
 	}
 }
 
-bool ATPPPlayerCharacter::CanStartWallCling() const
+float ATPPPlayerCharacter::GetDesiredWallLedgeHeight(FHitResult& WallImpactResult, FVector& AttachPoint) const
 {
 	const UCapsuleComponent* PlayerCapsule = GetCapsuleComponent();
 	const ATPPPlayerController* PlayerController = GetTPPPlayerController();
 	UWorld* World = GetWorld();
 	if (!World || !PlayerCapsule || !PlayerController || PlayerController->GetDesiredMovementDirection().IsNearlyZero())
 	{
-		return false;
+		return -1.0f;
 	}
 
 	const FVector WallClingDesiredDirection = PlayerController->GetRelativeControllerMovementRotation().Vector();
@@ -844,7 +887,7 @@ bool ATPPPlayerCharacter::CanStartWallCling() const
 		// Negate the dot product since the desired direction should be going into the wall.
 		if (-WallClingNormalDot < WallKickNormalMinDot)
 		{
-			return false;
+			return -1.0f;
 		}
 
 		const AActor* TraceActor = TraceResult.Actor.Get();
@@ -863,7 +906,7 @@ bool ATPPPlayerCharacter::CanStartWallCling() const
  			if (HitResult.bBlockingHit)
 			{
 				// No clear path to wall we want to cling to.
-				return false;
+				return -1.0f;
 			}
 		}
 
@@ -876,9 +919,77 @@ bool ATPPPlayerCharacter::CanStartWallCling() const
 		if (SweepResult.Actor.Get() == TraceActor)
 		{
 			const FVector HitLocation = SweepResult.ImpactPoint;
-			DrawDebugSphere(World, HitLocation, 7.0f, 4, FColor::Yellow, false, 2.0f, 0, .7f);
+			FColor SphereColor = FColor::Green;
+
+			const float WallHeightAbovePlayer = FMath::Abs(GetActorLocation().Z - SweepResult.ImpactPoint.Z);
+			FVector WallAttachPoint = SweepEndLocation;
+			// Output the relevant impact point of the two wall traces. If the ledge is low enough for us to grab, return the ledge impact point. Else, return the point where a wall run/scramble should begin.
+			if (WallHeightAbovePlayer <= LedgeGrabMaxHeight)
+			{
+				SphereColor = FColor::Yellow;
+				WallAttachPoint.Z = HitLocation.Z;
+			}
+
+			WallImpactResult = TraceResult;
+			AttachPoint = WallAttachPoint;
+
+			DrawDebugSphere(World, SweepResult.ImpactPoint, 6.0f, 3, SphereColor, false, 1.5f, 0, .6f);
+			UE_LOG(LogTemp, Warning, TEXT("Wall height: %f"), WallHeightAbovePlayer);
+			return WallHeightAbovePlayer;
 		}
 	}
 
+	return -1.0f;
+}
+
+bool ATPPPlayerCharacter::CanClimbUpLedge(const FHitResult& WallHitResult, const FVector& AttachPoint, FVector& ExitPoint)
+{
+	const FVector DesiredExitPoint = AttachPoint + (-WallHitResult.ImpactNormal * 90.0f) + (FVector::UpVector * 96.0f);
+	const UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
+
+	FHitResult SweepResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+	QueryParams.AddIgnoredActor(WallHitResult.Actor.Get());
+	FCollisionShape CollisionCap;
+	CollisionCap.SetCapsule(CapsuleComp->GetUnscaledCapsuleRadius(), CapsuleComp->GetUnscaledCapsuleHalfHeight());
+	GetWorld()->SweepSingleByChannel(SweepResult, DesiredExitPoint, DesiredExitPoint, GetActorRotation().Quaternion(), ECollisionChannel::ECC_WorldStatic, CollisionCap, QueryParams);
+
+	DrawDebugCapsule(GetWorld(), DesiredExitPoint, CapsuleComp->GetUnscaledCapsuleHalfHeight(), CapsuleComp->GetUnscaledCapsuleRadius(), GetActorRotation().Quaternion(), SweepResult.bBlockingHit ? FColor::Red : FColor::Green, false, 1.0f, 0.0f, .8f);
+	if (!SweepResult.bBlockingHit)
+	{
+		ExitPoint = DesiredExitPoint;
+		return true;
+	}
+
 	return false;
+}
+
+void ATPPPlayerCharacter::BeginWallLedgeGrab(FHitResult& WallTraceImpactPoint, FVector& WallAttachPoint)
+{
+	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+	if (!MovementComp)
+	{
+		return;
+	}
+
+	MovementComp->SetMovementMode(EMovementMode::MOVE_None);
+
+	SetActorLocation(WallAttachPoint - WallLedgeGrabOffset);
+	const FRotator Rotation = (-1.0f * WallTraceImpactPoint.ImpactNormal).Rotation();
+	SetActorRotation(Rotation);
+
+	SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
+	WallMovementState = EWallMovementState::WallCling;
+}
+
+void ATPPPlayerCharacter::EndWallLedgeGrab()
+{
+	WallMovementState = EWallMovementState::None;
+
+	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+	if (MovementComp)
+	{
+		MovementComp->SetMovementMode(EMovementMode::MOVE_Falling);
+	}
 }

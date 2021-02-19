@@ -12,8 +12,9 @@
 #include "TPPAbilityBase.h"
 #include "TPPWeaponBase.h"
 #include "TPPHealthComponent.h"
-#include "TPPSpecialMove.h"
-#include "TPP_SPM_Defeated.h"
+#include "SpecialMove/TPPSpecialMove.h"
+#include "SpecialMove/TPP_SPM_Defeated.h"
+#include "SpecialMove/TPP_SPM_LedgeClimb.h"
 #include "TPPPlayerCharacter.generated.h"
 
 class ATPPPlayerController;
@@ -26,14 +27,17 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ATPPWeaponBase*, 
 
 /** Wall run direction */
 UENUM(BlueprintType)
-enum class EWallRunDirection : uint8
+enum class EWallMovementState : uint8
 {
+	None,
+	/** Player is clinging to wall */
+	WallCling = 1,
 	/** Running along wall to the players left */
-	Left = 0,
+	WallRunLeft = 2,
 	/** Running along wall to the players right */
-	Right = 1,
+	WallRunRight = 3,
 	/** Running upwards along wall */
-	Up = 2,
+	WallRunUp = 4,
 	MAX UMETA(Hidden)
 };
 
@@ -156,20 +160,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
 	float ADSRotationRate;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
-	float WallKickMaxDistance = 50.0f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement", meta = (ClampMax = "1.0", UIMax = "1.0", ClampMin = "0.0", UIMin = "0.0"))
-	float WallKickNormalMinDot = .65f;
-
-	/** Velocity to add to the player when kicking off the wall. Multiplied by the direction of the walls normal. */
-	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
-	FVector MinWallKickoffVelocity = FVector(700.0f, 700.0f, 500.0f);
-
-	/** Time that wall kick will be disabled after using it */
-	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
-	float WallKickCooldownTime = .9f;
-
 public:
 
 	/** Ability to activate for special movement key */
@@ -277,7 +267,10 @@ public:
 protected:
 
 	UFUNCTION(BlueprintCallable)
-	void ExecuteSpecialMove(TSubclassOf<UTPPSpecialMove> SpecialMove);
+	void ExecuteSpecialMoveByClass(TSubclassOf<UTPPSpecialMove> SpecialMoveClass);
+
+	UFUNCTION(BlueprintCallable)
+	void ExecuteSpecialMove(UTPPSpecialMove* SpecialMove);
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -418,7 +411,7 @@ public:
 protected:
 
 	/** Set to true if the player has wall kicked while in the air. */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, BlueprintReadOnly)
 	bool bHasWallKicked = false;
 
 	/** Wallkick cooldown timer handle */
@@ -426,10 +419,6 @@ protected:
 	FTimerHandle WallKickCooldownTimerHandle;
 
 protected:
-
-	/** Returns if the player has wall kicked while in the air */
-	UFUNCTION(BlueprintPure)
-	bool HasPlayerWallKicked() const { return bHasWallKicked; }
 
 	/** Reset wallkick flag */
 	UFUNCTION()
@@ -442,22 +431,65 @@ protected:
 
 	void DoWallKick(const FHitResult& WallKickHitResult);
 
-protected:
+public:
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	float WallKickMaxDistance = 50.0f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall", meta = (ClampMax = "1.0", UIMax = "1.0", ClampMin = "0.0", UIMin = "0.0"))
+	float WallKickNormalMinDot = .65f;
+
+	/** Velocity to add to the player when kicking off the wall. Multiplied by the direction of the walls normal. */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	FVector MinWallKickoffVelocity = FVector(700.0f, 700.0f, 500.0f);
+
+	/** Time that wall kick will be disabled after using it */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	float WallKickCooldownTime = .9f;
 
 	/** Distance in front of the player that the wall cling sweep capsule will be projected. */
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
 	float WallClingSweepDistance = 10.0f;
 
 	/** Time the player can cling to the wall before falling */
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
 	float WallClingTime = 1.2f;
 
-	/** True if the player is clinging to the wall */
-	UPROPERTY(Transient)
-	bool bIsClingingToWall;
+	/** Height below the ledge for the character to skip hanging and pull themselves up */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	float AutoLedgeClimbMaxHeight = 40.0f;
+
+	/** Min height below the ledge of a wall to start a ledge hang. */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	float LedgeGrabMaxHeight = 175.0f;
+
+	/** Vector to offset the player from the grab point when grabbing a ledge */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	FVector WallLedgeGrabOffset = FVector(0.0f, 0.0f, -20.0f);
+
+	/** Ledge climb special move to use when hanging from a ledge. */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	TSubclassOf<UTPP_SPM_LedgeClimb> LedgeHangClimbClass;
+
+	/** Ledge climb special move to use when the player should climb over a ledge without hanging from it. */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	TSubclassOf<UTPP_SPM_LedgeClimb> AutoLedgeClimbClass;
+
+public:
+
+	bool CanClimbUpLedge(const FHitResult& WallHitResult, const FVector& AttachPoint, FVector& ExitPoint);
+
+protected:
+
+	/** Wall cling state of the player */
+	UPROPERTY(Transient,BlueprintReadOnly)
+	EWallMovementState WallMovementState = EWallMovementState::None;
 
 	/** Returns true if the player has a valid wall to cling to */
-	UFUNCTION(BlueprintPure)
-	bool CanStartWallCling() const;
+	float GetDesiredWallLedgeHeight(FHitResult& WallHitResult, FVector& OutAttachPoint) const;
+
+	void BeginWallLedgeGrab(FHitResult& WallTraceImpactPoint, FVector& WallAttachPoint);
+
+	void EndWallLedgeGrab();
 };
 

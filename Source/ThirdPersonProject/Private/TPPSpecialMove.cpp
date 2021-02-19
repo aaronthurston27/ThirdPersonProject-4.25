@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "TPPSpecialMove.h"
+#include "SpecialMove/TPPSpecialMove.h"
 #include "TPPPlayerController.h"
 #include "TPPWeaponBase.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"

@@ -2,7 +2,7 @@
 
 
 #include "TPPWeaponFirearm.h"
-#include "TPPSpecialMove.h"
+#include "SpecialMove/TPPSpecialMove.h"
 #include "Camera/CameraComponent.h"
 #include "TPPMovementComponent.h"
 #include "TPPGameInstance.h"
