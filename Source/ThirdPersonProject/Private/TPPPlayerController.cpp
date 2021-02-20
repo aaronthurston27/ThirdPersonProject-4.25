@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TPPPlayerController.h"
-#include "TPPWeaponBase.h"
-#include "TPPWeaponFirearm.h"
+#include "Weapon/TPPWeaponBase.h"
+#include "Weapon/TPPWeaponFirearm.h"
 #include "TPPAimProperties.h"
 #include "TPPGameInstance.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"

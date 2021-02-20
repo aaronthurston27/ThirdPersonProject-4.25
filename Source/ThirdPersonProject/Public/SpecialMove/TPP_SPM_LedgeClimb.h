@@ -43,13 +43,13 @@ public:
 
 	UTPP_SPM_LedgeClimb(const FObjectInitializer& ObjectInitializer);
 
-	void SetLedgeClimbParameters(const FHitResult& WallImpactResult, const FVector& WallAttachPoint, const FVector& ExitPoint);
-
 	virtual void BeginSpecialMove_Implementation() override;
 
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void EndSpecialMove_Implementation() override;
+
+	void SetClimbExitPoint(const FVector& ExitPoint);
 
 protected:
 

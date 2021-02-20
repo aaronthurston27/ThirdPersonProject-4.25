@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
-#include "TPPWeaponBase.h"
+#include "Weapon/TPPWeaponBase.h"
 #include "ThirdPersonProjectGameMode.generated.h"
 
 UCLASS(minimalapi)

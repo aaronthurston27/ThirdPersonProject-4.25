@@ -3,7 +3,7 @@
 
 #include "TPPHUD.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
-#include "TPPWeaponBase.h"
+#include "Weapon/TPPWeaponBase.h"
 #include "Kismet/GameplayStatics.h"
 
 void ATPPHUD::BeginPlay()

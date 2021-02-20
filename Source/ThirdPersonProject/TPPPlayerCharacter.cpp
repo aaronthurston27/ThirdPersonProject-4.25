@@ -16,8 +16,8 @@
 #include "TPPMovementComponent.h"
 #include "Engine.h"
 #include "TPPPlayerController.h"
-#include "TPPWeaponBase.h"
-#include "TPPWeaponFirearm.h"
+#include "Weapon/TPPWeaponBase.h"
+#include "Weapon/TPPWeaponFirearm.h"
 #include "TPPHUD.h"
 #include "TPPDamageType.h"
 #include "DrawDebugHelpers.h"
@@ -124,25 +124,28 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 	if (GetCharacterMovement()->IsFalling() && !CurrentSpecialMove && WallMovementState == EWallMovementState::None)
 	{
 		FHitResult WallImpactResult;
-		FVector WallAttachPoint;
-		const float WallLedgeHeight = GetDesiredWallLedgeHeight(WallImpactResult, WallAttachPoint);
+		FVector TargetAttachPoint;
+		const float WallLedgeHeight = GetDesiredWallLedgeHeight(WallImpactResult, TargetAttachPoint);
+
 		if (WallLedgeHeight > 0.0f && !WallImpactResult.ImpactNormal.IsNearlyZero())
 		{
+			WallTraceImpactResult = WallImpactResult;
+			WallAttachPoint = TargetAttachPoint;
+
 			if (WallLedgeHeight <= AutoLedgeClimbMaxHeight && AutoLedgeClimbClass)
 			{
 				FVector ClimbExitPoint;
-				bool bCanClimbLedge = CanClimbUpLedge(WallImpactResult, WallAttachPoint, ClimbExitPoint);
+				const bool bCanClimbLedge = CanClimbUpLedge(WallImpactResult, TargetAttachPoint, ClimbExitPoint);
 				UTPP_SPM_LedgeClimb* LedgeClimbSPM = bCanClimbLedge ? NewObject<UTPP_SPM_LedgeClimb>(this, AutoLedgeClimbClass) : nullptr;
-
 				if (LedgeClimbSPM)
 				{
-					LedgeClimbSPM->SetLedgeClimbParameters(WallImpactResult, WallAttachPoint, ClimbExitPoint);
+					LedgeClimbSPM->SetClimbExitPoint(ClimbExitPoint);
 					ExecuteSpecialMove(LedgeClimbSPM);
 				}
 			}
-			else if (WallLedgeHeight > AutoLedgeClimbMaxHeight && WallLedgeHeight <= LedgeGrabMaxHeight)
+			else if (WallLedgeHeight > AutoLedgeClimbMaxHeight && WallLedgeHeight <= LedgeGrabMaxHeight && LedgeHangClass)
 			{
-				BeginWallLedgeGrab(WallImpactResult, WallAttachPoint);
+				ExecuteSpecialMoveByClass(LedgeHangClass);
 			}
 			else if (WallLedgeHeight > LedgeGrabMaxHeight)
 			{
@@ -152,15 +155,9 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 	}
 	else if (WallMovementState != EWallMovementState::None)
 	{
-		ATPPPlayerController* PC = GetTPPPlayerController();
 		switch (WallMovementState)
 		{
 			case EWallMovementState::WallCling:
-				const FVector DesiredMovementDirection = PC->GetRelativeControllerMovementRotation().Vector();
-				if (FVector::DotProduct(DesiredMovementDirection, GetActorRotation().Vector()) >= .8f && !CurrentSpecialMove)
-				{
-					//ExecuteSpecialMoveByClass(LedgeClimbClass);
-				}
 				break;
 		}
 	}
@@ -922,16 +919,16 @@ float ATPPPlayerCharacter::GetDesiredWallLedgeHeight(FHitResult& WallImpactResul
 			FColor SphereColor = FColor::Green;
 
 			const float WallHeightAbovePlayer = FMath::Abs(GetActorLocation().Z - SweepResult.ImpactPoint.Z);
-			FVector WallAttachPoint = SweepEndLocation;
+			FVector TargetAttachPoint = SweepEndLocation;
 			// Output the relevant impact point of the two wall traces. If the ledge is low enough for us to grab, return the ledge impact point. Else, return the point where a wall run/scramble should begin.
 			if (WallHeightAbovePlayer <= LedgeGrabMaxHeight)
 			{
 				SphereColor = FColor::Yellow;
-				WallAttachPoint.Z = HitLocation.Z;
+				TargetAttachPoint.Z = HitLocation.Z;
 			}
 
 			WallImpactResult = TraceResult;
-			AttachPoint = WallAttachPoint;
+			AttachPoint = TargetAttachPoint;
 
 			DrawDebugSphere(World, SweepResult.ImpactPoint, 6.0f, 3, SphereColor, false, 1.5f, 0, .6f);
 			UE_LOG(LogTemp, Warning, TEXT("Wall height: %f"), WallHeightAbovePlayer);
@@ -965,24 +962,6 @@ bool ATPPPlayerCharacter::CanClimbUpLedge(const FHitResult& WallHitResult, const
 	return false;
 }
 
-void ATPPPlayerCharacter::BeginWallLedgeGrab(FHitResult& WallTraceImpactPoint, FVector& WallAttachPoint)
-{
-	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
-	if (!MovementComp)
-	{
-		return;
-	}
-
-	MovementComp->SetMovementMode(EMovementMode::MOVE_None);
-
-	SetActorLocation(WallAttachPoint - WallLedgeGrabOffset);
-	const FRotator Rotation = (-1.0f * WallTraceImpactPoint.ImpactNormal).Rotation();
-	SetActorRotation(Rotation);
-
-	SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
-	WallMovementState = EWallMovementState::WallCling;
-}
-
 void ATPPPlayerCharacter::EndWallLedgeGrab()
 {
 	WallMovementState = EWallMovementState::None;
@@ -992,4 +971,9 @@ void ATPPPlayerCharacter::EndWallLedgeGrab()
 	{
 		MovementComp->SetMovementMode(EMovementMode::MOVE_Falling);
 	}
+}
+
+void ATPPPlayerCharacter::SetWallMovementState(EWallMovementState NewWallMovementState)
+{
+	WallMovementState = NewWallMovementState;
 }

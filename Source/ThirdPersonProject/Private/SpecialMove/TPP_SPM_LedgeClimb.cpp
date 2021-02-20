@@ -17,27 +17,25 @@ UTPP_SPM_LedgeClimb::UTPP_SPM_LedgeClimb(const FObjectInitializer& ObjectInitial
 	bDisablesCharacterRotation = true;
 }
 
-void UTPP_SPM_LedgeClimb::SetLedgeClimbParameters(const FHitResult& WallImpactResult, const FVector& WallAttachPoint, const FVector& ExitPoint)
+void UTPP_SPM_LedgeClimb::SetClimbExitPoint(const FVector& ExitPoint)
 {
-	TargetWallImpactResult = WallImpactResult;
-	TargetAttachPoint = WallAttachPoint;
 	ClimbExitPoint = ExitPoint;
 }
 
 void UTPP_SPM_LedgeClimb::BeginSpecialMove_Implementation()
 {
+	Super::BeginSpecialMove_Implementation();
+	OwningCharacter->GetCurrentWallClimbProperties(TargetWallImpactResult, TargetAttachPoint);
+
 	if (!ClimbMontage || TargetAttachPoint.IsNearlyZero())
 	{
 		EndSpecialMove();
 		return;
 	}
 
-	Super::BeginSpecialMove_Implementation();
-
 	const FRotator ToWallRotation = (-1.0f * TargetWallImpactResult.ImpactNormal).Rotation();
 	OwningCharacter->SetActorRotation(ToWallRotation);
-
-	OwningCharacter->SetActorLocation(TargetAttachPoint - WallAttachOffset);
+	OwningCharacter->SetActorLocation(TargetAttachPoint - OwningCharacter->WallLedgeGrabOffset);
 
 	if (ClimbMontage)
 	{
@@ -48,7 +46,7 @@ void UTPP_SPM_LedgeClimb::BeginSpecialMove_Implementation()
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
 		PlayAnimMontage(ClimbMontage);
 
-		AnimLength = ClimbMontage->GetPlayLength();
+		AnimLength = ClimbMontage->GetPlayLength() / ClimbMontage->RateScale;
 	}
 }
 

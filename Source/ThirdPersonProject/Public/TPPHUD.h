@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
-#include "TPPCrosshairWidget.h"
-#include "TPPWeaponInfoWidget.h"
+#include "Widgets/TPPCrosshairWidget.h"
+#include "Widgets/TPPWeaponInfoWidget.h"
 #include "TPPHUD.generated.h"
 
 class ATPPPlayerCharacter;

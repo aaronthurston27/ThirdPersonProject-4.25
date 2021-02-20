@@ -10,11 +10,12 @@
 #include "Components/TimelineComponent.h"
 #include "Engine/DataTable.h"
 #include "TPPAbilityBase.h"
-#include "TPPWeaponBase.h"
+#include "Weapon/TPPWeaponBase.h"
 #include "TPPHealthComponent.h"
 #include "SpecialMove/TPPSpecialMove.h"
 #include "SpecialMove/TPP_SPM_Defeated.h"
 #include "SpecialMove/TPP_SPM_LedgeClimb.h"
+#include "SpecialMove/TPP_SPM_LedgeHang.h"
 #include "TPPPlayerCharacter.generated.h"
 
 class ATPPPlayerController;
@@ -469,7 +470,7 @@ public:
 
 	/** Ledge climb special move to use when hanging from a ledge. */
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
-	TSubclassOf<UTPP_SPM_LedgeClimb> LedgeHangClimbClass;
+	TSubclassOf<UTPP_SPM_LedgeHang> LedgeHangClass;
 
 	/** Ledge climb special move to use when the player should climb over a ledge without hanging from it. */
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
@@ -485,11 +486,23 @@ protected:
 	UPROPERTY(Transient,BlueprintReadOnly)
 	EWallMovementState WallMovementState = EWallMovementState::None;
 
+	/** Cached wall cling impact trace result */
+	UPROPERTY(Transient)
+	FHitResult WallTraceImpactResult;
+
+	/** Cached wall climg attach point */
+	UPROPERTY(Transient)
+	FVector WallAttachPoint;
+
 	/** Returns true if the player has a valid wall to cling to */
 	float GetDesiredWallLedgeHeight(FHitResult& WallHitResult, FVector& OutAttachPoint) const;
 
-	void BeginWallLedgeGrab(FHitResult& WallTraceImpactPoint, FVector& WallAttachPoint);
-
 	void EndWallLedgeGrab();
+
+public:
+
+	void SetWallMovementState(EWallMovementState NewMovementState);
+
+	void GetCurrentWallClimbProperties(FHitResult& TraceImpactResult, FVector& AttachPoint) const { TraceImpactResult = WallTraceImpactResult; AttachPoint = WallAttachPoint; }
 };
 
