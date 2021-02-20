@@ -3,6 +3,7 @@
 
 #include "SpecialMove/TPP_SPM_LedgeClimb.h"
 #include "TPPMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 
 UTPP_SPM_LedgeClimb::UTPP_SPM_LedgeClimb(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -46,11 +47,20 @@ void UTPP_SPM_LedgeClimb::BeginSpecialMove_Implementation()
 		SetAnimRootMotionMode(ERootMotionMode::IgnoreRootMotion);
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
 		PlayAnimMontage(ClimbMontage);
+
+		AnimLength = ClimbMontage->GetPlayLength();
 	}
 }
 
 void UTPP_SPM_LedgeClimb::Tick(float DeltaTime)
 {
+	if (AnimLength > 0.0f)
+	{
+		const FVector Hmm = FMath::Lerp(TargetAttachPoint, ClimbExitPoint, ElapsedTime / AnimLength);
+		OwningCharacter->SetActorLocation(Hmm);
+	}
+
+	ElapsedTime += DeltaTime;
 }
 
 void UTPP_SPM_LedgeClimb::EndSpecialMove_Implementation()
@@ -59,7 +69,7 @@ void UTPP_SPM_LedgeClimb::EndSpecialMove_Implementation()
 	OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::None);
 
 	UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
-	MovementComp->SetMovementMode(EMovementMode::MOVE_Falling);
+	MovementComp->SetMovementMode(EMovementMode::MOVE_Walking);
 
 	Super::EndSpecialMove_Implementation();
 }

@@ -944,7 +944,7 @@ float ATPPPlayerCharacter::GetDesiredWallLedgeHeight(FHitResult& WallImpactResul
 
 bool ATPPPlayerCharacter::CanClimbUpLedge(const FHitResult& WallHitResult, const FVector& AttachPoint, FVector& ExitPoint)
 {
-	const FVector DesiredExitPoint = AttachPoint + (-WallHitResult.ImpactNormal * 90.0f) + (FVector::UpVector * 96.0f);
+	const FVector DesiredExitPoint = AttachPoint + (-WallHitResult.ImpactNormal * 90.0f) + (FVector::UpVector * 99.0f);
 	const UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
 
 	FHitResult SweepResult;

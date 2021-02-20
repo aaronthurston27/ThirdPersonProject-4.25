@@ -33,6 +33,12 @@ protected:
 	UPROPERTY(Transient)
 	FVector ClimbExitPoint;
 
+	UPROPERTY(Transient)
+	float ElapsedTime = 0.0f;
+
+	UPROPERTY(Transient)
+	float AnimLength;
+
 public:
 
 	UTPP_SPM_LedgeClimb(const FObjectInitializer& ObjectInitializer);
