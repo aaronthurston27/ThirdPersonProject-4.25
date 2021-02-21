@@ -3,6 +3,8 @@
 
 #include "SpecialMove/TPP_SPM_LedgeHang.h"
 #include "TPPMovementComponent.h"
+#include "TPPPlayerController.h"
+#include "SpecialMove/TPP_SPM_LedgeClimb.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 
 UTPP_SPM_LedgeHang::UTPP_SPM_LedgeHang(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -17,7 +19,6 @@ UTPP_SPM_LedgeHang::UTPP_SPM_LedgeHang(const FObjectInitializer& ObjectInitializ
 
 void UTPP_SPM_LedgeHang::BeginSpecialMove_Implementation()
 {
-
 	Super::BeginSpecialMove_Implementation();
 
 	OwningCharacter->GetCurrentWallClimbProperties(ImpactResult, TargetAttachPoint);
@@ -39,8 +40,44 @@ void UTPP_SPM_LedgeHang::BeginSpecialMove_Implementation()
 
 void UTPP_SPM_LedgeHang::Tick(float DeltaTime)
 {
+	ATPPPlayerController* PC = OwningCharacter ? OwningCharacter->GetTPPPlayerController() : nullptr;
+	if (PC && !PC->GetDesiredMovementDirection().IsNearlyZero() && ElapsedTime >= LedgeHangActionDelay)
+	{
+		const FVector DesiredMovementDirection = PC->GetRelativeControllerMovementRotation().Vector();
+		const float DesiredDirectionWallDot = FVector::DotProduct(DesiredMovementDirection, ImpactResult.ImpactNormal);
+		if (DesiredDirectionWallDot >= EndHangInputDot)
+		{
+			EndSpecialMove();
+		}
+		else if (-DesiredDirectionWallDot >= HangToClimbInputDot && LedgeClimbClass)
+		{
+			FVector ClimbExitPoint;
+			const bool bCanClimbCurrentLedge = OwningCharacter->CanClimbUpLedge(ImpactResult, TargetAttachPoint, ClimbExitPoint);
+			if (bCanClimbCurrentLedge)
+			{
+				UTPP_SPM_LedgeClimb* LedgeClimbSPM = NewObject<UTPP_SPM_LedgeClimb>(OwningCharacter, LedgeClimbClass);
+				if (LedgeClimbSPM)
+				{
+					LedgeClimbSPM->SetClimbExitPoint(ClimbExitPoint);
+					OwningCharacter->ExecuteSpecialMove(LedgeClimbSPM);
+					InterruptSpecialMove();
+				}
+			}
+		}
+	}
+
+	ElapsedTime += DeltaTime;
 }
 
 void UTPP_SPM_LedgeHang::EndSpecialMove_Implementation()
 {
+	UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
+	MovementComp->SetMovementMode(EMovementMode::MOVE_Falling);
+	
+	if (!bWasInterrupted)
+	{
+		OwningCharacter->SetWallMovementState(EWallMovementState::None);
+		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::None);
+	}
+	Super::EndSpecialMove_Implementation();
 }

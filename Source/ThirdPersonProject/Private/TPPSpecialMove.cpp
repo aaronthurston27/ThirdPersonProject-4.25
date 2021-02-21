@@ -87,6 +87,12 @@ void UTPPSpecialMove::EndSpecialMove_Implementation()
 	OwningCharacter = nullptr;
 }
 
+void UTPPSpecialMove::InterruptSpecialMove()
+{
+	bWasInterrupted = true;
+	EndSpecialMove();
+}
+
 void UTPPSpecialMove::PlayAnimMontage(UAnimMontage* Montage, bool bShouldEndAllMontages)
 {
 	if (Montage && OwningCharacter)

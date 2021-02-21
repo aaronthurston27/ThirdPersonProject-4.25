@@ -19,9 +19,6 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	UAnimMontage* ClimbMontage;
 
-	UPROPERTY(EditDefaultsOnly)
-	FVector WallAttachOffset;
-
 protected:
 
 	UPROPERTY(Transient)
@@ -31,13 +28,22 @@ protected:
 	FVector TargetAttachPoint;
 
 	UPROPERTY(Transient)
+	FVector StartingClimbPosition = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
 	FVector ClimbExitPoint;
 
 	UPROPERTY(Transient)
 	float ElapsedTime = 0.0f;
 
 	UPROPERTY(Transient)
+	float LateralLerpElapsedTime = 0.0f;
+
+	UPROPERTY(Transient)
 	float AnimLength;
+
+	UPROPERTY(Transient)
+	float LateralAnimLength;
 
 public:
 

@@ -6,6 +6,8 @@
 #include "SpecialMove/TPPSpecialMove.h"
 #include "TPP_SPM_LedgeHang.generated.h"
 
+class UTPP_SPM_LedgeClimb;
+
 /**
  * 
  */
@@ -16,8 +18,21 @@ class THIRDPERSONPROJECT_API UTPP_SPM_LedgeHang : public UTPPSpecialMove
 
 public:
 
+	/** Delay in seconds before player can make an action (wall jump, drop, climb, etc). */
 	UPROPERTY(EditDefaultsOnly)
-	float AlignmentSpeed = 10.0f;
+	float LedgeHangActionDelay = 1.0f;
+
+	/** Minimum dot product of desired movement direction and wall normal to end hang */
+	UPROPERTY(EditDefaultsOnly)
+	float EndHangInputDot = .8f;
+
+	/** Minimum dot product of desired movement direction and wall normal to climg the ledge that is held onto. */
+	UPROPERTY(EditDefaultsOnly)
+	float HangToClimbInputDot = .7f;
+
+	/** Ledge climb class to use when going from hanging to climbing */
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UTPP_SPM_LedgeClimb> LedgeClimbClass;
 
 protected:
 
@@ -32,6 +47,9 @@ protected:
 
 	UPROPERTY(Transient)
 	FVector CachedLedgeDelta = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	float ElapsedTime = 0.0f;
 
 
 public:

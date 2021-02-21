@@ -265,7 +265,7 @@ public:
 
 	void OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove);
 
-protected:
+public:
 
 	UFUNCTION(BlueprintCallable)
 	void ExecuteSpecialMoveByClass(TSubclassOf<UTPPSpecialMove> SpecialMoveClass);
@@ -468,6 +468,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
 	FVector WallLedgeGrabOffset = FVector(0.0f, 0.0f, -20.0f);
 
+	/** Minimum dot product of desired movement direction and wall normal to end hang */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	float EndHangInputDot = .8f;
+
+	/** Minimum dot product of desired movement direction and wall normal to climg the ledge that is held onto. */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	float HangToClimbInputDot = .8f;
+
 	/** Ledge climb special move to use when hanging from a ledge. */
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
 	TSubclassOf<UTPP_SPM_LedgeHang> LedgeHangClass;
@@ -500,6 +508,8 @@ protected:
 	void EndWallLedgeGrab();
 
 public:
+
+	EWallMovementState GetWallMovementState() const { return WallMovementState; }
 
 	void SetWallMovementState(EWallMovementState NewMovementState);
 

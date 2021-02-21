@@ -80,6 +80,9 @@ protected:
 	UPROPERTY(Transient)
 	float TimeRemaining = 0.f;
 
+	UPROPERTY(Transient)
+	bool bWasInterrupted = false;
+
 public:
 
 	UFUNCTION(BlueprintNativeEvent)
@@ -88,6 +91,9 @@ public:
 	virtual void BeginSpecialMove_Implementation();
 
 	virtual void Tick(float DeltaSeconds);
+
+	/** To be called if the move should end prematurely. Sets flag internally that should bypass some ending logic */
+	void InterruptSpecialMove();
 
 	UFUNCTION(BlueprintNativeEvent)
 	void EndSpecialMove();
