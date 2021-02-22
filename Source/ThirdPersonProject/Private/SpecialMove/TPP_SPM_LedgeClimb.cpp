@@ -37,7 +37,7 @@ void UTPP_SPM_LedgeClimb::BeginSpecialMove_Implementation()
 	OwningCharacter->SetActorRotation(ToWallRotation);
 
 	const EWallMovementState CurrentWallMovementState = OwningCharacter->GetWallMovementState();
-	StartingClimbPosition = TargetAttachPoint + (CurrentWallMovementState == EWallMovementState::WallCling ? OwningCharacter->WallLedgeGrabOffset : FVector::ZeroVector);
+	StartingClimbPosition = TargetAttachPoint + (CurrentWallMovementState == EWallMovementState::WallLedgeHang ? OwningCharacter->WallLedgeGrabOffset : FVector::ZeroVector);
 	OwningCharacter->SetActorLocation(StartingClimbPosition);
 	OwningCharacter->SetWallMovementState(EWallMovementState::None);
 

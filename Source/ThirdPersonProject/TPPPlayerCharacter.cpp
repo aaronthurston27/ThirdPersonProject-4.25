@@ -157,7 +157,7 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 	{
 		switch (WallMovementState)
 		{
-			case EWallMovementState::WallCling:
+			case EWallMovementState::WallLedgeHang:
 				break;
 		}
 	}
@@ -228,20 +228,31 @@ bool ATPPPlayerCharacter::CanCrouch() const
 
 void ATPPPlayerCharacter::Crouch(bool bIsClientSimulation)
 {
-	UTPPMovementComponent* MovementComponent = Cast<UTPPMovementComponent>(GetCharacterMovement());
-	if (MovementComponent)
+	if (WallMovementState == EWallMovementState::WallLedgeHang && CurrentSpecialMove && CurrentSpecialMove->GetClass()->IsChildOf(UTPP_SPM_LedgeHang::StaticClass()))
 	{
-		if (MovementComponent->IsSliding())
+		UTPP_SPM_LedgeHang* LedgeHangSPM = Cast<UTPP_SPM_LedgeHang>(CurrentSpecialMove);
+		if (LedgeHangSPM)
 		{
-			MovementComponent->bWantsToCrouch = true;
+			LedgeHangSPM->EndSpecialMove();
 		}
-		else if (CanSlide())
+	}
+	else
+	{
+		UTPPMovementComponent* MovementComponent = Cast<UTPPMovementComponent>(GetCharacterMovement());
+		if (MovementComponent)
 		{
-			MovementComponent->bWantsToSlide = true;
-		}
-		else
-		{
-			Super::Crouch(bIsClientSimulation);
+			if (MovementComponent->IsSliding())
+			{
+				MovementComponent->bWantsToCrouch = true;
+			}
+			else if (CanSlide())
+			{
+				MovementComponent->bWantsToSlide = true;
+			}
+			else
+			{
+				Super::Crouch(bIsClientSimulation);
+			}
 		}
 	}
 }
@@ -304,7 +315,7 @@ void ATPPPlayerCharacter::TryJump()
 	{
 		Jump();
 	}
-	else if (WallMovementState == EWallMovementState::WallCling)
+	else if (WallMovementState == EWallMovementState::WallLedgeHang)
 	{
 		UTPP_SPM_LedgeHang* LedgeHangSPM = Cast<UTPP_SPM_LedgeHang>(CurrentSpecialMove);
 		if (LedgeHangSPM)

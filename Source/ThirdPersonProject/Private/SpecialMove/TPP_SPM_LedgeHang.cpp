@@ -26,7 +26,7 @@ void UTPP_SPM_LedgeHang::BeginSpecialMove_Implementation()
 	UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
 	MovementComp->SetMovementMode(EMovementMode::MOVE_None);
 
-	OwningCharacter->SetWallMovementState(EWallMovementState::WallCling);
+	OwningCharacter->SetWallMovementState(EWallMovementState::WallLedgeHang);
 	OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
 	
 	FRotator Rotation = (-1.0f * ImpactResult.ImpactNormal).Rotation();
@@ -41,11 +41,12 @@ void UTPP_SPM_LedgeHang::BeginSpecialMove_Implementation()
 void UTPP_SPM_LedgeHang::Tick(float DeltaTime)
 {
 	ATPPPlayerController* PC = OwningCharacter ? OwningCharacter->GetTPPPlayerController() : nullptr;
-	if (PC && !PC->GetDesiredMovementDirection().IsNearlyZero() && ElapsedTime >= LedgeHangActionDelay)
+	const FVector DesiredMovementDirection = PC ? PC->GetDesiredMovementDirection() : FVector::ZeroVector;
+	if (PC && !DesiredMovementDirection.IsNearlyZero() && ElapsedTime >= LedgeHangActionDelay)
 	{
-		const FVector DesiredMovementDirection = PC->GetRelativeControllerMovementRotation().Vector();
-		const float DesiredDirectionWallDot = FVector::DotProduct(DesiredMovementDirection, ImpactResult.ImpactNormal);
-		if (DesiredDirectionWallDot >= EndHangInputDot)
+		const FVector ControllerRelativeMovementDirection = PC->GetRelativeControllerMovementRotation().Vector();
+		const float DesiredDirectionWallDot = FVector::DotProduct(ControllerRelativeMovementDirection, ImpactResult.ImpactNormal);
+		if (DesiredMovementDirection.X <= 0.0f)
 		{
 			EndSpecialMove();
 		}

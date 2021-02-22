@@ -32,7 +32,7 @@ enum class EWallMovementState : uint8
 {
 	None,
 	/** Player is clinging to wall */
-	WallCling = 1,
+	WallLedgeHang = 1,
 	/** Running along wall to the players left */
 	WallRunLeft = 2,
 	/** Running along wall to the players right */
