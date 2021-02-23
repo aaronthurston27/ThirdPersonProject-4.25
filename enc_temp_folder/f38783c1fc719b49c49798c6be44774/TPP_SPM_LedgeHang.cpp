@@ -46,7 +46,7 @@ void UTPP_SPM_LedgeHang::Tick(float DeltaTime)
 	{
 		const FVector ControllerRelativeMovementDirection = PC->GetRelativeControllerMovementRotation().Vector();
 		const float DesiredDirectionWallDot = FVector::DotProduct(ControllerRelativeMovementDirection, ImpactResult.ImpactNormal);
-		if (DesiredMovementDirection.X < 0.0f)
+		if (DesiredMovementDirection.X <= 0.0f)
 		{
 			EndSpecialMove();
 		}

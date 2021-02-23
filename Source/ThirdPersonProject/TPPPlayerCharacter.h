@@ -268,10 +268,10 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable)
-	void ExecuteSpecialMoveByClass(TSubclassOf<UTPPSpecialMove> SpecialMoveClass);
+	void ExecuteSpecialMoveByClass(TSubclassOf<UTPPSpecialMove> SpecialMoveClass, bool bShouldInterrupCurrentMove = false);
 
 	UFUNCTION(BlueprintCallable)
-	void ExecuteSpecialMove(UTPPSpecialMove* SpecialMove);
+	void ExecuteSpecialMove(UTPPSpecialMove* SpecialMove, bool bShouldInterruptCurrentMove = false);
 
 public:
 	/** Returns CameraBoom subobject **/

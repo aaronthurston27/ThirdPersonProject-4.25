@@ -377,22 +377,26 @@ void ATPPPlayerCharacter::BeginMovementAbility()
 	}
 }
 
-void ATPPPlayerCharacter::ExecuteSpecialMoveByClass(TSubclassOf<UTPPSpecialMove> SpecialMoveClass)
+void ATPPPlayerCharacter::ExecuteSpecialMoveByClass(TSubclassOf<UTPPSpecialMove> SpecialMoveClass, bool bShouldInterruptCurrentMove)
 {
 	if (SpecialMoveClass)
 	{
 		UTPPSpecialMove* SpecialMove = NewObject<UTPPSpecialMove>(this, SpecialMoveClass);
 		if (SpecialMove)
 		{
-			ExecuteSpecialMove(SpecialMove);
+			ExecuteSpecialMove(SpecialMove, bShouldInterruptCurrentMove);
 		}
 	}
 }
 
-void ATPPPlayerCharacter::ExecuteSpecialMove(UTPPSpecialMove* SpecialMove)
+void ATPPPlayerCharacter::ExecuteSpecialMove(UTPPSpecialMove* SpecialMove, bool bShouldInterruptCurrentMove)
 {
-	if (SpecialMove)
+	if (SpecialMove && !CurrentSpecialMove || bShouldInterruptCurrentMove)
 	{
+		if (CurrentSpecialMove && bShouldInterruptCurrentMove)
+		{
+			CurrentSpecialMove->InterruptSpecialMove();
+		}
 		CurrentSpecialMove = SpecialMove;
 		CurrentSpecialMove->OwningCharacter = this;
 		CurrentSpecialMove->BeginSpecialMove();
