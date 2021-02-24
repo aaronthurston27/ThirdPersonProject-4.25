@@ -125,12 +125,14 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 	{
 		FHitResult WallImpactResult;
 		FVector TargetAttachPoint;
-		const float WallLedgeHeight = GetDesiredWallLedgeHeight(WallImpactResult, TargetAttachPoint);
+		float WallLedgeHeight = 0.0f;
+		const bool bCanAttachToWall = CanAttachToWall(WallImpactResult, TargetAttachPoint, WallLedgeHeight);
 
-		if (WallLedgeHeight > 0.0f && !WallImpactResult.ImpactNormal.IsNearlyZero())
+		if (bCanAttachToWall && !WallImpactResult.ImpactNormal.IsNearlyZero())
 		{
 			WallTraceImpactResult = WallImpactResult;
 			WallAttachPoint = TargetAttachPoint;
+			CachedLedgeHeight = WallLedgeHeight;
 
 			if (WallLedgeHeight <= AutoLedgeClimbMaxHeight && AutoLedgeClimbClass)
 			{
@@ -147,9 +149,10 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 			{
 				ExecuteSpecialMoveByClass(LedgeHangClass);
 			}
-			else if (WallLedgeHeight > LedgeGrabMaxHeight)
+			// Just start a regular wall run if wall is to high to climb or grab ledge
+			else if (WallRunClass)
 			{
-				// TODO: Wall run logic? Idk, I'm fucking tired.
+				ExecuteSpecialMoveByClass(WallRunClass);
 			}
 		}
 	}
@@ -874,14 +877,14 @@ void ATPPPlayerCharacter::OnWallKickTimerExpired()
 	}
 }
 
-float ATPPPlayerCharacter::GetDesiredWallLedgeHeight(FHitResult& WallImpactResult, FVector& AttachPoint) const
+bool ATPPPlayerCharacter::CanAttachToWall(FHitResult& WallImpactResult, FVector& AttachPoint, float& WallLedgeHeight) const
 {
 	const UCapsuleComponent* PlayerCapsule = GetCapsuleComponent();
 	const ATPPPlayerController* PlayerController = GetTPPPlayerController();
 	UWorld* World = GetWorld();
 	if (!World || !PlayerCapsule || !PlayerController || PlayerController->GetDesiredMovementDirection().IsNearlyZero())
 	{
-		return -1.0f;
+		return false;
 	}
 
 	const FVector WallClingDesiredDirection = PlayerController->GetRelativeControllerMovementRotation().Vector();
@@ -903,7 +906,7 @@ float ATPPPlayerCharacter::GetDesiredWallLedgeHeight(FHitResult& WallImpactResul
 		// Negate the dot product since the desired direction should be going into the wall.
 		if (-WallClingNormalDot < WallKickNormalMinDot)
 		{
-			return -1.0f;
+			return false;
 		}
 
 		const AActor* TraceActor = TraceResult.Actor.Get();
@@ -922,7 +925,7 @@ float ATPPPlayerCharacter::GetDesiredWallLedgeHeight(FHitResult& WallImpactResul
  			if (HitResult.bBlockingHit)
 			{
 				// No clear path to wall we want to cling to.
-				return -1.0f;
+				return false;
 			}
 		}
 
@@ -951,11 +954,13 @@ float ATPPPlayerCharacter::GetDesiredWallLedgeHeight(FHitResult& WallImpactResul
 
 			DrawDebugSphere(World, SweepResult.ImpactPoint, 6.0f, 3, SphereColor, false, 1.5f, 0, .6f);
 			UE_LOG(LogTemp, Warning, TEXT("Wall height: %f"), WallHeightAbovePlayer);
-			return WallHeightAbovePlayer;
+			WallLedgeHeight = WallHeightAbovePlayer;
 		}
+
+		return true;
 	}
 
-	return -1.0f;
+	return false;
 }
 
 bool ATPPPlayerCharacter::CanClimbUpLedge(const FHitResult& WallHitResult, const FVector& AttachPoint, FVector& ExitPoint)

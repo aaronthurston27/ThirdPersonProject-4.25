@@ -16,6 +16,7 @@
 #include "SpecialMove/TPP_SPM_Defeated.h"
 #include "SpecialMove/TPP_SPM_LedgeClimb.h"
 #include "SpecialMove/TPP_SPM_LedgeHang.h"
+#include "SpecialMove/TPP_SPM_WallRun.h"
 #include "TPPPlayerCharacter.generated.h"
 
 class ATPPPlayerController;
@@ -484,6 +485,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
 	TSubclassOf<UTPP_SPM_LedgeClimb> AutoLedgeClimbClass;
 
+	/** Wall run special move to use attaching to wall with a high ledge */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	TSubclassOf<UTPP_SPM_WallRun> WallRunClass;
+
 public:
 
 	bool CanClimbUpLedge(const FHitResult& WallHitResult, const FVector& AttachPoint, FVector& ExitPoint);
@@ -502,8 +507,12 @@ protected:
 	UPROPERTY(Transient)
 	FVector WallAttachPoint;
 
+	/** Cached ledge height of the wall that the player is trying to attach to */
+	UPROPERTY(Transient)
+	float CachedLedgeHeight = -1.0f;
+
 	/** Returns true if the player has a valid wall to cling to */
-	float GetDesiredWallLedgeHeight(FHitResult& WallHitResult, FVector& OutAttachPoint) const;
+	bool CanAttachToWall(FHitResult& WallHitResult, FVector& OutAttachPoint, float& WallLedgeHeight) const;
 
 	void EndWallLedgeGrab();
 
@@ -514,5 +523,7 @@ public:
 	void SetWallMovementState(EWallMovementState NewMovementState);
 
 	void GetCurrentWallClimbProperties(FHitResult& TraceImpactResult, FVector& AttachPoint) const { TraceImpactResult = WallTraceImpactResult; AttachPoint = WallAttachPoint; }
+
+	float GetCachedLedgeHeight() const { return CachedLedgeHeight; }
 };
 
