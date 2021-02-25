@@ -55,7 +55,7 @@ public:
 
 	virtual void EndSpecialMove_Implementation() override;
 
-	void SetClimbExitPoint(const FVector& ExitPoint);
+	void SetClimbProperties(const FHitResult& WallImpactResult, const FVector& AttachPoint, const FVector& ExitPoint);
 
 protected:
 

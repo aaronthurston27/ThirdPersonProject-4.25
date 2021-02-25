@@ -17,11 +17,15 @@ UTPP_SPM_LedgeHang::UTPP_SPM_LedgeHang(const FObjectInitializer& ObjectInitializ
 	bDisablesCharacterRotation = true;
 }
 
+void UTPP_SPM_LedgeHang::SetLedgeHangProperties(const FHitResult& WallTraceHitResult, const FVector& AttachPoint)
+{
+	ImpactResult = WallTraceHitResult;
+	TargetAttachPoint = AttachPoint;
+}
+
 void UTPP_SPM_LedgeHang::BeginSpecialMove_Implementation()
 {
 	Super::BeginSpecialMove_Implementation();
-
-	OwningCharacter->GetCurrentWallClimbProperties(ImpactResult, TargetAttachPoint);
 
 	UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
 	MovementComp->SetMovementMode(EMovementMode::MOVE_None);
@@ -59,7 +63,7 @@ void UTPP_SPM_LedgeHang::Tick(float DeltaTime)
 				UTPP_SPM_LedgeClimb* LedgeClimbSPM = NewObject<UTPP_SPM_LedgeClimb>(OwningCharacter, LedgeClimbClass);
 				if (LedgeClimbSPM)
 				{
-					LedgeClimbSPM->SetClimbExitPoint(ClimbExitPoint);
+					LedgeClimbSPM->SetClimbProperties(ImpactResult, TargetAttachPoint, ClimbExitPoint);
 					OwningCharacter->ExecuteSpecialMove(LedgeClimbSPM, true);
 				}
 			}

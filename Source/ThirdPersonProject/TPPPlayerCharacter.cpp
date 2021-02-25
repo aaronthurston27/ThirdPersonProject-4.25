@@ -130,10 +130,6 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 
 		if (bCanAttachToWall && !WallImpactResult.ImpactNormal.IsNearlyZero())
 		{
-			WallTraceImpactResult = WallImpactResult;
-			WallAttachPoint = TargetAttachPoint;
-			CachedLedgeHeight = WallLedgeHeight;
-
 			if (WallLedgeHeight <= AutoLedgeClimbMaxHeight && AutoLedgeClimbClass)
 			{
 				FVector ClimbExitPoint;
@@ -141,18 +137,29 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 				UTPP_SPM_LedgeClimb* LedgeClimbSPM = bCanClimbLedge ? NewObject<UTPP_SPM_LedgeClimb>(this, AutoLedgeClimbClass) : nullptr;
 				if (LedgeClimbSPM)
 				{
-					LedgeClimbSPM->SetClimbExitPoint(ClimbExitPoint);
+					LedgeClimbSPM->SetClimbProperties(WallImpactResult, TargetAttachPoint, ClimbExitPoint);
 					ExecuteSpecialMove(LedgeClimbSPM);
 				}
 			}
 			else if (WallLedgeHeight > AutoLedgeClimbMaxHeight && WallLedgeHeight <= LedgeGrabMaxHeight && LedgeHangClass)
 			{
-				ExecuteSpecialMoveByClass(LedgeHangClass);
+				UTPP_SPM_LedgeHang* LedgeHangSPM = NewObject<UTPP_SPM_LedgeHang>(this, LedgeHangClass);
+				if (LedgeHangSPM)
+				{
+					LedgeHangSPM->SetLedgeHangProperties(WallImpactResult, TargetAttachPoint);
+					ExecuteSpecialMove(LedgeHangSPM);
+				}
 			}
 			// Just start a regular wall run if wall is to high to climb or grab ledge
-			else if (WallRunClass)
+			else if (WallRunClass && !bIsWallRunCooldownActive)
 			{
-				ExecuteSpecialMoveByClass(WallRunClass);
+				UTPP_SPM_WallRun* WallRunSPM = NewObject<UTPP_SPM_WallRun>(this, WallRunClass);
+				if (WallRunSPM)
+				{
+					WallRunSPM->SetWallRunProperties(WallImpactResult, TargetAttachPoint, WallLedgeHeight);
+					ExecuteSpecialMove(WallRunSPM);
+					bIsWallRunCooldownActive = CurrentSpecialMove != nullptr;
+				}
 			}
 		}
 	}
@@ -162,6 +169,9 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 		{
 			case EWallMovementState::WallLedgeHang:
 				break;
+			case EWallMovementState::WallRunUp:
+				break;
+
 		}
 	}
 }
@@ -343,6 +353,8 @@ void ATPPPlayerCharacter::Landed(const FHitResult& HitResult)
 	{
 		MovementComponent->RotationRate = FRotator(0.0f, DefaultRotationRate, 0.0f);
 	}
+
+	bIsWallRunCooldownActive = false;
 
 	Super::Landed(HitResult);
 }

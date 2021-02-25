@@ -8,6 +8,8 @@
 
 UTPP_SPM_WallRun::UTPP_SPM_WallRun(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+	bDurationBased = true;
+	Duration = 1.5f;
 	bDisablesMovementInput = true;
 	bDisablesSprint = true;
 	bDisablesJump = true;
@@ -17,16 +19,16 @@ UTPP_SPM_WallRun::UTPP_SPM_WallRun(const FObjectInitializer& ObjectInitializer) 
 	bDisablesCharacterRotation = true;
 }
 
-void UTPP_SPM_WallRun::SetWallRunDestination(const FVector& WallRunDestination)
+void UTPP_SPM_WallRun::SetWallRunProperties(const FHitResult& WallTraceHitResult, const FVector& AttachPoint, const float LedgeHeight)
 {
-	WallRunDestinationPoint = WallRunDestination;
+	TargetWallImpactResult = WallTraceHitResult;
+	TargetAttachPoint = AttachPoint;
+	WallLedgeHeight = LedgeHeight;
 }
 
 void UTPP_SPM_WallRun::BeginSpecialMove_Implementation()
 {
 	Super::BeginSpecialMove_Implementation();
-
-	OwningCharacter->GetCurrentWallClimbProperties(TargetWallImpactResult, TargetAttachPoint);
 
 	UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
 	if (!MovementComp || TargetAttachPoint.IsNearlyZero())
@@ -35,8 +37,8 @@ void UTPP_SPM_WallRun::BeginSpecialMove_Implementation()
 		return;
 	}
 
-	float WallLedgeHeight = OwningCharacter->GetCachedLedgeHeight();
-	const float DestinationZ = WallLedgeHeight > 0.0f ? FMath::Min(WallLedgeHeight, WallRunMaxVerticalDistance) : WallRunMaxVerticalDistance;
+	const float WallRunMaxDistance = bDurationBased ? WallRunVerticalSpeed * Duration : WallRunMaxVerticalDistance;
+	const float DestinationZ = WallLedgeHeight > 0.0f ? FMath::Min(WallLedgeHeight - OwningCharacter->LedgeGrabMaxHeight, WallRunMaxDistance) : WallRunMaxDistance;
 	WallRunDestinationPoint = TargetAttachPoint + FVector(0.0f, 0.0f, DestinationZ);
 
 	const FRotator ToWallRotation = (-1.0f * TargetWallImpactResult.ImpactNormal).Rotation();
@@ -52,29 +54,58 @@ void UTPP_SPM_WallRun::BeginSpecialMove_Implementation()
 void UTPP_SPM_WallRun::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
-	MovementComp->Velocity = FVector(0.0f, 0.0f, WallRunVerticalSpeed);
 
-	float CurrentZ = OwningCharacter->GetActorLocation().Z;
-	if (CurrentZ >= WallRunDestinationPoint.Z)
+	if (OwningCharacter)
 	{
-		OnWallRunDestinationReached();
+		UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
+		MovementComp->Velocity = FVector(0.0f, 0.0f, WallRunVerticalSpeed);
+
+		float CurrentZ = OwningCharacter->GetActorLocation().Z;
+		if (CurrentZ >= WallRunDestinationPoint.Z)
+		{
+			OnWallRunDestinationReached();
+		}
 	}
+}
+
+void UTPP_SPM_WallRun::OnDurationExceeded_Implementation()
+{
+	OnWallRunDestinationReached();
 }
 
 void UTPP_SPM_WallRun::OnWallRunDestinationReached()
 {
-	EndSpecialMove();
+	UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
+	if (MovementComp)
+	{
+		MovementComp->SetMovementMode(EMovementMode::MOVE_Falling);
+	}
+
+	FHitResult ImpactResult;
+	FVector AttachPoint;
+	float LedgeHeight;
+	const bool bCanGrabLedge = OwningCharacter ? OwningCharacter->CanAttachToWall(ImpactResult, AttachPoint, LedgeHeight) : false;
+	if (bCanGrabLedge && LedgeHeight > OwningCharacter->AutoLedgeClimbMaxHeight && LedgeHeight <= OwningCharacter->LedgeGrabMaxHeight && OwningCharacter->LedgeHangClass)
+	{
+		UTPP_SPM_LedgeHang* LedgeHangSPM = NewObject <UTPP_SPM_LedgeHang>(this, OwningCharacter->LedgeHangClass);
+		if (LedgeHangSPM)
+		{
+			LedgeHangSPM->SetLedgeHangProperties(ImpactResult, AttachPoint);
+			OwningCharacter->ExecuteSpecialMove(LedgeHangSPM, true);
+			return;
+		}
+	}
+	else
+	{
+		EndSpecialMove();
+	}
 }
 
 void UTPP_SPM_WallRun::EndSpecialMove_Implementation()
 {	
-	UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
-
 	if (!bWasInterrupted)
 	{
 		OwningCharacter->SetWallMovementState(EWallMovementState::None);
-		MovementComp->SetMovementMode(EMovementMode::MOVE_Falling);
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::None);
 	}
 

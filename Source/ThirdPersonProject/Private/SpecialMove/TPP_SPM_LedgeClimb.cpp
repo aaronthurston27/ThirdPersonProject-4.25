@@ -17,15 +17,16 @@ UTPP_SPM_LedgeClimb::UTPP_SPM_LedgeClimb(const FObjectInitializer& ObjectInitial
 	bDisablesCharacterRotation = true;
 }
 
-void UTPP_SPM_LedgeClimb::SetClimbExitPoint(const FVector& ExitPoint)
+void UTPP_SPM_LedgeClimb::SetClimbProperties(const FHitResult& WallImpactResult, const FVector& AttachPoint, const FVector& ExitPoint)
 {
+	TargetWallImpactResult = WallImpactResult;
+	TargetAttachPoint = AttachPoint;
 	ClimbExitPoint = ExitPoint;
 }
 
 void UTPP_SPM_LedgeClimb::BeginSpecialMove_Implementation()
 {
 	Super::BeginSpecialMove_Implementation();
-	OwningCharacter->GetCurrentWallClimbProperties(TargetWallImpactResult, TargetAttachPoint);
 
 	if (!ClimbMontage || TargetAttachPoint.IsNearlyZero())
 	{

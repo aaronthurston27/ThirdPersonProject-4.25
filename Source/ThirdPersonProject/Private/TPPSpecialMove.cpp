@@ -24,7 +24,7 @@ void UTPPSpecialMove::Tick(float DeltaSeconds)
 
 		if (TimeRemaining <= 0.0f)
 		{
-			EndSpecialMove();
+			OnDurationExceeded();
 		}
 	}
 }
@@ -60,6 +60,11 @@ void UTPPSpecialMove::BeginSpecialMove_Implementation()
 	}
 
 	bIsWeaponUseDisabled = bDisablesWeaponUseOnStart;
+}
+
+void UTPPSpecialMove::OnDurationExceeded_Implementation()
+{
+	EndSpecialMove();
 }
 
 void UTPPSpecialMove::EndSpecialMove_Implementation()

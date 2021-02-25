@@ -113,4 +113,9 @@ protected:
 
 	UFUNCTION()
 	virtual void OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnDurationExceeded();
+
+	virtual void OnDurationExceeded_Implementation();
 };

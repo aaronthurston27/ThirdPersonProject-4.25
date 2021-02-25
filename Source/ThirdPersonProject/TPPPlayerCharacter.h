@@ -491,13 +491,21 @@ public:
 
 public:
 
+	/** Returns true if the player has a valid wall to cling to */
+	bool CanAttachToWall(FHitResult& WallHitResult, FVector& OutAttachPoint, float& WallLedgeHeight) const;
+
+	/** Returns true if the player can climb up a wall ledge from the attach point */
 	bool CanClimbUpLedge(const FHitResult& WallHitResult, const FVector& AttachPoint, FVector& ExitPoint);
 
 protected:
 
 	/** Wall cling state of the player */
-	UPROPERTY(Transient,BlueprintReadOnly)
+	UPROPERTY(Transient, BlueprintReadOnly)
 	EWallMovementState WallMovementState = EWallMovementState::None;
+
+	/** True if player has wall climbed and is on cooldown until theey land */
+	UPROPERTY(Transient, BlueprintReadOnly)
+	bool bIsWallRunCooldownActive = false;
 
 	/** Cached wall cling impact trace result */
 	UPROPERTY(Transient)
@@ -510,9 +518,6 @@ protected:
 	/** Cached ledge height of the wall that the player is trying to attach to */
 	UPROPERTY(Transient)
 	float CachedLedgeHeight = -1.0f;
-
-	/** Returns true if the player has a valid wall to cling to */
-	bool CanAttachToWall(FHitResult& WallHitResult, FVector& OutAttachPoint, float& WallLedgeHeight) const;
 
 	void EndWallLedgeGrab();
 

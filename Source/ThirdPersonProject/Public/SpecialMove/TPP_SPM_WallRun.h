@@ -16,7 +16,8 @@ class THIRDPERSONPROJECT_API UTPP_SPM_WallRun : public UTPPSpecialMove
 
 public:
 
-	UPROPERTY(EditDefaultsOnly)
+	/** Max vertical distance to travel. Enabled only if move is not duration based */
+	UPROPERTY(EditDefaultsOnly, meta = (EditCondition = "!bDurationBased"))
 	float WallRunMaxVerticalDistance = 350.0f;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -31,11 +32,10 @@ public:
 	FVector TargetAttachPoint;
 
 	UPROPERTY(Transient)
+	float WallLedgeHeight = 0.0f;
+
+	UPROPERTY(Transient)
 	FVector WallRunDestinationPoint = FVector::ZeroVector;
-
-public:
-
-	void SetWallRunDestination(const FVector& WallRunDestination);
 
 public:
 
@@ -47,8 +47,12 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	void SetWallRunProperties(const FHitResult& WallTraceHitResult, const FVector& AttachPoint, const float LedgeHeight);
+
 protected:
 
 	void OnWallRunDestinationReached();
+
+	virtual void OnDurationExceeded_Implementation() override;
 	
 };

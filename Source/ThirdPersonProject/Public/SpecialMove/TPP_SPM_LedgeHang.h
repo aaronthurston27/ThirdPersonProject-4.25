@@ -61,4 +61,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void EndSpecialMove_Implementation() override;
+
+	void SetLedgeHangProperties(const FHitResult& WallTraceHitResult, const FVector& AttachPoint);
 };
