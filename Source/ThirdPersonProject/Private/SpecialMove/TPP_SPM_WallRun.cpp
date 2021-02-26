@@ -38,7 +38,8 @@ void UTPP_SPM_WallRun::BeginSpecialMove_Implementation()
 	}
 
 	const float WallRunMaxDistance = bDurationBased ? WallRunVerticalSpeed * Duration : WallRunMaxVerticalDistance;
-	const float DestinationZ = WallLedgeHeight > 0.0f ? FMath::Min(WallLedgeHeight - OwningCharacter->LedgeGrabMaxHeight, WallRunMaxDistance) : WallRunMaxDistance;
+	// Added 15.0f to the ledge ledge grab offset to account for the wall attach trace starting at the players foot instead of the hips (center).
+	const float DestinationZ = WallLedgeHeight > 0.0f ? FMath::Min(WallLedgeHeight - OwningCharacter->LedgeGrabMaxHeight + 15.0f, WallRunMaxDistance) : WallRunMaxDistance;
 	WallRunDestinationPoint = TargetAttachPoint + FVector(0.0f, 0.0f, DestinationZ);
 
 	const FRotator ToWallRotation = (-1.0f * TargetWallImpactResult.ImpactNormal).Rotation();
@@ -57,6 +58,9 @@ void UTPP_SPM_WallRun::Tick(float DeltaTime)
 
 	if (OwningCharacter)
 	{
+		ATPPPlayerController* PC = OwningCharacter ? OwningCharacter->GetTPPPlayerController() : nullptr;
+		const FVector DesiredMovementDirection = PC ? PC->GetControllerRelativeDesiredMovementDirection() : FVector::ZeroVector;
+
 		UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
 		MovementComp->Velocity = FVector(0.0f, 0.0f, WallRunVerticalSpeed);
 
@@ -85,6 +89,7 @@ void UTPP_SPM_WallRun::OnWallRunDestinationReached()
 	FVector AttachPoint;
 	float LedgeHeight;
 	const bool bCanGrabLedge = OwningCharacter ? OwningCharacter->CanAttachToWall(ImpactResult, AttachPoint, LedgeHeight) : false;
+
 	if (bCanGrabLedge && LedgeHeight > OwningCharacter->AutoLedgeClimbMaxHeight && LedgeHeight <= OwningCharacter->LedgeGrabMaxHeight && OwningCharacter->LedgeHangClass)
 	{
 		UTPP_SPM_LedgeHang* LedgeHangSPM = NewObject <UTPP_SPM_LedgeHang>(this, OwningCharacter->LedgeHangClass);
@@ -95,10 +100,7 @@ void UTPP_SPM_WallRun::OnWallRunDestinationReached()
 			return;
 		}
 	}
-	else
-	{
-		EndSpecialMove();
-	}
+	EndSpecialMove();
 }
 
 void UTPP_SPM_WallRun::EndSpecialMove_Implementation()

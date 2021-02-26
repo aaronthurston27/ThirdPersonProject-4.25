@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "SpecialMove/TPPSpecialMove.h"
+#include "SpecialMove/TPP_SPM_LedgeClimb.h"
 #include "TPP_SPM_WallRun.generated.h"
 
 /**
@@ -22,6 +23,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	float WallRunVerticalSpeed = 110.f;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UTPP_SPM_LedgeClimb> WallRunToLedgeClimbClass;
 
 public:
 

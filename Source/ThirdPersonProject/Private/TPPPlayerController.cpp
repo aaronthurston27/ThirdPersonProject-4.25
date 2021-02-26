@@ -245,13 +245,19 @@ void ATPPPlayerController::OnPausePressed()
 #endif !WITH_EDITOR
 }
 
-FRotator ATPPPlayerController::GetRelativeControllerMovementRotation() const
+FRotator ATPPPlayerController::GetControllerRelativeMovementRotation() const
 {
 	const FRotator DesiredDirection = GetDesiredMovementDirection().ToOrientationRotator();
 	const FRotator ControlRot = GetControlRotation();
 
 	// Add the desired movement rotation to the player controller rotation instead of world space.
 	return FRotator(0.0f, DesiredDirection.Yaw + ControlRot.Yaw, 0.0f);
+}
+
+FVector ATPPPlayerController::GetControllerRelativeDesiredMovementDirection() const
+{
+	const FVector ControllerDesiredMovementDirection = GetDesiredMovementDirection();
+	return ControllerDesiredMovementDirection.IsNearlyZero() ? ControllerDesiredMovementDirection : GetControllerRelativeMovementRotation().Vector();
 }
 
 ATPPPlayerCharacter* ATPPPlayerController::GetOwnerCharacter()

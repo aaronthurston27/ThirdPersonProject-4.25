@@ -846,7 +846,7 @@ void ATPPPlayerCharacter::DoWallKick(const FHitResult& WallKickHitResult)
 	FVector DesiredMoveDirection = FVector::ZeroVector;
 	if (PC && !PC->GetDesiredMovementDirection().IsNearlyZero())
 	{
-		DesiredMoveDirection = PC->GetRelativeControllerMovementRotation().Vector();
+		DesiredMoveDirection = PC->GetControllerRelativeMovementRotation().Vector();
 	}
 	// Set a z of 1 so that we can kick with some vertical velocity.
 	DesiredMoveDirection.Z = 1.0f;
@@ -899,7 +899,7 @@ bool ATPPPlayerCharacter::CanAttachToWall(FHitResult& WallImpactResult, FVector&
 		return false;
 	}
 
-	const FVector WallClingDesiredDirection = PlayerController->GetRelativeControllerMovementRotation().Vector();
+	const FVector WallClingDesiredDirection = PlayerController->GetControllerRelativeMovementRotation().Vector();
 	const FVector StartLocation = GetActorLocation() - FVector(0.0f,0.0f,10.0f);
 	const FVector TraceEndLocation = StartLocation + (WallClingDesiredDirection * WallKickMaxDistance);
 
