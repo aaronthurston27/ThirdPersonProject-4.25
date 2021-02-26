@@ -59,7 +59,12 @@ void UTPP_SPM_WallRun::Tick(float DeltaTime)
 	if (OwningCharacter)
 	{
 		ATPPPlayerController* PC = OwningCharacter ? OwningCharacter->GetTPPPlayerController() : nullptr;
-		const FVector DesiredMovementDirection = PC ? PC->GetControllerRelativeDesiredMovementDirection() : FVector::ZeroVector;
+		const FVector DesiredMovementDirection = PC ? PC->GetDesiredMovementDirection() : FVector::ZeroVector;
+		if (DesiredMovementDirection.X <= 0.0f)
+		{
+			EndSpecialMove();
+			return;
+		}
 
 		UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
 		MovementComp->Velocity = FVector(0.0f, 0.0f, WallRunVerticalSpeed);
@@ -105,8 +110,9 @@ void UTPP_SPM_WallRun::OnWallRunDestinationReached()
 
 void UTPP_SPM_WallRun::EndSpecialMove_Implementation()
 {	
-	if (!bWasInterrupted)
+	if (!bWasInterrupted && OwningCharacter)
 	{
+		OwningCharacter->GetTPPMovementComponent()->SetMovementMode(EMovementMode::MOVE_Falling);
 		OwningCharacter->SetWallMovementState(EWallMovementState::None);
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::None);
 	}

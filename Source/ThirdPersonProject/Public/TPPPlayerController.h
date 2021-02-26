@@ -74,7 +74,7 @@ public:
 
 	/** Gets the rotation of desired movement relative to the player controller */
 	UFUNCTION(BlueprintPure)
-	FRotator GetRelativeControllerMovementRotation() const;
+	FRotator GetControllerRelativeMovementRotation() const;
 
 	/** Gets the desired movement direction relative to the rotation of the player controller. Returns zero vector if desired movement direction is zero. */
 	UFUNCTION(BlueprintPure)
