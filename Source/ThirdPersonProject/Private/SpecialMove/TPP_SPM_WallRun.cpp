@@ -59,8 +59,9 @@ void UTPP_SPM_WallRun::Tick(float DeltaTime)
 	if (OwningCharacter)
 	{
 		ATPPPlayerController* PC = OwningCharacter ? OwningCharacter->GetTPPPlayerController() : nullptr;
-		const FVector DesiredMovementDirection = PC ? PC->GetDesiredMovementDirection() : FVector::ZeroVector;
-		if (DesiredMovementDirection.X <= 0.0f)
+		const FVector DesiredMovementDirection = PC ? PC->GetControllerRelativeDesiredMovementDirection() : FVector::ZeroVector;
+		const float WallNormalDesiredMovementDot = FVector::DotProduct(DesiredMovementDirection, -TargetWallImpactResult.ImpactNormal);
+		if (WallNormalDesiredMovementDot <= .5f)
 		{
 			EndSpecialMove();
 			return;
