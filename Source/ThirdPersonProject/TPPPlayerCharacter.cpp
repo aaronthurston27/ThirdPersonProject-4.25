@@ -909,7 +909,7 @@ bool ATPPPlayerCharacter::CanAttachToWall(FHitResult& WallImpactResult, FVector&
 	//DrawDebugLine(GetWorld(), StartLocation, TraceEndLocation, FColor::Green, false, .8f, 0, .5f);
 	if (TraceResult.bBlockingHit && TraceResult.Actor.IsValid())
 	{
-		DrawDebugSphere(World, TraceResult.ImpactPoint, 10.0f, 5, FColor::Purple, false, 1.0f, 0, .8f);
+		//DrawDebugSphere(World, TraceResult.ImpactPoint, 10.0f, 5, FColor::Purple, false, 1.0f, 0, .8f);
 		//DrawDebugLine(World, TraceResult.ImpactPoint, TraceResult.ImpactPoint + (TraceResult.ImpactNormal * 30.0f), FColor::Purple, false, .8f, 0, .5f);
 
 		const float WallClingNormalDot = FVector::DotProduct(WallClingDesiredDirection, TraceResult.ImpactNormal);
@@ -962,8 +962,7 @@ bool ATPPPlayerCharacter::CanAttachToWall(FHitResult& WallImpactResult, FVector&
 			WallImpactResult = TraceResult;
 			AttachPoint = TargetAttachPoint;
 
-			DrawDebugSphere(World, SweepResult.ImpactPoint, 6.0f, 3, SphereColor, false, 1.5f, 0, .6f);
-			UE_LOG(LogTemp, Warning, TEXT("Wall height: %f"), WallHeightAbovePlayer);
+			//DrawDebugSphere(World, SweepResult.ImpactPoint, 6.0f, 3, SphereColor, false, 1.5f, 0, .6f);
 			WallLedgeHeight = WallHeightAbovePlayer;
 		}
 
@@ -986,7 +985,7 @@ bool ATPPPlayerCharacter::CanClimbUpLedge(const FHitResult& WallHitResult, const
 	CollisionCap.SetCapsule(CapsuleComp->GetUnscaledCapsuleRadius(), CapsuleComp->GetUnscaledCapsuleHalfHeight());
 	GetWorld()->SweepSingleByChannel(SweepResult, DesiredExitPoint, DesiredExitPoint, GetActorRotation().Quaternion(), ECollisionChannel::ECC_WorldStatic, CollisionCap, QueryParams);
 
-	DrawDebugCapsule(GetWorld(), DesiredExitPoint, CapsuleComp->GetUnscaledCapsuleHalfHeight(), CapsuleComp->GetUnscaledCapsuleRadius(), GetActorRotation().Quaternion(), SweepResult.bBlockingHit ? FColor::Red : FColor::Green, false, 1.0f, 0.0f, .8f);
+	//DrawDebugCapsule(GetWorld(), DesiredExitPoint, CapsuleComp->GetUnscaledCapsuleHalfHeight(), CapsuleComp->GetUnscaledCapsuleRadius(), GetActorRotation().Quaternion(), SweepResult.bBlockingHit ? FColor::Red : FColor::Green, false, 1.0f, 0.0f, .8f);
 	if (!SweepResult.bBlockingHit)
 	{
 		ExitPoint = DesiredExitPoint;
