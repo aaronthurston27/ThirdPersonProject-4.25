@@ -530,5 +530,9 @@ public:
 	void GetCurrentWallClimbProperties(FHitResult& TraceImpactResult, FVector& AttachPoint) const { TraceImpactResult = WallTraceImpactResult; AttachPoint = WallAttachPoint; }
 
 	float GetCachedLedgeHeight() const { return CachedLedgeHeight; }
+
+protected:
+
+	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
 };
 

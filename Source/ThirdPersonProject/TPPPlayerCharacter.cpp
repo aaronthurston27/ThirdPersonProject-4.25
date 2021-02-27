@@ -354,8 +354,6 @@ void ATPPPlayerCharacter::Landed(const FHitResult& HitResult)
 		MovementComponent->RotationRate = FRotator(0.0f, DefaultRotationRate, 0.0f);
 	}
 
-	bIsWallRunCooldownActive = false;
-
 	Super::Landed(HitResult);
 }
 
@@ -1012,4 +1010,15 @@ void ATPPPlayerCharacter::EndWallLedgeGrab()
 void ATPPPlayerCharacter::SetWallMovementState(EWallMovementState NewWallMovementState)
 {
 	WallMovementState = NewWallMovementState;
+}
+
+void ATPPPlayerCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
+{
+	Super::OnMovementModeChanged(PrevMovementMode, PreviousCustomMode);
+
+	const EMovementMode MovementMode = GetCharacterMovement()->MovementMode;
+	if (MovementMode == EMovementMode::MOVE_Walking)
+	{
+		bIsWallRunCooldownActive = false;
+	}
 }
