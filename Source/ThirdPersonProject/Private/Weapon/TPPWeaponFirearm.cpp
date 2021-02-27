@@ -10,6 +10,7 @@
 #include "TPPPlayerController.h"
 #include "DrawDebugHelpers.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 ATPPWeaponFirearm::ATPPWeaponFirearm()
 {
@@ -180,8 +181,8 @@ void ATPPWeaponFirearm::HitscanFire()
 	GetWorldTimerManager().ClearTimer(WeaponRecoilResetTimer);
 	GetWorldTimerManager().SetTimer(WeaponRecoilResetTimer, this, &ATPPWeaponFirearm::OnWeaponRecoilReset, .15f, false);
 
-	const FVector StartingLocation = PlayerCamera->GetComponentLocation();
-	const FVector FireDirection = PlayerCamera->GetForwardVector();
+	const FVector StartingLocation = PlayerController ? PlayerCamera->GetComponentLocation() : CharacterOwner->GetActorLocation();
+	const FVector FireDirection = PlayerController ? PlayerCamera->GetForwardVector() : CharacterOwner->GetControlRotation().Vector();
 	FVector WeaponInaccuracyVector = FireDirection;
 	ModifyAimVectorFromSpread(WeaponInaccuracyVector);
 
@@ -269,8 +270,10 @@ void ATPPWeaponFirearm::Equip()
 	Super::Equip();
 	
 	UAnimInstance* AnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
-	AnimInstance->OnMontageEnded.AddDynamic(this, &ATPPWeaponFirearm::OnMontageEnded);
-
+	if (AnimInstance)
+	{
+		AnimInstance->OnMontageEnded.AddDynamic(this, &ATPPWeaponFirearm::OnMontageEnded);
+	}
 	PrimaryActorTick.bCanEverTick = true;
 }
 
