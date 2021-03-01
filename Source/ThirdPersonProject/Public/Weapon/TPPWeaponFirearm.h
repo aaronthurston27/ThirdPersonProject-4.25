@@ -94,6 +94,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Audio")
 	USoundWave* WeaponFireSound;
 
+	/** Weapon trail effect to spawn after firing */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|FX")
+	UParticleSystem* WeaponTrailEffect = nullptr;
+
+	/** param name for trace target location */
+	UPROPERTY(EditDefaultsOnly, Category = Effects)
+	FName TrailTargetParam = FName(TEXT("BeamEnd"));
+
 protected:
 
 	/** Current firing mode */

@@ -10,6 +10,7 @@
 #include "TPPPlayerController.h"
 #include "DrawDebugHelpers.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 ATPPWeaponFirearm::ATPPWeaponFirearm()
@@ -197,7 +198,7 @@ void ATPPWeaponFirearm::HitscanFire()
 	QueryParams.AddIgnoredActor(this);
 
 	World->LineTraceMultiByChannel(TraceResults, StartingLocation, ActualEndLocation, ECollisionChannel::ECC_GameTraceChannel1, QueryParams);
-	const FVector EndDebugDrawLocation = TraceResults.Num() > 0 ? TraceResults[0].Location : ActualEndLocation;
+	FVector ParticleTrailEndLocation = ActualEndLocation;
 
 	if (TraceResults.Num() > 0)
 	{
@@ -209,6 +210,15 @@ void ATPPWeaponFirearm::HitscanFire()
 		PointDamage.DamageTypeClass = HitDamageClass;
 		PointDamage.HitInfo = HitTrace;
 		OnWeaponHit(HitTrace, PointDamage);
+		ParticleTrailEndLocation = HitTrace.ImpactPoint;
+	}
+
+	const FVector MuzzleLocation = WeaponMesh->GetSocketLocation("Muzzle");
+	UParticleSystemComponent * ParticleSystemComp = UGameplayStatics::SpawnEmitterAtLocation(World, WeaponTrailEffect, MuzzleLocation);
+	if (ParticleSystemComp)
+	{
+		
+		ParticleSystemComp->SetVectorParameter(TrailTargetParam, ParticleTrailEndLocation);
 	}
 }
 
