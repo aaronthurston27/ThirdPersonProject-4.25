@@ -4,6 +4,7 @@
 #include "SpecialMove/TPP_SPM_WallRun.h"
 #include "TPPPlayerController.h"
 #include "TPPMovementComponent.h"
+#include "TPPPlayerController.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 
 UTPP_SPM_WallRun::UTPP_SPM_WallRun(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -50,6 +51,12 @@ void UTPP_SPM_WallRun::BeginSpecialMove_Implementation()
 	MovementComp->SetMovementMode(EMovementMode::MOVE_Flying);
 
 	OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
+
+	ATPPPlayerController* PC = OwningCharacter->GetTPPPlayerController();
+	if (PC)
+	{
+		CachedDirectionInput = PC->GetDesiredMovementDirection();
+	}
 }
 
 void UTPP_SPM_WallRun::Tick(float DeltaTime)
@@ -59,12 +66,21 @@ void UTPP_SPM_WallRun::Tick(float DeltaTime)
 	if (OwningCharacter)
 	{
 		ATPPPlayerController* PC = OwningCharacter ? OwningCharacter->GetTPPPlayerController() : nullptr;
-		const FVector DesiredMovementDirection = PC ? PC->GetControllerRelativeDesiredMovementDirection() : FVector::ZeroVector;
-		const float WallNormalDesiredMovementDot = FVector::DotProduct(DesiredMovementDirection, -TargetWallImpactResult.ImpactNormal);
-		if (WallNormalDesiredMovementDot <= .5f)
+		const FVector CurrentDesiredMovementDirection = PC ? PC->GetDesiredMovementDirection() : FVector::ZeroVector;
+		const bool bChangedXInput = CachedDirectionInput.X != 0.0f && CachedDirectionInput.X != CurrentDesiredMovementDirection.X;
+		const bool bChangedYInput = CachedDirectionInput.Y != 0.0f && CachedDirectionInput.Y != CurrentDesiredMovementDirection.Y;
+		if (bChangedXInput || (bChangedYInput && CurrentDesiredMovementDirection.X <= 0.0f))
 		{
-			EndSpecialMove();
-			return;
+			TimeSinceInputChanged += DeltaTime;
+			if (TimeSinceInputChanged >= InputDelay)
+			{
+				EndSpecialMove();
+				return;
+			}
+		}
+		else
+		{
+			TimeSinceInputChanged = 0.0f;
 		}
 
 		UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();

@@ -175,7 +175,7 @@ void ATPPPlayerController::TurnRate(float value)
 
 void ATPPPlayerController::OnJumpPressed()
 {
-	CachedOwnerCharacter->TryJump();
+	CachedOwnerCharacter->AttemptToJump();
 }
 
 void ATPPPlayerController::OnJumpReleased()

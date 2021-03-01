@@ -27,7 +27,10 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UTPP_SPM_LedgeClimb> WallRunToLedgeClimbClass;
 
-public:
+	UPROPERTY(EditDefaultsOnly)
+	float InputDelay = .8f;
+
+protected:
 
 	UPROPERTY(Transient)
 	FHitResult TargetWallImpactResult;
@@ -40,6 +43,12 @@ public:
 
 	UPROPERTY(Transient)
 	FVector WallRunDestinationPoint = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	FVector CachedDirectionInput = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	float TimeSinceInputChanged = 0.0f;
 
 public:
 

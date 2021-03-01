@@ -103,75 +103,80 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 		CurrentSpecialMove->Tick(DeltaTime);
 	}
 
-	if (bWantsToAim && !bIsAiming && CanPlayerBeginAiming())
+	if (IsCharacterAlive())
 	{
-		StartAiming();
-	}
-	else if (!bWantsToAim && bIsAiming)
-	{
-		StopAiming();
-	}
-
-	if (bWantsToSprint && !bIsSprinting && CanSprint())
-	{
-		BeginSprint();
-	}
-	else if (bIsSprinting && !bWantsToSprint)
-	{
-		StopSprint();
-	}
-
-	if (GetCharacterMovement()->IsFalling() && !CurrentSpecialMove && WallMovementState == EWallMovementState::None)
-	{
-		FHitResult WallImpactResult;
-		FVector TargetAttachPoint;
-		float WallLedgeHeight = 0.0f;
-		const bool bCanAttachToWall = CanAttachToWall(WallImpactResult, TargetAttachPoint, WallLedgeHeight);
-
-		if (bCanAttachToWall && !WallImpactResult.ImpactNormal.IsNearlyZero())
+		if (bWantsToAim && !bIsAiming && CanPlayerBeginAiming())
 		{
-			if (WallLedgeHeight <= AutoLedgeClimbMaxHeight && AutoLedgeClimbClass)
+			StartAiming();
+		}
+		else if (!bWantsToAim && bIsAiming)
+		{
+			StopAiming();
+		}
+
+		if (bWantsToSprint && !bIsSprinting && CanSprint())
+		{
+			BeginSprint();
+		}
+		else if (bIsSprinting && !bWantsToSprint)
+		{
+			StopSprint();
+		}
+
+		if (GetCharacterMovement()->IsFalling() && !CurrentSpecialMove && WallMovementState == EWallMovementState::None)
+		{
+			FHitResult WallImpactResult;
+			FVector TargetAttachPoint;
+			float WallLedgeHeight = 0.0f;
+			const bool bCanAttachToWall = CanAttachToWall(WallImpactResult, TargetAttachPoint, WallLedgeHeight);
+
+			if (bCanAttachToWall && !WallImpactResult.ImpactNormal.IsNearlyZero())
 			{
-				FVector ClimbExitPoint;
-				const bool bCanClimbLedge = CanClimbUpLedge(WallImpactResult, TargetAttachPoint, ClimbExitPoint);
-				UTPP_SPM_LedgeClimb* LedgeClimbSPM = bCanClimbLedge ? NewObject<UTPP_SPM_LedgeClimb>(this, AutoLedgeClimbClass) : nullptr;
-				if (LedgeClimbSPM)
+				WallTraceImpactResult = WallImpactResult;
+
+				if (WallLedgeHeight <= AutoLedgeClimbMaxHeight && AutoLedgeClimbClass)
 				{
-					LedgeClimbSPM->SetClimbProperties(WallImpactResult, TargetAttachPoint, ClimbExitPoint);
-					ExecuteSpecialMove(LedgeClimbSPM);
+					FVector ClimbExitPoint;
+					const bool bCanClimbLedge = CanClimbUpLedge(WallImpactResult, TargetAttachPoint, ClimbExitPoint);
+					UTPP_SPM_LedgeClimb* LedgeClimbSPM = bCanClimbLedge ? NewObject<UTPP_SPM_LedgeClimb>(this, AutoLedgeClimbClass) : nullptr;
+					if (LedgeClimbSPM)
+					{
+						LedgeClimbSPM->SetClimbProperties(WallImpactResult, TargetAttachPoint, ClimbExitPoint);
+						ExecuteSpecialMove(LedgeClimbSPM);
+					}
 				}
-			}
-			else if (WallLedgeHeight > AutoLedgeClimbMaxHeight && WallLedgeHeight <= LedgeGrabMaxHeight && LedgeHangClass)
-			{
-				UTPP_SPM_LedgeHang* LedgeHangSPM = NewObject<UTPP_SPM_LedgeHang>(this, LedgeHangClass);
-				if (LedgeHangSPM)
+				else if (WallLedgeHeight > AutoLedgeClimbMaxHeight && WallLedgeHeight <= LedgeGrabMaxHeight && LedgeHangClass)
 				{
-					LedgeHangSPM->SetLedgeHangProperties(WallImpactResult, TargetAttachPoint);
-					ExecuteSpecialMove(LedgeHangSPM);
+					UTPP_SPM_LedgeHang* LedgeHangSPM = NewObject<UTPP_SPM_LedgeHang>(this, LedgeHangClass);
+					if (LedgeHangSPM)
+					{
+						LedgeHangSPM->SetLedgeHangProperties(WallImpactResult, TargetAttachPoint);
+						ExecuteSpecialMove(LedgeHangSPM);
+					}
 				}
-			}
-			// Just start a regular wall run if wall is to high to climb or grab ledge
-			else if (WallRunClass && !bIsWallRunCooldownActive)
-			{
-				UTPP_SPM_WallRun* WallRunSPM = NewObject<UTPP_SPM_WallRun>(this, WallRunClass);
-				if (WallRunSPM)
+				// Just start a regular wall run if wall is to high to climb or grab ledge
+				else if (WallRunClass && !bIsWallRunCooldownActive)
 				{
-					WallRunSPM->SetWallRunProperties(WallImpactResult, TargetAttachPoint, WallLedgeHeight);
-					ExecuteSpecialMove(WallRunSPM);
-					bIsWallRunCooldownActive = CurrentSpecialMove != nullptr;
+					UTPP_SPM_WallRun* WallRunSPM = NewObject<UTPP_SPM_WallRun>(this, WallRunClass);
+					if (WallRunSPM)
+					{
+						WallRunSPM->SetWallRunProperties(WallImpactResult, TargetAttachPoint, WallLedgeHeight);
+						ExecuteSpecialMove(WallRunSPM);
+						bIsWallRunCooldownActive = CurrentSpecialMove != nullptr;
+					}
 				}
 			}
 		}
-	}
-	else if (WallMovementState != EWallMovementState::None)
-	{
-		switch (WallMovementState)
+		else if (WallMovementState != EWallMovementState::None)
 		{
+			switch (WallMovementState)
+			{
 			case EWallMovementState::WallLedgeHang:
 				break;
 			case EWallMovementState::WallRunUp:
 				break;
 
+			}
 		}
 	}
 }
@@ -321,19 +326,24 @@ bool ATPPPlayerCharacter::CanJumpInternal_Implementation() const
 	return MovementComponent && !MovementComponent->IsSliding() && !bBlockedBySpecialMove && Super::CanJumpInternal_Implementation();
 }
 
-void ATPPPlayerCharacter::TryJump()
+void ATPPPlayerCharacter::AttemptToJump()
 {
 	UCharacterMovementComponent* MovementComp = GetCharacterMovement();
 	if (MovementComp->IsMovingOnGround())
 	{
 		Jump();
 	}
-	else if (WallMovementState == EWallMovementState::WallLedgeHang)
+	else
 	{
-		UTPP_SPM_LedgeHang* LedgeHangSPM = Cast<UTPP_SPM_LedgeHang>(CurrentSpecialMove);
-		if (LedgeHangSPM)
+		const bool bCanExecuteWallKick = WallMovementState == EWallMovementState::WallLedgeHang || WallMovementState == EWallMovementState::WallRunUp;
+		if (bCanExecuteWallKick)
 		{
-			// TODO: Jump from ledge.
+			if (CurrentSpecialMove)
+			{
+				CurrentSpecialMove->EndSpecialMove();
+			}
+
+			DoWallKick(WallTraceImpactResult);
 		}
 	}
 }
@@ -653,10 +663,16 @@ void ATPPPlayerCharacter::OnPlayerHealthDepleted()
 
 void ATPPPlayerCharacter::BecomeDefeated()
 {
+	ATPPPlayerController* PC = GetTPPPlayerController();
+	if (PC)
+	{
+		DisableInput(PC);
+	}
+
 	const UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
 	if (MovementComp && MovementComp->IsMovingOnGround() && DeathSpecialMove)
 	{
-		ExecuteSpecialMoveByClass(DeathSpecialMove);
+		ExecuteSpecialMoveByClass(DeathSpecialMove, true);
 	}
 	else
 	{
@@ -831,31 +847,26 @@ bool ATPPPlayerCharacter::CanPlayerWallKick(FHitResult& OutKickoffHitResult) con
 	return false;
 }
 
-FVector ATPPPlayerCharacter::CalculateWallKickDirection(const FHitResult& HitResult) const
-{
-	return HitResult.ImpactNormal;
-}
-
 void ATPPPlayerCharacter::DoWallKick(const FHitResult& WallKickHitResult)
 {
-	FVector WallKickOffDirection = CalculateWallKickDirection(WallKickHitResult);
-
-	const ATPPPlayerController* PC = GetTPPPlayerController();
-	FVector DesiredMoveDirection = FVector::ZeroVector;
-	if (PC && !PC->GetDesiredMovementDirection().IsNearlyZero())
+	if (WallKickHitResult.ImpactNormal.IsNearlyZero() || !WallKickHitResult.Actor.IsValid())
 	{
-		DesiredMoveDirection = PC->GetControllerRelativeMovementRotation().Vector();
+		return;
 	}
-	// Set a z of 1 so that we can kick with some vertical velocity.
-	DesiredMoveDirection.Z = 1.0f;
 
-	const FVector FinalWallKickDirection = WallKickOffDirection + DesiredMoveDirection;
+	if (CurrentSpecialMove)
+	{
+		CurrentSpecialMove->EndSpecialMove();
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Direction: %s"), *WallKickHitResult.ImpactNormal.ToString());
+	// Set z to 1 for scaling by min kick off velocity so that we have some vertical gain.
+	const FVector WallKickOffDirection = WallKickHitResult.ImpactNormal + FVector::UpVector;
 
 	UCharacterMovementComponent* MovementComp = GetCharacterMovement();
 	if (MovementComp)
 	{
 		// Set the new velocity.
-		const FVector WallKickVelocity = FinalWallKickDirection * MinWallKickoffVelocity;
+		const FVector WallKickVelocity = WallKickOffDirection * MinWallKickoffVelocity;
 		const FVector NewVelocity = FVector(MovementComp->Velocity.X + WallKickVelocity.X,
 			MovementComp->Velocity.Y + WallKickVelocity.Y,
 			WallKickVelocity.Z);
@@ -993,17 +1004,6 @@ bool ATPPPlayerCharacter::CanClimbUpLedge(const FHitResult& WallHitResult, const
 	}
 
 	return false;
-}
-
-void ATPPPlayerCharacter::EndWallLedgeGrab()
-{
-	WallMovementState = EWallMovementState::None;
-
-	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
-	if (MovementComp)
-	{
-		MovementComp->SetMovementMode(EMovementMode::MOVE_Falling);
-	}
 }
 
 void ATPPPlayerCharacter::SetWallMovementState(EWallMovementState NewWallMovementState)

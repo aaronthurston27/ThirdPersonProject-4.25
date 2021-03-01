@@ -229,7 +229,7 @@ public:
 
 	virtual void Landed(const FHitResult& LandHit) override;
 
-	void TryJump();
+	void AttemptToJump();
 
 public:
 
@@ -341,6 +341,7 @@ public:
 	void TryToReloadWeapon();
 
 	/** Set player's intent to begin aiming */
+	UFUNCTION(BlueprintCallable)
 	void SetPlayerWantsToAim(bool bIsTryingToAim);
 
 	/** Returns true if the player is trying to aim */
@@ -428,8 +429,7 @@ protected:
 
 	bool CanPlayerWallKick(FHitResult& OutKickoffHitResult) const;
 
-	/** Calculates the actual vector that player will travel when kicking the wall */
-	FVector CalculateWallKickDirection(const FHitResult& WallHitResutlt) const;
+public:
 
 	void DoWallKick(const FHitResult& WallKickHitResult);
 
@@ -515,12 +515,6 @@ protected:
 	UPROPERTY(Transient)
 	FVector WallAttachPoint;
 
-	/** Cached ledge height of the wall that the player is trying to attach to */
-	UPROPERTY(Transient)
-	float CachedLedgeHeight = -1.0f;
-
-	void EndWallLedgeGrab();
-
 public:
 
 	EWallMovementState GetWallMovementState() const { return WallMovementState; }
@@ -528,8 +522,6 @@ public:
 	void SetWallMovementState(EWallMovementState NewMovementState);
 
 	void GetCurrentWallClimbProperties(FHitResult& TraceImpactResult, FVector& AttachPoint) const { TraceImpactResult = WallTraceImpactResult; AttachPoint = WallAttachPoint; }
-
-	float GetCachedLedgeHeight() const { return CachedLedgeHeight; }
 
 protected:
 
