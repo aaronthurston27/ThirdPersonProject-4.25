@@ -20,6 +20,12 @@ public:
 	UTPPAbilityBase();
 	~UTPPAbilityBase();
 
+public:
+
+	/** Ability cooldown time */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (UIMin = "0.0", ClampMin = "0.0"))
+	float AbilityCooldownTime = 0.0f;
+
 public: 
 
 	virtual bool ActivateAbility();
@@ -31,9 +37,9 @@ public:
 	void SetOwningCharacter(ATPPPlayerCharacter* Character);
 
 	UFUNCTION(BlueprintNativeEvent)
-	bool CanActivate();
+	bool CanActivate() const;
 
-	virtual bool CanActivate_Implementation();
+	virtual bool CanActivate_Implementation() const;
 
 protected:
 
@@ -41,7 +47,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	ATPPPlayerCharacter* OwningCharacter;
 
-	/** True if the ability is playing and has reached the sweet spot for cancelling */
-	UPROPERTY(Transient)
-	bool bIsInSweetSpot;
+	/** Time since ability was last used. Used for tracking cooldown. */
+	UPROPERTY(Transient, BlueprintReadOnly)
+	float LastAbilityUseTime = 0.0f;
 };

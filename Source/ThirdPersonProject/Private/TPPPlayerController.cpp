@@ -140,7 +140,8 @@ void ATPPPlayerController::MoveForward(float Value)
 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
 	DesiredMovementDirection.X = Value;
-	if (bIsMovementInputEnabled)
+	APawn* TargetPawn = GetPawn();
+	if (bIsMovementInputEnabled && TargetPawn)
 	{
 		GetPawn()->AddMovementInput(Direction, Value);
 	}
@@ -157,7 +158,8 @@ void ATPPPlayerController::MoveRight(float Value)
 	DesiredMovementDirection.Y = Value;
 
 	// add movement in that direction
-	if (bIsMovementInputEnabled)
+	APawn* TargetPawn = GetPawn();
+	if (bIsMovementInputEnabled && TargetPawn)
 	{
 		GetPawn()->AddMovementInput(Direction, Value);
 	}
