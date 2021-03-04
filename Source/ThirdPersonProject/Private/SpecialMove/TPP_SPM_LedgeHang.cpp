@@ -50,11 +50,7 @@ void UTPP_SPM_LedgeHang::Tick(float DeltaTime)
 	{
 		const FVector ControllerRelativeMovementDirection = PC->GetControllerRelativeMovementRotation().Vector();
 		const float DesiredDirectionWallDot = FVector::DotProduct(ControllerRelativeMovementDirection, ImpactResult.ImpactNormal);
-		if (DesiredMovementDirection.X < 0.0f)
-		{
-			EndSpecialMove();
-		}
-		else if (-DesiredDirectionWallDot >= HangToClimbInputDot && LedgeClimbClass)
+		if (-DesiredDirectionWallDot >= HangToClimbInputDot && LedgeClimbClass)
 		{
 			FVector ClimbExitPoint;
 			const bool bCanClimbCurrentLedge = OwningCharacter->CanClimbUpLedge(ImpactResult, TargetAttachPoint, ClimbExitPoint);
@@ -67,6 +63,10 @@ void UTPP_SPM_LedgeHang::Tick(float DeltaTime)
 					OwningCharacter->ExecuteSpecialMove(LedgeClimbSPM, true);
 				}
 			}
+		}
+		else if (-DesiredDirectionWallDot <= -EndHangInputDot)
+		{
+			EndSpecialMove();
 		}
 	}
 
