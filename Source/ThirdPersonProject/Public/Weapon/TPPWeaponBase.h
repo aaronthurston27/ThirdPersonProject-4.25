@@ -9,7 +9,7 @@
 #include "TPPWeaponBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponFired);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloaded);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponAmmoUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponDamageActor, const FHitResult&, HitResult, const float, DamageApplied);
 
 class ATPPPlayerCharacter;
@@ -181,7 +181,7 @@ protected:
 public:
 
 	UPROPERTY(BlueprintAssignable)
-	FOnWeaponReloaded OnWeaponReloaded;
+	FOnWeaponAmmoUpdated OnWeaponAmmoUpdated;
 
 	/** Evaluate whether or not this weapon can be reloaded */
 	UFUNCTION(BlueprintNativeEvent)

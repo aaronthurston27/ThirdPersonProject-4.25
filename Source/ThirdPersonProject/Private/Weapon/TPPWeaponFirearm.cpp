@@ -244,11 +244,6 @@ void ATPPWeaponFirearm::ReloadActual()
 {
 	const int32 AmmoToChamber = FMath::Min(CurrentAmmoPool, MaxLoadedAmmo) - LoadedAmmo;
 	ModifyWeaponAmmo(AmmoToChamber, -AmmoToChamber);
-	
-	if (OnWeaponReloaded.IsBound())
-	{
-		OnWeaponReloaded.Broadcast();
-	}
 }
 
 void ATPPWeaponFirearm::InterruptReload()
