@@ -17,8 +17,13 @@ class ATPPPlayerCharacter;
 UENUM(BlueprintType)
 enum class EWeaponAmmoType : uint8
 {
+	None,
 	Rifle,
-	Melee,
+	Pistol,
+	Shotgun,
+	Launcher,
+	Battery,
+	Thrown,
 	MAX UMETA(Hidden)
 };
 
@@ -107,7 +112,7 @@ protected:
 	UPROPERTY(Transient)
 	bool bIsWeaponReady = true;
 
-protected:
+public:
 
 	/** Modifes ammo count of weapon */
 	UFUNCTION(BlueprintCallable)
@@ -205,7 +210,7 @@ protected:
 public:
 
 	UFUNCTION(BlueprintCallable)
-	int32 GetPooledAmmoCount() const { return CurrentAmmoPool; }
+	int32 GetCurrentPooledAmmo() const { return CurrentAmmoPool; }
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetLoadedAmmoCount() const { return LoadedAmmo; }
