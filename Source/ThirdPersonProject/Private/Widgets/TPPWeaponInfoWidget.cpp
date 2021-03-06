@@ -35,7 +35,7 @@ void UTPPWeaponInfoWidget::AssignWeaponDelegates(ATPPWeaponBase* Weapon)
 	if (Weapon)
 	{
 		Weapon->OnWeaponFired.AddDynamic(this, &UTPPWeaponInfoWidget::OnWeaponFired);
-		Weapon->OnWeaponAmmoUpdated.AddDynamic(this, &UTPPWeaponInfoWidget::OnWeaponReloaded);
+		Weapon->OnWeaponReloaded.AddDynamic(this, &UTPPWeaponInfoWidget::OnWeaponReloaded);
 	}
 }
 
@@ -44,6 +44,6 @@ void UTPPWeaponInfoWidget::RemoveWeaponDelegates(ATPPWeaponBase* Weapon)
 	if (Weapon)
 	{
 		Weapon->OnWeaponFired.RemoveDynamic(this, &UTPPWeaponInfoWidget::OnWeaponFired);
-		Weapon->OnWeaponAmmoUpdated.RemoveDynamic(this, &UTPPWeaponInfoWidget::OnWeaponReloaded);
+		Weapon->OnWeaponReloaded.RemoveDynamic(this, &UTPPWeaponInfoWidget::OnWeaponReloaded);
 	}
 }

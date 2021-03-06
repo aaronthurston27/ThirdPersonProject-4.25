@@ -72,6 +72,6 @@ void ATPPPickupBase::Activate()
 void ATPPPickupBase::Deactivate()
 {
 	bIsActive = false;
-	OnActiveStateChanged(false);
+	OnActiveStateChanged(true);
 }
 
