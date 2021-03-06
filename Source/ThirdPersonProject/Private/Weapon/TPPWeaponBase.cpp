@@ -58,6 +58,12 @@ void ATPPWeaponBase::ModifyWeaponAmmo(const int32 ChamberAmmoChange, const int32
 {
 	LoadedAmmo = FMath::Clamp(LoadedAmmo + ChamberAmmoChange, 0, MaxLoadedAmmo);
 	CurrentAmmoPool = FMath::Clamp(CurrentAmmoPool + PooledAmmoChange, 0, MaxAmmoInPool);
+
+	if (OnWeaponAmmoUpdated.IsBound())
+	{
+		OnWeaponAmmoUpdated.Broadcast();
+	}
+
 }
 
 void ATPPWeaponBase::SetWeaponReady(bool bWeaponReady)
@@ -101,9 +107,9 @@ void ATPPWeaponBase::ReloadActual()
 	const int32 AmmoToChamber = FMath::Min(CurrentAmmoPool, MaxLoadedAmmo);
 	ModifyWeaponAmmo(AmmoToChamber, -AmmoToChamber);
 
-	if (OnWeaponReloaded.IsBound())
+	if (OnWeaponAmmoUpdated.IsBound())
 	{
-		OnWeaponReloaded.Broadcast();
+		OnWeaponAmmoUpdated.Broadcast();
 	}
 }
 
