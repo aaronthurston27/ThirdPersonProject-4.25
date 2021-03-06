@@ -66,12 +66,16 @@ void ATPPPickupBase::OnRespawnTimerExpired()
 void ATPPPickupBase::Activate()
 {
 	bIsActive = true;
+	SetActorHiddenInGame(false);
+	SetActorEnableCollision(true);
 	OnActiveStateChanged(true);
 }
 
 void ATPPPickupBase::Deactivate()
 {
 	bIsActive = false;
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
 	OnActiveStateChanged(false);
 }
 

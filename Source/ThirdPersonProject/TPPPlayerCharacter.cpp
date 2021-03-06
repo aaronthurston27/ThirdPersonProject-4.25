@@ -643,7 +643,7 @@ float ATPPPlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEv
 	{
 		HealthDamaged =  HealthComponent->DamageHealth(Damage, DamageEvent, DamageCauser);
 
-		if (HealthDamaged > 0 && HealthComponent->GetHealth() > 0)
+		if (HealthDamaged > 0 && HealthComponent->GetHealth() > 0 && !CurrentSpecialMove)
 		{
 			UAnimMontage* HitReactMontage = bWasHitInHead ? HitReactions.HeadHitReactMontage : HitReactions.UpperBodyHitReactMontage;
 			if (HitReactMontage)
