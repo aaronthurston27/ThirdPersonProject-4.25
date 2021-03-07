@@ -174,9 +174,13 @@ protected:
 protected:
 
 	UFUNCTION(BlueprintNativeEvent)
-	void OnWeaponHit(const FHitResult& HitResult, FDamageEvent& DamageEvent);
+	void OnWeaponHit(const FHitResult& HitResult, const float DamageApplied);
 
-	void OnWeaponHit_Implementation(const FHitResult& HitResult, FDamageEvent& DamageEvent);
+	void OnWeaponHit_Implementation(const FHitResult& HitResult, const float DamageApplied);
+
+	void ApplyWeaponPointDamage(const FHitResult& HitResult, const FVector& StartingLocation);
+
+	void ApplyWeaponBlastDamage(const FVector& BlastCenter);
 
 public:
 

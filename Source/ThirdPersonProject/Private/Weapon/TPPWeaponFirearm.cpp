@@ -203,14 +203,10 @@ void ATPPWeaponFirearm::HitscanFire()
 	if (TraceResults.Num() > 0)
 	{
 		const FHitResult HitTrace = TraceResults[0];
+		ParticleTrailEndLocation = HitTrace.ImpactPoint;
 		//DrawDebugSphere(World, HitTrace.Location, 15.f, 2, FColor::Green, false, 3.5f, 0, 1.5f);
 
-		FPointDamageEvent PointDamage;
-		PointDamage.ShotDirection = StartingLocation;
-		PointDamage.DamageTypeClass = HitDamageClass;
-		PointDamage.HitInfo = HitTrace;
-		OnWeaponHit(HitTrace, PointDamage);
-		ParticleTrailEndLocation = HitTrace.ImpactPoint;
+		ApplyWeaponPointDamage(HitTrace, StartingLocation);
 	}
 
 	const FVector MuzzleLocation = WeaponMesh->GetSocketLocation("Muzzle");

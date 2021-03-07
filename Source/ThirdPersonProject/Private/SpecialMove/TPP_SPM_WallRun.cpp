@@ -108,8 +108,8 @@ void UTPP_SPM_WallRun::OnWallRunDestinationReached()
 	}
 
 	FHitResult ImpactResult;
-	FVector AttachPoint;
-	float LedgeHeight;
+	FVector AttachPoint = FVector::ZeroVector;
+	float LedgeHeight = 0.0f;
 	const bool bCanGrabLedge = OwningCharacter ? OwningCharacter->CanAttachToWall(ImpactResult, AttachPoint, LedgeHeight) : false;
 
 	if (bCanGrabLedge && LedgeHeight > OwningCharacter->AutoLedgeClimbMaxHeight && LedgeHeight <= OwningCharacter->LedgeGrabMaxHeight && OwningCharacter->LedgeHangClass)

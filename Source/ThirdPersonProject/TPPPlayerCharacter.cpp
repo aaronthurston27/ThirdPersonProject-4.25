@@ -618,9 +618,9 @@ void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutpu
 
 float ATPPPlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	UTPPDamageType* DamageType = Cast<UTPPDamageType>(DamageEvent.DamageTypeClass.GetDefaultObject());
+	Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 
-	if (!CanBeDamaged() || !IsCharacterAlive() || !DamageType)
+	if (!CanBeDamaged() || !IsCharacterAlive())
 	{
 		return 0.0f;
 	}
@@ -629,11 +629,10 @@ float ATPPPlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEv
 	if (EventInstigator && DamageCauser)
 	{
 		static const FName HeadBoneName = FName(TEXT("head"));
-		const FPointDamageEvent* PointDamage = static_cast<const FPointDamageEvent*>(&DamageEvent);
-		if (PointDamage && PointDamage->HitInfo.BoneName == HeadBoneName)
+		if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 		{
-			bWasHitInHead = true;
-			Damage *= DamageType->DamageHeadshotMultiplier;
+			FPointDamageEvent* const PointDamageEvent = (FPointDamageEvent*)&DamageEvent;
+			bWasHitInHead = PointDamageEvent->HitInfo.BoneName.IsEqual(HeadBoneName);
 		}
 	}
 

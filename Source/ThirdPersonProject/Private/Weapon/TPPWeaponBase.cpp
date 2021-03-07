@@ -6,6 +6,8 @@
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 #include "Components/DecalComponent.h"
 #include "TPPHUD.h"
+#include "Kismet/GameplayStatics.h"
+#include "TPPDamageType.h"
 #include "Weapon/TPPWeaponBase.h"
 
 // Sets default values
@@ -118,34 +120,49 @@ void ATPPWeaponBase::InterruptReload()
 
 }
 
-void ATPPWeaponBase::OnWeaponHit_Implementation(const FHitResult& HitResult, FDamageEvent& DamageEvent)
+void ATPPWeaponBase::OnWeaponHit_Implementation(const FHitResult& HitResult, const float DamageApplied)
+{
+	if (DamageApplied > 0.0f)
+	{
+		ATPPHUD* TPPHUD = CharacterOwner->GetCharacterHUD();
+		if (TPPHUD)
+		{
+			TPPHUD->OnWeaponHit(this, HitResult, DamageApplied);
+		}
+	}
+}
+
+void ATPPWeaponBase::ApplyWeaponPointDamage(const FHitResult& HitResult, const FVector& StartingLocation)
 {
 	if (HitResult.bBlockingHit && HitResult.Component != nullptr && CharacterOwner)
 	{
 		ATPPPlayerCharacter* CharacterHit = Cast<ATPPPlayerCharacter>(HitResult.Actor.Get());
-		if (CharacterHit && CharacterHit->IsCharacterAlive())
+		UTPPDamageType* DamageType = Cast<UTPPDamageType>(HitDamageClass.GetDefaultObject());
+		if (CharacterHit && CharacterHit->IsCharacterAlive() && DamageType)
 		{
-			FPointDamageEvent* PointDamage = static_cast<FPointDamageEvent*>(&DamageEvent);
-			const float DamageApplied = CharacterHit->TakeDamage(BaseWeaponDamage, DamageEvent, CharacterOwner->GetController(), CharacterOwner);
-			if (DamageApplied > 0.0f)
+			float BaseDamage = BaseWeaponDamage;
+			if (HitResult.BoneName.IsEqual("head"))
 			{
-				ATPPHUD* TPPHUD = CharacterOwner->GetCharacterHUD();
-				if (TPPHUD)
-				{
-					TPPHUD->OnWeaponHit(this, HitResult, DamageApplied);
-				}
+				BaseDamage *= DamageType->DamageHeadshotMultiplier;
 			}
+			const float DamageApplied = UGameplayStatics::ApplyPointDamage(CharacterHit, BaseDamage, StartingLocation.GetSafeNormal(), HitResult, CharacterOwner->GetController(), CharacterOwner, HitDamageClass);
+			OnWeaponHit(HitResult, DamageApplied);
 		}
 		else if (!CharacterHit)
 		{
 			UPrimitiveComponent* PrimitiveComp = HitResult.Component.Get();
-			UDecalComponent* Hmm = UTPPBlueprintFunctionLibrary::SpawnDecalWithParameters(PrimitiveComp, ImpactProperties.WeaponHitMaterial, 10.0f, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), ImpactProperties.WeaponHitDecalSize);
-			if (Hmm)
+			UDecalComponent* SpawnedDecal = UTPPBlueprintFunctionLibrary::SpawnDecalWithParameters(PrimitiveComp, ImpactProperties.WeaponHitMaterial, 10.0f, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), ImpactProperties.WeaponHitDecalSize);
+			if (SpawnedDecal)
 			{
-				Hmm->Activate();
+				SpawnedDecal->Activate();
 			}
 		}
 	}
+}
+
+void ATPPWeaponBase::ApplyWeaponBlastDamage(const FVector& BlastCenter)
+{
+
 }
 
 
