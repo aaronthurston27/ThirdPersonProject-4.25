@@ -60,7 +60,17 @@ protected:
 	UPROPERTY(Transient)
 	TMap<EPlayerInputAction, float> KeyHoldTimers;
 
+	/** Replicated control rotation. Updated on the server for use on client machines */
+	UPROPERTY(Replicated)
+	FRotator ReplicatedControlRotation = FRotator::ZeroRotator;
+
+	UFUNCTION(Server)
+	void UpdateReplicatedControlRotation(const FRotator& NewRotation);
+
 protected:
+
+	// Required network scaffolding
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	/** Ticks all key hold timers */
 	void TickKeyHoldTimers(float DeltaTime);
@@ -82,7 +92,13 @@ public:
 
 	virtual void SetupInputComponent() override;
 
+	FRotator GetReplicatedControlRotation() const { return ReplicatedControlRotation; }
+
 protected:
+
+	virtual void AddYawInput(float value) override;
+
+	virtual void AddPitchInput(float Value) override;
 
 	UFUNCTION()
 	void MoveForward(float value);

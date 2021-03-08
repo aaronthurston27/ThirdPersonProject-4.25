@@ -6,10 +6,16 @@
 #include "TPPAimProperties.h"
 #include "TPPGameInstance.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
+#include "Net/UnrealNetwork.h"
 
 ATPPPlayerController::ATPPPlayerController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	bIsMovementInputEnabled = true;
+}
+
+void ATPPPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	DOREPLIFETIME(ATPPPlayerController, ReplicatedControlRotation);
 }
 
 void ATPPPlayerController::BeginPlay()
@@ -51,25 +57,10 @@ void ATPPPlayerController::SetupInputComponent()
 void ATPPPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	TickKeyHoldTimers(DeltaTime);
 }
 
 void ATPPPlayerController::TickKeyHoldTimers(float DeltaTime)
 {
-	TMap<EPlayerInputAction, float> HoldTimerCopy = KeyHoldTimers;
-	for (auto& HoldTimer : HoldTimerCopy)
-	{
-		const float TimerValue = HoldTimer.Value - DeltaTime;
-		if (TimerValue <= 0.0f)
-		{
-			KeyHoldTimers.Remove(HoldTimer.Key);
-		}
-		else
-		{
-			KeyHoldTimers[HoldTimer.Key] = TimerValue;
-		}
-	}
 }
 
 void ATPPPlayerController::UpdateRotation(float DeltaTime)
@@ -81,7 +72,7 @@ void ATPPPlayerController::UpdateRotation(float DeltaTime)
 
 	// Calculate Delta to be applied on ViewRotation
 	FRotator DeltaRot(RotationInput);
-	
+
 	const UTPPGameInstance* GameInstance = UTPPGameInstance::Get();
 	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
 
@@ -128,6 +119,27 @@ void ATPPPlayerController::UpdateRotation(float DeltaTime)
 	{
 		P->FaceRotation(ViewRotation, DeltaTime);
 	}
+
+	if (IsLocalController())
+	{
+		UpdateReplicatedControlRotation(ViewRotation);
+	}
+}
+
+void ATPPPlayerController::UpdateReplicatedControlRotation_Implementation(const FRotator& NewRotation)
+{
+	ReplicatedControlRotation = NewRotation;
+}
+
+
+void ATPPPlayerController::AddYawInput(float value)
+{
+	Super::AddYawInput(value);
+}
+
+void ATPPPlayerController::AddPitchInput(float value)
+{
+	Super::AddPitchInput(value);
 }
 
 void ATPPPlayerController::MoveForward(float Value)

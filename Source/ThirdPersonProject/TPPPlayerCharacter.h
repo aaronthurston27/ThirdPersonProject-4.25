@@ -180,9 +180,15 @@ public:
 
 	void SetWantsToSprint(bool bPlayerWantsToSprint);
 
-	void BeginSprint();
+	UFUNCTION(Server, Reliable)
+	void ServerBeginSprint();
 
-	void StopSprint();
+	void ServerBeginSprint_Implementation();
+
+	UFUNCTION(Server, Reliable)
+	void ServerStopSprint();
+
+	void ServerStopSprint_Implementation();
 
 	UFUNCTION()
 	void OnRep_IsSprinting();
@@ -345,18 +351,26 @@ public:
 	bool CanPlayerBeginAiming() const;
 
 	/** Updates the speed of the character relative to the controller's rotation. */
+	UFUNCTION(Server,Reliable)
 	void UpdateControllerRelativeMovementSpeed();
 
+	void UpdateControllerRelativeMovementSpeed_Implementation();
+
 	/** Updates aim rotation delta for animation aim offset */
+	UFUNCTION(Server,Reliable)
 	void UpdateAimRotationDelta();
+
+	void UpdateAimRotationDelta_Implementation();
 
 protected:
 
 	/** Have the player start aiming down the sights */
-	void BeginAiming();
+	UFUNCTION(Server, Reliable)
+	void ServerBeginAiming();
 
 	/** Stops the player from aiming down the sights */
-	void StopAiming();
+	UFUNCTION(Server, Reliable)
+	void ServerStopAiming();
 
 	UFUNCTION()
 	void OnRep_IsAiming();

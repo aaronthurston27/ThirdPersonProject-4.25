@@ -76,7 +76,7 @@ void ATPPPlayerCharacter::BeginPlay()
 		MovementComp->RotationRate = FRotator(0.f, DefaultRotationRate, 0.f);
 	}
 
-	StopAiming();
+	ServerStopAiming();
 
 	ATPPPlayerController* PlayerController = GetTPPPlayerController();
 	if (PlayerController)
@@ -121,22 +121,28 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 
 	if (IsCharacterAlive())
 	{
-		if (bWantsToAim && !bIsAiming && CanPlayerBeginAiming())
+		if (IsLocallyControlled())
 		{
-			BeginAiming();
-		}
-		else if (!bWantsToAim && bIsAiming)
-		{
-			StopAiming();
-		}
+			if (bWantsToAim && !bIsAiming && CanPlayerBeginAiming())
+			{
+				ServerBeginAiming();
+			}
+			else if (!bWantsToAim && bIsAiming)
+			{
+				ServerStopAiming();
+			}
 
-		if (bWantsToSprint && !bIsSprinting && CanSprint())
-		{
-			BeginSprint();
-		}
-		else if (bIsSprinting && !bWantsToSprint)
-		{
-			StopSprint();
+			if (bWantsToSprint && !bIsSprinting && CanSprint())
+			{
+				ServerBeginSprint();
+			}
+			else if (bIsSprinting && !bWantsToSprint)
+			{
+				ServerStopSprint();
+			}
+
+			UpdateAimRotationDelta();
+			UpdateControllerRelativeMovementSpeed();
 		}
 
 		if (GetCharacterMovement()->IsFalling() && !CurrentSpecialMove && WallMovementState == EWallMovementState::None)
@@ -195,9 +201,6 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 			}
 		}
 	}
-
-	UpdateAimRotationDelta();
-	UpdateControllerRelativeMovementSpeed();
 }
 
 void ATPPPlayerCharacter::SetWantsToSprint(bool bPlayerWantsToSprint)
@@ -205,7 +208,7 @@ void ATPPPlayerCharacter::SetWantsToSprint(bool bPlayerWantsToSprint)
 	bWantsToSprint = bPlayerWantsToSprint;
 }
 
-void ATPPPlayerCharacter::BeginSprint()
+void ATPPPlayerCharacter::ServerBeginSprint_Implementation()
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
@@ -214,7 +217,7 @@ void ATPPPlayerCharacter::BeginSprint()
 	}
 }
 
-void ATPPPlayerCharacter::StopSprint()
+void ATPPPlayerCharacter::ServerStopSprint_Implementation()
 {
 	if (GetLocalRole() == ROLE_Authority)
 	{
@@ -296,7 +299,7 @@ void ATPPPlayerCharacter::UnCrouch(bool bIsClientSimulation)
 void ATPPPlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
 {
 	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
-	StopSprint();
+	ServerStopSprint();
 }
 
 void ATPPPlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
@@ -385,26 +388,20 @@ ATPPPlayerController* ATPPPlayerCharacter::GetTPPPlayerController() const
 	return Cast<ATPPPlayerController>(GetController());
 }
 
-void ATPPPlayerCharacter::UpdateAimRotationDelta()
+void ATPPPlayerCharacter::UpdateAimRotationDelta_Implementation()
 {
-	if (HasAuthority())
-	{
-		const bool bSpecialMoveDisablesAiming = CurrentSpecialMove ? CurrentSpecialMove->bDisablesAiming : false;
-		AimRotationDelta = bSpecialMoveDisablesAiming ? FRotator::ZeroRotator : (GetControlRotation() - GetActorRotation());
-	}
+	const bool bSpecialMoveDisablesAiming = CurrentSpecialMove ? CurrentSpecialMove->bDisablesAiming : false;
+	AimRotationDelta = bSpecialMoveDisablesAiming ? FRotator::ZeroRotator : (GetTPPPlayerController()->GetReplicatedControlRotation() - GetActorRotation());
 }
 
-void ATPPPlayerCharacter::UpdateControllerRelativeMovementSpeed()
+void ATPPPlayerCharacter::UpdateControllerRelativeMovementSpeed_Implementation()
 {
-	if (HasAuthority())
-	{
-		const FRotator YawRotation(0, GetControlRotation().Yaw, 0);
-		const FVector Velocity = GetVelocity();
+	const FRotator YawRotation(0, GetTPPPlayerController()->GetReplicatedControlRotation().Yaw, 0);
+	const FVector Velocity = GetVelocity();
 
-		const float ForwardSpeed = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X) | Velocity;
-		const float RightSpeed = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y) | Velocity;
-		ControllerRelativeMovementSpeed = FVector(ForwardSpeed, RightSpeed, 0.0f);
-	}
+	const float ForwardSpeed = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X) | Velocity;
+	const float RightSpeed = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y) | Velocity;
+	ControllerRelativeMovementSpeed = FVector(ForwardSpeed, RightSpeed, 0.0f);
 }
 
 void ATPPPlayerCharacter::ResetCameraToPlayerRotation()
@@ -457,7 +454,7 @@ void ATPPPlayerCharacter::OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove)
 		CurrentSpecialMove = nullptr;
 		if (DoesPlayerWantToAim() && CanPlayerBeginAiming())
 		{
-			BeginAiming();
+			ServerBeginAiming();
 		}
 	}
 }
@@ -496,7 +493,7 @@ void ATPPPlayerCharacter::TryToFireWeapon()
 
 	if (IsSprinting())
 	{
-		StopSprint();
+		ServerStopSprint();
 	}
 
 	CurrentWeapon->FireWeapon();
@@ -513,22 +510,16 @@ bool ATPPPlayerCharacter::CanPlayerBeginAiming() const
 	return CurrentWeapon && (MovementComp && !MovementComp->IsSliding()) && (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesAiming);
 }
 
-void ATPPPlayerCharacter::BeginAiming()
+void ATPPPlayerCharacter::ServerBeginAiming_Implementation()
 {
-	if (GetLocalRole() == ROLE_Authority)
-	{
-		bIsAiming = true;
-		OnRep_IsAiming();
-	}
+	bIsAiming = true;
+	OnRep_IsAiming();
 }
 
-void ATPPPlayerCharacter::StopAiming()
+void ATPPPlayerCharacter::ServerStopAiming_Implementation()
 {
-	if (GetLocalRole() == ROLE_Authority)
-	{
-		bIsAiming = false;
-		OnRep_IsAiming();
-	}
+	bIsAiming = false;
+	OnRep_IsAiming();
 }
 
 void ATPPPlayerCharacter::OnRep_IsAiming()
@@ -538,7 +529,7 @@ void ATPPPlayerCharacter::OnRep_IsAiming()
 	if (bIsAiming)
 	{
 		FollowCamera->SetRelativeLocation(ADSCameraOffset);
-		StopSprint();
+		ServerStopSprint();
 
 		MovementComp->bOrientRotationToMovement = false;
 		if (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesCharacterRotation)
