@@ -1,5 +1,3 @@
-
-
 // Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "TPPPlayerCharacter.h"
@@ -23,6 +21,7 @@
 #include "DrawDebugHelpers.h"
 #include "TPPBlueprintFunctionLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Net/UnrealNetwork.h"
 
 ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitialzer) :
 	Super(ObjectInitialzer.SetDefaultSubobjectClass<UTPPMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -94,6 +93,23 @@ void ATPPPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 }
 
+void ATPPPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ATPPPlayerCharacter, bIsSprinting);
+	DOREPLIFETIME(ATPPPlayerCharacter, bIsAiming);
+
+	DOREPLIFETIME(ATPPPlayerCharacter, CurrentAnimationBlendSlot);
+
+	DOREPLIFETIME(ATPPPlayerCharacter, DefaultRotationRate);
+	DOREPLIFETIME(ATPPPlayerCharacter, SprintRotationRate);
+	DOREPLIFETIME(ATPPPlayerCharacter, ADSRotationRate);
+
+	DOREPLIFETIME(ATPPPlayerCharacter, AimRotationDelta);
+	DOREPLIFETIME(ATPPPlayerCharacter, ControllerRelativeMovementSpeed);
+}
+
 void ATPPPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -107,7 +123,7 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 	{
 		if (bWantsToAim && !bIsAiming && CanPlayerBeginAiming())
 		{
-			StartAiming();
+			BeginAiming();
 		}
 		else if (!bWantsToAim && bIsAiming)
 		{
@@ -179,21 +195,9 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 			}
 		}
 	}
-}
 
-void ATPPPlayerCharacter::OnResetVR()
-{
-	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
-}
-
-void ATPPPlayerCharacter::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
-{
-	Jump();
-}
-
-void ATPPPlayerCharacter::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
-{
-	StopJumping();
+	UpdateAimRotationDelta();
+	UpdateControllerRelativeMovementSpeed();
 }
 
 void ATPPPlayerCharacter::SetWantsToSprint(bool bPlayerWantsToSprint)
@@ -203,21 +207,35 @@ void ATPPPlayerCharacter::SetWantsToSprint(bool bPlayerWantsToSprint)
 
 void ATPPPlayerCharacter::BeginSprint()
 {
-	bIsSprinting = true;
-	UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement();
-	if (CharacterMovementComponent)
+	if (GetLocalRole() == ROLE_Authority)
 	{
-		CharacterMovementComponent->RotationRate = FRotator(0.f, SprintRotationRate, 0.f);
+		bIsSprinting = true;
+		OnRep_IsSprinting();
 	}
 }
 
 void ATPPPlayerCharacter::StopSprint()
 {
-	bIsSprinting = false;
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		bIsSprinting = false;
+		OnRep_IsSprinting();
+	}
+}
+
+void ATPPPlayerCharacter::OnRep_IsSprinting()
+{
 	UCharacterMovementComponent* CharacterMovementComponent = GetCharacterMovement();
 	if (CharacterMovementComponent)
 	{
-		CharacterMovementComponent->RotationRate = FRotator(0.f, DefaultRotationRate, 0.f);
+		if (bIsSprinting)
+		{
+			CharacterMovementComponent->RotationRate = FRotator(0.f, SprintRotationRate, 0.f);
+		}
+		else
+		{
+			CharacterMovementComponent->RotationRate = FRotator(0.f, DefaultRotationRate, 0.f);
+		}
 	}
 }
 
@@ -227,16 +245,6 @@ bool ATPPPlayerCharacter::CanSprint() const
 	const UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
 	const ATPPPlayerController* PC = GetTPPPlayerController();
 	return !bBlockedBySpecialMove && !bIsAiming && MovementComp->IsMovingOnGround() && !bIsCrouched && PC->GetInputAxisValue(FName("FireWeapon")) < PC->FireWeaponThreshold;
-}
-
-void ATPPPlayerCharacter::TryToDash()
-{
-
-}
-
-bool ATPPPlayerCharacter::CanDash() const
-{
-	return false;
 }
 
 bool ATPPPlayerCharacter::CanCrouch() const
@@ -377,10 +385,26 @@ ATPPPlayerController* ATPPPlayerCharacter::GetTPPPlayerController() const
 	return Cast<ATPPPlayerController>(GetController());
 }
 
-FRotator ATPPPlayerCharacter::GetAimRotationDelta() const
+void ATPPPlayerCharacter::UpdateAimRotationDelta()
 {
-	const bool bSpecialMoveDisablesAiming = CurrentSpecialMove ? CurrentSpecialMove->bDisablesAiming : false;
-	return bSpecialMoveDisablesAiming ? FRotator::ZeroRotator :(GetControlRotation() - GetActorRotation());
+	if (HasAuthority())
+	{
+		const bool bSpecialMoveDisablesAiming = CurrentSpecialMove ? CurrentSpecialMove->bDisablesAiming : false;
+		AimRotationDelta = bSpecialMoveDisablesAiming ? FRotator::ZeroRotator : (GetControlRotation() - GetActorRotation());
+	}
+}
+
+void ATPPPlayerCharacter::UpdateControllerRelativeMovementSpeed()
+{
+	if (HasAuthority())
+	{
+		const FRotator YawRotation(0, GetControlRotation().Yaw, 0);
+		const FVector Velocity = GetVelocity();
+
+		const float ForwardSpeed = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X) | Velocity;
+		const float RightSpeed = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y) | Velocity;
+		ControllerRelativeMovementSpeed = FVector(ForwardSpeed, RightSpeed, 0.0f);
+	}
 }
 
 void ATPPPlayerCharacter::ResetCameraToPlayerRotation()
@@ -433,7 +457,7 @@ void ATPPPlayerCharacter::OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove)
 		CurrentSpecialMove = nullptr;
 		if (DoesPlayerWantToAim() && CanPlayerBeginAiming())
 		{
-			StartAiming();
+			BeginAiming();
 		}
 	}
 }
@@ -489,37 +513,52 @@ bool ATPPPlayerCharacter::CanPlayerBeginAiming() const
 	return CurrentWeapon && (MovementComp && !MovementComp->IsSliding()) && (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesAiming);
 }
 
-void ATPPPlayerCharacter::StartAiming()
+void ATPPPlayerCharacter::BeginAiming()
 {
-	bIsAiming = true;
-	FollowCamera->SetRelativeLocation(ADSCameraOffset);
-	StopSprint();
-	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
-	if (MovementComp)
+	if (GetLocalRole() == ROLE_Authority)
 	{
+		bIsAiming = true;
+		OnRep_IsAiming();
+	}
+}
+
+void ATPPPlayerCharacter::StopAiming()
+{
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		bIsAiming = false;
+		OnRep_IsAiming();
+	}
+}
+
+void ATPPPlayerCharacter::OnRep_IsAiming()
+{
+	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+
+	if (bIsAiming)
+	{
+		FollowCamera->SetRelativeLocation(ADSCameraOffset);
+		StopSprint();
+
 		MovementComp->bOrientRotationToMovement = false;
 		if (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesCharacterRotation)
 		{
 			MovementComp->bUseControllerDesiredRotation = true;
 		}
 		MovementComp->RotationRate = FRotator(0.0f, ADSRotationRate, 0.0f);
-		
-	}
-	CameraBoom->TargetArmLength = ADSCameraArmLength;
-}
 
-void ATPPPlayerCharacter::StopAiming()
-{
-	bIsAiming = false;
-	FollowCamera->SetRelativeLocation(HipAimCameraOffset);
-	bUseControllerRotationYaw = false;
-	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
-	if (MovementComp)
+		CameraBoom->TargetArmLength = ADSCameraArmLength;
+	}
+	else
 	{
+		FollowCamera->SetRelativeLocation(HipAimCameraOffset);
+		bUseControllerRotationYaw = false;
+
 		MovementComp->bOrientRotationToMovement = true;
 		MovementComp->RotationRate = FRotator(0.0f, DefaultRotationRate, 0.0f);
+
+		CameraBoom->TargetArmLength = HipAimCameraArmLength;
 	}
-	CameraBoom->TargetArmLength = HipAimCameraArmLength;
 }
 
 void ATPPPlayerCharacter::TryToReloadWeapon()
@@ -545,16 +584,6 @@ void ATPPPlayerCharacter::TryToReloadWeapon()
 	{
 		WeaponFirearm->StartWeaponReload();
 	}
-}
-
-FVector ATPPPlayerCharacter::GetControllerRelativeMovementSpeed() const
-{
-	const FRotator YawRotation(0, GetControlRotation().Yaw, 0);
-	const FVector Velocity = GetVelocity();
-
-	const float ForwardSpeed = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X) | Velocity;
-	const float RightSpeed = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y) | Velocity;
-	return FVector(ForwardSpeed, RightSpeed, 0.0f);
 }
 
 void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutput LogOutput)

@@ -119,7 +119,7 @@ class ATPPPlayerCharacter : public ACharacter
 	UPROPERTY(EditDefaultsOnly, Category = Camera)
 	float ADSCameraArmLength = 100.f;
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	EAnimationBlendSlot CurrentAnimationBlendSlot;
 
 protected:
@@ -142,24 +142,18 @@ public:
 
 protected:
 
-	/** Resets HMD orientation in VR. */
-	void OnResetVR();
-
-	/** Handler for when a touch input begins. */
-	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
-
-	/** Handler for when a touch input stops. */
-	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
+	// Required network scaffolding
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
+	UPROPERTY(Replicated, EditDefaultsOnly, Category = "Character|Movement")
 	float DefaultRotationRate;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
+	UPROPERTY(Replicated, EditDefaultsOnly, Category = "Character|Movement")
 	float SprintRotationRate;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement")
+	UPROPERTY(Replicated, EditDefaultsOnly, Category = "Character|Movement")
 	float ADSRotationRate;
 
 public:
@@ -173,7 +167,7 @@ protected:
 	UPROPERTY(Transient)
 	bool bWantsToSprint = false;
 
-	UPROPERTY(Transient)
+	UPROPERTY(ReplicatedUsing = OnRep_IsSprinting, Transient)
 	bool bIsSprinting = false;
 
 public:
@@ -190,17 +184,8 @@ public:
 
 	void StopSprint();
 
-public:
-
-	UFUNCTION(BlueprintPure)
-	bool CanDash() const;
-
-	void TryToDash();
-
-protected:
-
-	UPROPERTY(Transient)
-	bool bIsDashing = false;
+	UFUNCTION()
+	void OnRep_IsSprinting();
 
 public:
 
@@ -238,9 +223,6 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	ATPPPlayerController* GetTPPPlayerController() const;
-
-	UFUNCTION(BlueprintPure)
-	FRotator GetAimRotationDelta() const;
 
 protected:
 
@@ -318,8 +300,14 @@ protected:
 	bool bWantsToAim = false;
 
 	/** True if the player has begun aiming down the sights. Can be delayed by special moves */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_IsAiming)
 	bool bIsAiming = false;
+
+	UPROPERTY(Transient, Replicated, BlueprintReadOnly)
+	FRotator AimRotationDelta = FRotator::ZeroRotator;
+
+	UPROPERTY(Transient, Replicated, BlueprintReadOnly)
+	FVector ControllerRelativeMovementSpeed = FVector::ZeroVector;
 
 public:
 
@@ -356,17 +344,22 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool CanPlayerBeginAiming() const;
 
-	/** Gets the speed of the character relative to the controller's rotation*/
-	UFUNCTION(BlueprintPure)
-	FVector GetControllerRelativeMovementSpeed() const;
+	/** Updates the speed of the character relative to the controller's rotation. */
+	void UpdateControllerRelativeMovementSpeed();
+
+	/** Updates aim rotation delta for animation aim offset */
+	void UpdateAimRotationDelta();
 
 protected:
 
 	/** Have the player start aiming down the sights */
-	void StartAiming();
+	void BeginAiming();
 
 	/** Stops the player from aiming down the sights */
 	void StopAiming();
+
+	UFUNCTION()
+	void OnRep_IsAiming();
 
 public:
 
