@@ -20,6 +20,7 @@ public:
 
 	UTPPSpecialMove(const FObjectInitializer& ObjectInitializer);
 	~UTPPSpecialMove();
+	virtual bool IsSupportedForNetworking() const override{ return true; }
 
 public:
 
@@ -62,7 +63,7 @@ public:
 
 protected:
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	bool bIsWeaponUseDisabled = false;
 
 public:
@@ -72,41 +73,53 @@ public:
 
 public:
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	ATPPPlayerCharacter* OwningCharacter = nullptr;
 
 protected:
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	float TimeRemaining = 0.f;
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	bool bWasInterrupted = false;
 
 public:
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(NetMulticast, Reliable)
 	void BeginSpecialMove();
 
 	virtual void BeginSpecialMove_Implementation();
 
+	UFUNCTION(Client, Reliable)
+	virtual void Client_SpecialMoveStarted();
+
 	virtual void Tick(float DeltaSeconds);
 
 	/** To be called if the move should end prematurely. Sets flag internally that should bypass some ending logic */
+	UFUNCTION(Server, Reliable)
 	void InterruptSpecialMove();
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(Server, Reliable)
 	void EndSpecialMove();
 
 	virtual void EndSpecialMove_Implementation();
 
 protected:
 
+	// Required network scaffolding
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION(NetMulticast, Reliable)
 	void PlayAnimMontage(UAnimMontage* Montage, bool bShouldEndAllMontages = false);
 
+	UFUNCTION(NetMulticast, Reliable)
 	void EndAnimMontage(UAnimMontage* MontageToEnd);
 
 	void SetAnimRootMotionMode(TEnumAsByte<ERootMotionMode::Type> NewMode);
+
+	UFUNCTION(Client, Reliable)
+	void OnRootMotionModeSet();
 
 	UFUNCTION()
 	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);

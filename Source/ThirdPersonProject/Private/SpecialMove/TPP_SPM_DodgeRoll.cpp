@@ -21,6 +21,13 @@ UTPP_SPM_DodgeRoll::UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializ
 	RollRampDownSpeed = 150.f;
 }
 
+void UTPP_SPM_DodgeRoll::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UTPP_SPM_DodgeRoll, CachedRollDirection);
+	DOREPLIFETIME(UTPP_SPM_DodgeRoll, CharacterMovementComponent);
+}
+
 void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 {
 	Super::BeginSpecialMove_Implementation();

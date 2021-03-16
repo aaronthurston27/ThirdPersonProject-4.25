@@ -22,6 +22,7 @@
 #include "TPPBlueprintFunctionLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Engine/ActorChannel.h"
 
 ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitialzer) :
 	Super(ObjectInitialzer.SetDefaultSubobjectClass<UTPPMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -58,25 +59,33 @@ ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitial
 	ADSRotationRate = 200.0f;
 	
 	PrimaryActorTick.bCanEverTick = true;
+
+	bReplicates = true;
 }
 
 void ATPPPlayerCharacter::BeginPlay()
 {
-	CurrentAnimationBlendSlot = EAnimationBlendSlot::None;
+	Super::BeginPlay();
 
-	CurrentAbility = MovementAbilityClass ? NewObject<UTPPAbilityBase>(this, MovementAbilityClass) : nullptr;
-	if (CurrentAbility)
+	if (HasAuthority())
 	{
-		CurrentAbility->SetOwningCharacter(this);
-	}
+		CurrentAnimationBlendSlot = EAnimationBlendSlot::None;
 
-	UCharacterMovementComponent* MovementComp = GetTPPMovementComponent();
-	if (MovementComp)
-	{
-		MovementComp->RotationRate = FRotator(0.f, DefaultRotationRate, 0.f);
-	}
+		UCharacterMovementComponent* MovementComp = GetTPPMovementComponent();
+		if (MovementComp)
+		{
+			MovementComp->RotationRate = FRotator(0.f, DefaultRotationRate, 0.f);
+		}
 
-	ServerStopAiming();
+		CurrentAbility = MovementAbilityClass ? NewObject<UTPPAbilityBase>(this, MovementAbilityClass) : nullptr;
+		if (CurrentAbility)
+		{
+			CurrentAbility->SetOwningCharacter(this);
+		}
+		OnRep_CurrentAbility();
+
+		ServerStopAiming();
+	}
 
 	ATPPPlayerController* PlayerController = GetTPPPlayerController();
 	if (PlayerController)
@@ -88,9 +97,9 @@ void ATPPPlayerCharacter::BeginPlay()
 		}
 	}
 
-	HealthComponent->HealthDepleted.AddDynamic(this, &ATPPPlayerCharacter::OnPlayerHealthDepleted);
+	OnRep_CurrentAbility();
 
-	Super::BeginPlay();
+	HealthComponent->HealthDepleted.AddDynamic(this, &ATPPPlayerCharacter::OnPlayerHealthDepleted);
 }
 
 void ATPPPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -108,6 +117,19 @@ void ATPPPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 	DOREPLIFETIME(ATPPPlayerCharacter, AimRotationDelta);
 	DOREPLIFETIME(ATPPPlayerCharacter, ControllerRelativeMovementSpeed);
+
+	DOREPLIFETIME(ATPPPlayerCharacter, CurrentAbility);
+	DOREPLIFETIME(ATPPPlayerCharacter, CurrentSpecialMove);
+}
+
+bool ATPPPlayerCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool bWroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	bWroteSomething |= Channel->ReplicateSubobject(CurrentSpecialMove, *Bunch, *RepFlags);
+	bWroteSomething |= Channel->ReplicateSubobject(CurrentAbility, *Bunch, *RepFlags);
+	
+	return bWroteSomething;
 }
 
 void ATPPPlayerCharacter::Tick(float DeltaTime)
@@ -121,7 +143,7 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 
 	if (IsCharacterAlive())
 	{
-		if (IsLocallyControlled())
+		if (GetLocalRole() == ENetRole::ROLE_AutonomousProxy)
 		{
 			if (bWantsToAim && !bIsAiming && CanPlayerBeginAiming())
 			{
@@ -413,9 +435,22 @@ void ATPPPlayerCharacter::ResetCameraToPlayerRotation()
 	Controller->SetControlRotation(IntendedRotation);
 }
 
-void ATPPPlayerCharacter::BeginMovementAbility()
+void ATPPPlayerCharacter::TryActivateAbility()
 {
-	if (CurrentAbility && CurrentAbility->CanActivate() && !CurrentSpecialMove)
+	if (!CurrentSpecialMove && CurrentAbility && CurrentAbility->CanActivate())
+	{
+		ServerBeginMovementAbility();
+	}
+}
+
+bool ATPPPlayerCharacter::ServerBeginMovementAbility_Validate()
+{
+	return true;
+}
+
+void ATPPPlayerCharacter::ServerBeginMovementAbility_Implementation()
+{
+	if (CurrentAbility && !CurrentSpecialMove)
 	{
 		CurrentAbility->ActivateAbility();
 	}
@@ -433,7 +468,12 @@ void ATPPPlayerCharacter::ExecuteSpecialMoveByClass(TSubclassOf<UTPPSpecialMove>
 	}
 }
 
-void ATPPPlayerCharacter::ExecuteSpecialMove(UTPPSpecialMove* SpecialMove, bool bShouldInterruptCurrentMove)
+bool ATPPPlayerCharacter::ExecuteSpecialMove_Validate(UTPPSpecialMove* SpecialMove, bool bShouldInterruptCurrentMove)
+{
+	return true;
+}
+
+void ATPPPlayerCharacter::ExecuteSpecialMove_Implementation(UTPPSpecialMove* SpecialMove, bool bShouldInterruptCurrentMove)
 {
 	if (SpecialMove && !CurrentSpecialMove || bShouldInterruptCurrentMove)
 	{
@@ -443,16 +483,43 @@ void ATPPPlayerCharacter::ExecuteSpecialMove(UTPPSpecialMove* SpecialMove, bool 
 		}
 		CurrentSpecialMove = SpecialMove;
 		CurrentSpecialMove->OwningCharacter = this;
+		OnRep_SpecialMove();
 		CurrentSpecialMove->BeginSpecialMove();
 	}
 }
 
-void ATPPPlayerCharacter::OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove)
+void ATPPPlayerCharacter::OnRep_SpecialMove()
 {
+	if (CurrentSpecialMove)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Testing"));
+	}
+}
+
+void ATPPPlayerCharacter::OnRep_CurrentAbility()
+{
+	if (CurrentAbility)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Testing2: %d"), GetLocalRole());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("kasnmd"));
+	}
+}
+
+void ATPPPlayerCharacter::OnSpecialMoveEnded_Implementation(UTPPSpecialMove* SpecialMove)
+{
+	bool bOldSpecialMoveEnded = false;
 	if (SpecialMove == CurrentSpecialMove)
 	{
+		bOldSpecialMoveEnded = true;
 		CurrentSpecialMove = nullptr;
-		if (DoesPlayerWantToAim() && CanPlayerBeginAiming())
+	}
+
+	if (IsLocallyControlled())
+	{
+		if (bOldSpecialMoveEnded && DoesPlayerWantToAim() && CanPlayerBeginAiming())
 		{
 			ServerBeginAiming();
 		}
@@ -461,7 +528,16 @@ void ATPPPlayerCharacter::OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove)
 
 void ATPPPlayerCharacter::SetAnimationBlendSlot(const EAnimationBlendSlot NewSlot)
 {
-	CurrentAnimationBlendSlot = NewSlot;
+	if (HasAuthority())
+	{
+		CurrentAnimationBlendSlot = NewSlot;
+		OnRep_AnimationBlendSlot();
+	}
+}
+
+void ATPPPlayerCharacter::OnRep_AnimationBlendSlot()
+{
+
 }
 
 void ATPPPlayerCharacter::EquipWeapon(ATPPWeaponBase* NewEquippedWeapon)

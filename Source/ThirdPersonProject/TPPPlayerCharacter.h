@@ -119,7 +119,7 @@ class ATPPPlayerCharacter : public ACharacter
 	UPROPERTY(EditDefaultsOnly, Category = Camera)
 	float ADSCameraArmLength = 100.f;
 
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_AnimationBlendSlot)
 	EAnimationBlendSlot CurrentAnimationBlendSlot;
 
 protected:
@@ -143,7 +143,9 @@ public:
 protected:
 
 	// Required network scaffolding
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual bool ReplicateSubobjects(UActorChannel* channel, FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 
 public:
 
@@ -155,12 +157,6 @@ public:
 
 	UPROPERTY(Replicated, EditDefaultsOnly, Category = "Character|Movement")
 	float ADSRotationRate;
-
-public:
-
-	/** Ability to activate for special movement key */
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UTPPAbilityBase> MovementAbilityClass;
 
 protected:
 
@@ -233,16 +229,25 @@ public:
 protected:
 
 	/** Ability being used */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_CurrentAbility)
 	UTPPAbilityBase* CurrentAbility;
 
 	/** Current special move to track */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_SpecialMove)
 	UTPPSpecialMove* CurrentSpecialMove;
 
 public:
 
-	void BeginMovementAbility();
+	/** Ability to activate for special movement key */
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UTPPAbilityBase> MovementAbilityClass;
+
+public:
+
+	void TryActivateAbility();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerBeginMovementAbility();
 
 	/** Gets current special move */
 	UFUNCTION(BlueprintPure)
@@ -252,6 +257,10 @@ public:
 	UFUNCTION(BlueprintPure)
 	UTPPAbilityBase* GetCurrentAbility() const { return CurrentAbility;  }
 
+	UFUNCTION()
+	void OnRep_CurrentAbility();
+
+	UFUNCTION(NetMulticast, Reliable)
 	void OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove);
 
 public:
@@ -259,8 +268,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ExecuteSpecialMoveByClass(TSubclassOf<UTPPSpecialMove> SpecialMoveClass, bool bShouldInterrupCurrentMove = false);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Server, Reliable, WithValidation)
 	void ExecuteSpecialMove(UTPPSpecialMove* SpecialMove, bool bShouldInterruptCurrentMove = false);
+
+protected:
+
+	UFUNCTION()
+	void OnRep_SpecialMove();
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -278,6 +292,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ResetCameraToPlayerRotation();
+
+protected:
+
+	UFUNCTION()
+	void OnRep_AnimationBlendSlot();
 
 private:
 
@@ -298,7 +317,7 @@ public:
 protected:
 
 	/** Currently equipped weapon */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	ATPPWeaponBase* CurrentWeapon = nullptr;
 
 	/** True if the player intends to aim down the sights when able */

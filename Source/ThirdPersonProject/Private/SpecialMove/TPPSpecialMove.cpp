@@ -4,6 +4,7 @@
 #include "SpecialMove/TPPSpecialMove.h"
 #include "TPPPlayerController.h"
 #include "Weapon/TPPWeaponBase.h"
+#include "Net/UnrealNetwork.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 
 UTPPSpecialMove::UTPPSpecialMove(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) 
@@ -18,15 +19,28 @@ UTPPSpecialMove::~UTPPSpecialMove()
 
 void UTPPSpecialMove::Tick(float DeltaSeconds)
 {
-	if (bDurationBased)
+	if (OwningCharacter && OwningCharacter->HasAuthority())
 	{
-		TimeRemaining -= DeltaSeconds;
-
-		if (TimeRemaining <= 0.0f)
+		if (bDurationBased)
 		{
-			OnDurationExceeded();
+			TimeRemaining -= DeltaSeconds;
+
+			if (TimeRemaining <= 0.0f)
+			{
+				OnDurationExceeded();
+			}
 		}
 	}
+}
+
+void UTPPSpecialMove::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTPPSpecialMove, bIsWeaponUseDisabled);
+	DOREPLIFETIME(UTPPSpecialMove, OwningCharacter);
+	DOREPLIFETIME(UTPPSpecialMove, TimeRemaining);
+	DOREPLIFETIME(UTPPSpecialMove, bWasInterrupted);
 }
 
 void UTPPSpecialMove::BeginSpecialMove_Implementation()
@@ -60,6 +74,13 @@ void UTPPSpecialMove::BeginSpecialMove_Implementation()
 	}
 
 	bIsWeaponUseDisabled = bDisablesWeaponUseOnStart;
+
+	Client_SpecialMoveStarted();
+}
+
+void UTPPSpecialMove::Client_SpecialMoveStarted_Implementation()
+{
+
 }
 
 void UTPPSpecialMove::OnDurationExceeded_Implementation()
@@ -92,13 +113,13 @@ void UTPPSpecialMove::EndSpecialMove_Implementation()
 	OwningCharacter = nullptr;
 }
 
-void UTPPSpecialMove::InterruptSpecialMove()
+void UTPPSpecialMove::InterruptSpecialMove_Implementation()
 {
 	bWasInterrupted = true;
 	EndSpecialMove();
 }
 
-void UTPPSpecialMove::PlayAnimMontage(UAnimMontage* Montage, bool bShouldEndAllMontages)
+void UTPPSpecialMove::PlayAnimMontage_Implementation(UAnimMontage* Montage, bool bShouldEndAllMontages)
 {
 	if (Montage && OwningCharacter)
 	{
@@ -110,7 +131,7 @@ void UTPPSpecialMove::PlayAnimMontage(UAnimMontage* Montage, bool bShouldEndAllM
 	}
 }
 
-void UTPPSpecialMove::EndAnimMontage(UAnimMontage* MontageToEnd)
+void UTPPSpecialMove::EndAnimMontage_Implementation(UAnimMontage* MontageToEnd)
 {
 	if (MontageToEnd && OwningCharacter)
 	{
@@ -129,7 +150,13 @@ void UTPPSpecialMove::SetAnimRootMotionMode(TEnumAsByte<ERootMotionMode::Type> N
 	if (AnimInstance)
 	{
 		AnimInstance->SetRootMotionMode(NewMode);
+		OnRootMotionModeSet();
 	}
+}
+
+void UTPPSpecialMove::OnRootMotionModeSet_Implementation()
+{
+
 }
 
 void UTPPSpecialMove::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)

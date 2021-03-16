@@ -219,7 +219,7 @@ void ATPPPlayerController::OnCrouchReleased()
 
 void ATPPPlayerController::OnMovementAbilityPressed()
 {
-	CachedOwnerCharacter->BeginMovementAbility();
+	CachedOwnerCharacter->TryActivateAbility();
 }
 
 void ATPPPlayerController::SetMovementInputEnabled(bool bIsEnabled)

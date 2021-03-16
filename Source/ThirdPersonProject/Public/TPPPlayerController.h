@@ -64,7 +64,7 @@ protected:
 	UPROPERTY(Replicated)
 	FRotator ReplicatedControlRotation = FRotator::ZeroRotator;
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Unreliable)
 	void UpdateReplicatedControlRotation(const FRotator& NewRotation);
 
 protected:
