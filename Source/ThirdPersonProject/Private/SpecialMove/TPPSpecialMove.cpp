@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ // Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "SpecialMove/TPPSpecialMove.h"
@@ -19,28 +19,15 @@ UTPPSpecialMove::~UTPPSpecialMove()
 
 void UTPPSpecialMove::Tick(float DeltaSeconds)
 {
-	if (OwningCharacter && OwningCharacter->HasAuthority())
+	if (bDurationBased)
 	{
-		if (bDurationBased)
-		{
-			TimeRemaining -= DeltaSeconds;
+		TimeRemaining -= DeltaSeconds;
 
-			if (TimeRemaining <= 0.0f)
-			{
-				OnDurationExceeded();
-			}
+		if (TimeRemaining <= 0.0f)
+		{
+			OnDurationExceeded();
 		}
 	}
-}
-
-void UTPPSpecialMove::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(UTPPSpecialMove, bIsWeaponUseDisabled);
-	DOREPLIFETIME(UTPPSpecialMove, OwningCharacter);
-	DOREPLIFETIME(UTPPSpecialMove, TimeRemaining);
-	DOREPLIFETIME(UTPPSpecialMove, bWasInterrupted);
 }
 
 void UTPPSpecialMove::BeginSpecialMove_Implementation()
@@ -74,13 +61,6 @@ void UTPPSpecialMove::BeginSpecialMove_Implementation()
 	}
 
 	bIsWeaponUseDisabled = bDisablesWeaponUseOnStart;
-
-	Client_SpecialMoveStarted();
-}
-
-void UTPPSpecialMove::Client_SpecialMoveStarted_Implementation()
-{
-
 }
 
 void UTPPSpecialMove::OnDurationExceeded_Implementation()
@@ -113,50 +93,10 @@ void UTPPSpecialMove::EndSpecialMove_Implementation()
 	OwningCharacter = nullptr;
 }
 
-void UTPPSpecialMove::InterruptSpecialMove_Implementation()
+void UTPPSpecialMove::InterruptSpecialMove()
 {
 	bWasInterrupted = true;
 	EndSpecialMove();
-}
-
-void UTPPSpecialMove::PlayAnimMontage_Implementation(UAnimMontage* Montage, bool bShouldEndAllMontages)
-{
-	if (Montage && OwningCharacter)
-	{
-		UAnimInstance* AnimInstance = OwningCharacter->GetMesh()->GetAnimInstance();
-		if (AnimInstance)
-		{
-			AnimInstance->Montage_Play(Montage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, bShouldEndAllMontages);
-		}
-	}
-}
-
-void UTPPSpecialMove::EndAnimMontage_Implementation(UAnimMontage* MontageToEnd)
-{
-	if (MontageToEnd && OwningCharacter)
-	{
-		UAnimInstance* AnimInstance = OwningCharacter->GetMesh()->GetAnimInstance();
-		if (AnimInstance)
-		{
-			AnimInstance->Montage_Stop(0, MontageToEnd);
-		}
-	}
-}
-
-void UTPPSpecialMove::SetAnimRootMotionMode(TEnumAsByte<ERootMotionMode::Type> NewMode)
-{
-	USkeletalMeshComponent* SkeletalMesh = OwningCharacter ? OwningCharacter->GetMesh() : nullptr;
-	UAnimInstance* AnimInstance = SkeletalMesh ? SkeletalMesh->GetAnimInstance() : nullptr;
-	if (AnimInstance)
-	{
-		AnimInstance->SetRootMotionMode(NewMode);
-		OnRootMotionModeSet();
-	}
-}
-
-void UTPPSpecialMove::OnRootMotionModeSet_Implementation()
-{
-
 }
 
 void UTPPSpecialMove::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)

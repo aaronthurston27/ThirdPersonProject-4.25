@@ -47,9 +47,9 @@ void UTPP_SPM_LedgeClimb::BeginSpecialMove_Implementation()
 		UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
 		MovementComp->SetMovementMode(EMovementMode::MOVE_None);
 
-		SetAnimRootMotionMode(ERootMotionMode::IgnoreRootMotion);
+		OwningCharacter->ServerSetAnimRootMotionMode(ERootMotionMode::IgnoreRootMotion);
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
-		PlayAnimMontage(ClimbMontage, true);
+		OwningCharacter->PlayAnimMontage(ClimbMontage, true);
 
 		AnimLength = ClimbMontage->GetPlayLength() / ClimbMontage->RateScale;
 		LateralAnimLength = 0.0f;
@@ -87,7 +87,7 @@ void UTPP_SPM_LedgeClimb::Tick(float DeltaTime)
 
 void UTPP_SPM_LedgeClimb::EndSpecialMove_Implementation()
 {
-	SetAnimRootMotionMode(ERootMotionMode::RootMotionFromMontagesOnly);
+	OwningCharacter->ServerSetAnimRootMotionMode(ERootMotionMode::RootMotionFromMontagesOnly);
 	OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::None);
 
 	UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();

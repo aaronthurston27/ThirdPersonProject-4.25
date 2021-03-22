@@ -233,7 +233,7 @@ protected:
 	UTPPAbilityBase* CurrentAbility;
 
 	/** Current special move to track */
-	UPROPERTY(Transient, ReplicatedUsing=OnRep_SpecialMove)
+	UPROPERTY(Transient)
 	UTPPSpecialMove* CurrentSpecialMove;
 
 public:
@@ -246,9 +246,6 @@ public:
 
 	void TryActivateAbility();
 
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerBeginMovementAbility();
-
 	/** Gets current special move */
 	UFUNCTION(BlueprintPure)
 	UTPPSpecialMove* GetCurrentSpecialMove() const { return CurrentSpecialMove; }
@@ -260,21 +257,33 @@ public:
 	UFUNCTION()
 	void OnRep_CurrentAbility();
 
-	UFUNCTION(NetMulticast, Reliable)
 	void OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove);
+
+	UFUNCTION(Server, Reliable)
+	void ServerPlaySpecialMoveMontage(UAnimMontage* Montage, bool bShouldEndAllMontages = false);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void PlaySpecialMoveAnimMontage(UAnimMontage* Montage, bool bShouldEndAllMontages = false);
+
+	UFUNCTION(Server, Reliable)
+	void ServerEndAnimMontage(UAnimMontage* Montage);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void EndAnimMontage(UAnimMontage* MontageToEnd);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetAnimRootMotionMode(ERootMotionMode::Type NewMode);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void ClientSetRootMode(ERootMotionMode::Type NewMode);
 
 public:
 
 	UFUNCTION(BlueprintCallable)
 	void ExecuteSpecialMoveByClass(TSubclassOf<UTPPSpecialMove> SpecialMoveClass, bool bShouldInterrupCurrentMove = false);
 
-	UFUNCTION(BlueprintCallable, Server, Reliable, WithValidation)
+	UFUNCTION(BlueprintCallable)
 	void ExecuteSpecialMove(UTPPSpecialMove* SpecialMove, bool bShouldInterruptCurrentMove = false);
-
-protected:
-
-	UFUNCTION()
-	void OnRep_SpecialMove();
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -288,6 +297,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = Animation)
 	EAnimationBlendSlot GetCurrentAnimationBlendSlot() const { return CurrentAnimationBlendSlot;}
 
+	UFUNCTION(Server, Reliable)
 	void SetAnimationBlendSlot(const EAnimationBlendSlot NewSlot);
 
 	UFUNCTION(BlueprintCallable)
@@ -380,6 +390,12 @@ public:
 	void UpdateAimRotationDelta();
 
 	void UpdateAimRotationDelta_Implementation();
+
+	UFUNCTION(Server, UnReliable)
+	void ServerSetCharacterRotation(const FRotator& NewRotation);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void SetCharacterRotation(const FRotator& NewRotation);
 
 protected:
 
@@ -526,7 +542,7 @@ public:
 protected:
 
 	/** Wall cling state of the player */
-	UPROPERTY(Transient, BlueprintReadOnly)
+	UPROPERTY(Transient, BlueprintReadOnly, ReplicatedUsing=OnRep_WallMovementstate)
 	EWallMovementState WallMovementState = EWallMovementState::None;
 
 	/** True if player has wall climbed and is on cooldown until theey land */
@@ -545,6 +561,7 @@ public:
 
 	EWallMovementState GetWallMovementState() const { return WallMovementState; }
 
+	UFUNCTION(Server, Reliable)
 	void SetWallMovementState(EWallMovementState NewMovementState);
 
 	void GetCurrentWallClimbProperties(FHitResult& TraceImpactResult, FVector& AttachPoint) const { TraceImpactResult = WallTraceImpactResult; AttachPoint = WallAttachPoint; }
@@ -552,5 +569,8 @@ public:
 protected:
 
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
+
+	UFUNCTION()
+	void OnRep_WallMovementState();
 };
 

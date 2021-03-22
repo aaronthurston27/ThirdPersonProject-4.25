@@ -24,7 +24,6 @@ bool UTPPAbilityBase::ActivateAbility()
 bool UTPPAbilityBase::CanActivate_Implementation() const
 {
 	const float CurrentTime = GetWorld()->GetTimeSeconds();
-	UE_LOG(LogTemp, Warning, TEXT("%f"), CurrentTime);
 	return OwningCharacter && OwningCharacter->GetCurrentSpecialMove() == nullptr
 		&& OwningCharacter->IsCharacterAlive() && CurrentTime >= LastAbilityUseTime + AbilityCooldownTime;
 }

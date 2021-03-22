@@ -119,7 +119,6 @@ void ATPPPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	DOREPLIFETIME(ATPPPlayerCharacter, ControllerRelativeMovementSpeed);
 
 	DOREPLIFETIME(ATPPPlayerCharacter, CurrentAbility);
-	DOREPLIFETIME(ATPPPlayerCharacter, CurrentSpecialMove);
 }
 
 bool ATPPPlayerCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -152,6 +151,10 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 			else if (!bWantsToAim && bIsAiming)
 			{
 				ServerStopAiming();
+			}
+			else if (bIsAiming)
+			{
+				ServerSetCharacterRotation(GetActorRotation());
 			}
 
 			if (bWantsToSprint && !bIsSprinting && CanSprint())
@@ -416,6 +419,17 @@ void ATPPPlayerCharacter::UpdateAimRotationDelta_Implementation()
 	AimRotationDelta = bSpecialMoveDisablesAiming ? FRotator::ZeroRotator : (GetTPPPlayerController()->GetReplicatedControlRotation() - GetActorRotation());
 }
 
+void ATPPPlayerCharacter::ServerSetCharacterRotation_Implementation(const FRotator& NewRotation)
+{
+	SetActorRotation(NewRotation);
+	SetCharacterRotation(NewRotation);
+}
+
+void ATPPPlayerCharacter::SetCharacterRotation_Implementation(const FRotator& NewRotation)
+{
+	SetActorRotation(NewRotation);
+}
+
 void ATPPPlayerCharacter::UpdateControllerRelativeMovementSpeed_Implementation()
 {
 	const FRotator YawRotation(0, GetTPPPlayerController()->GetReplicatedControlRotation().Yaw, 0);
@@ -435,22 +449,14 @@ void ATPPPlayerCharacter::ResetCameraToPlayerRotation()
 	Controller->SetControlRotation(IntendedRotation);
 }
 
+void ATPPPlayerCharacter::OnRep_CurrentAbility()
+{
+
+}
+
 void ATPPPlayerCharacter::TryActivateAbility()
 {
 	if (!CurrentSpecialMove && CurrentAbility && CurrentAbility->CanActivate())
-	{
-		ServerBeginMovementAbility();
-	}
-}
-
-bool ATPPPlayerCharacter::ServerBeginMovementAbility_Validate()
-{
-	return true;
-}
-
-void ATPPPlayerCharacter::ServerBeginMovementAbility_Implementation()
-{
-	if (CurrentAbility && !CurrentSpecialMove)
 	{
 		CurrentAbility->ActivateAbility();
 	}
@@ -468,12 +474,7 @@ void ATPPPlayerCharacter::ExecuteSpecialMoveByClass(TSubclassOf<UTPPSpecialMove>
 	}
 }
 
-bool ATPPPlayerCharacter::ExecuteSpecialMove_Validate(UTPPSpecialMove* SpecialMove, bool bShouldInterruptCurrentMove)
-{
-	return true;
-}
-
-void ATPPPlayerCharacter::ExecuteSpecialMove_Implementation(UTPPSpecialMove* SpecialMove, bool bShouldInterruptCurrentMove)
+void ATPPPlayerCharacter::ExecuteSpecialMove(UTPPSpecialMove* SpecialMove, bool bShouldInterruptCurrentMove)
 {
 	if (SpecialMove && !CurrentSpecialMove || bShouldInterruptCurrentMove)
 	{
@@ -481,34 +482,15 @@ void ATPPPlayerCharacter::ExecuteSpecialMove_Implementation(UTPPSpecialMove* Spe
 		{
 			CurrentSpecialMove->InterruptSpecialMove();
 		}
+
 		CurrentSpecialMove = SpecialMove;
 		CurrentSpecialMove->OwningCharacter = this;
-		OnRep_SpecialMove();
+
 		CurrentSpecialMove->BeginSpecialMove();
 	}
 }
 
-void ATPPPlayerCharacter::OnRep_SpecialMove()
-{
-	if (CurrentSpecialMove)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Testing"));
-	}
-}
-
-void ATPPPlayerCharacter::OnRep_CurrentAbility()
-{
-	if (CurrentAbility)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Testing2: %d"), GetLocalRole());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("kasnmd"));
-	}
-}
-
-void ATPPPlayerCharacter::OnSpecialMoveEnded_Implementation(UTPPSpecialMove* SpecialMove)
+void ATPPPlayerCharacter::OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove)
 {
 	bool bOldSpecialMoveEnded = false;
 	if (SpecialMove == CurrentSpecialMove)
@@ -526,12 +508,70 @@ void ATPPPlayerCharacter::OnSpecialMoveEnded_Implementation(UTPPSpecialMove* Spe
 	}
 }
 
-void ATPPPlayerCharacter::SetAnimationBlendSlot(const EAnimationBlendSlot NewSlot)
+void ATPPPlayerCharacter::ServerPlaySpecialMoveMontage_Implementation(UAnimMontage* Montage, bool bShouldEndAllMontages)
 {
 	if (HasAuthority())
 	{
-		CurrentAnimationBlendSlot = NewSlot;
-		OnRep_AnimationBlendSlot();
+		PlaySpecialMoveAnimMontage(Montage, bShouldEndAllMontages);
+	}
+}
+
+void ATPPPlayerCharacter::PlaySpecialMoveAnimMontage_Implementation(UAnimMontage* Montage, bool bShouldEndAllMontages)
+{
+	if (Montage)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			AnimInstance->Montage_Play(Montage, 1.0f, EMontagePlayReturnType::MontageLength, 0.0f, bShouldEndAllMontages);
+		}
+	}
+}
+
+void ATPPPlayerCharacter::ServerEndAnimMontage_Implementation(UAnimMontage* Montage)
+{
+	if (HasAuthority())
+	{
+		EndAnimMontage(Montage);
+	}
+}
+
+void ATPPPlayerCharacter::EndAnimMontage_Implementation(UAnimMontage* MontageToEnd)
+{
+	if (MontageToEnd)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			AnimInstance->Montage_Stop(0, MontageToEnd);
+		}
+	}
+}
+
+void ATPPPlayerCharacter::SetAnimationBlendSlot_Implementation(const EAnimationBlendSlot NewSlot)
+{
+	CurrentAnimationBlendSlot = NewSlot;
+	OnRep_AnimationBlendSlot();
+}
+
+void ATPPPlayerCharacter::ServerSetAnimRootMotionMode_Implementation(ERootMotionMode::Type NewMode)
+{
+	USkeletalMeshComponent* SkeletalMesh = GetMesh();
+	UAnimInstance* AnimInstance = SkeletalMesh ? SkeletalMesh->GetAnimInstance() : nullptr;
+	if (AnimInstance)
+	{
+		AnimInstance->SetRootMotionMode(NewMode);
+		ClientSetRootMode(NewMode);
+	}
+}
+
+void ATPPPlayerCharacter::ClientSetRootMode_Implementation(ERootMotionMode::Type NewMode)
+{
+	USkeletalMeshComponent* SkeletalMesh = GetMesh();
+	UAnimInstance* AnimInstance = SkeletalMesh ? SkeletalMesh->GetAnimInstance() : nullptr;
+	if (AnimInstance)
+	{
+		AnimInstance->SetRootMotionMode(NewMode);
 	}
 }
 
@@ -589,12 +629,27 @@ bool ATPPPlayerCharacter::CanPlayerBeginAiming() const
 void ATPPPlayerCharacter::ServerBeginAiming_Implementation()
 {
 	bIsAiming = true;
+
+	ServerStopSprint();
+
+	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+	MovementComp->ServerSetOrientRotationToMovement(false);
+
+	MovementComp->RotationRate = FRotator(0.0f, ADSRotationRate, 0.0f);
+
 	OnRep_IsAiming();
 }
 
 void ATPPPlayerCharacter::ServerStopAiming_Implementation()
 {
 	bIsAiming = false;
+
+	bUseControllerRotationYaw = false;
+
+	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+	MovementComp->ServerSetOrientRotationToMovement(true);
+	MovementComp->RotationRate = FRotator(0.0f, DefaultRotationRate, 0.0f);
+
 	OnRep_IsAiming();
 }
 
@@ -605,12 +660,10 @@ void ATPPPlayerCharacter::OnRep_IsAiming()
 	if (bIsAiming)
 	{
 		FollowCamera->SetRelativeLocation(ADSCameraOffset);
-		ServerStopSprint();
 
-		MovementComp->bOrientRotationToMovement = false;
-		if (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesCharacterRotation)
+		if (IsLocallyControlled() && (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesCharacterRotation))
 		{
-			MovementComp->bUseControllerDesiredRotation = true;
+			MovementComp->ServerSetUseControllerDesiredRotation(true);
 		}
 		MovementComp->RotationRate = FRotator(0.0f, ADSRotationRate, 0.0f);
 
@@ -953,7 +1006,7 @@ void ATPPPlayerCharacter::DoWallKick(const FHitResult& WallKickHitResult)
 	{
 		CurrentSpecialMove->EndSpecialMove();
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Direction: %s"), *WallKickHitResult.ImpactNormal.ToString());
+
 	// Set z to 1 for scaling by min kick off velocity so that we have some vertical gain.
 	const FVector WallKickOffDirection = WallKickHitResult.ImpactNormal + FVector::UpVector;
 
@@ -1101,9 +1154,15 @@ bool ATPPPlayerCharacter::CanClimbUpLedge(const FHitResult& WallHitResult, const
 	return false;
 }
 
-void ATPPPlayerCharacter::SetWallMovementState(EWallMovementState NewWallMovementState)
+void ATPPPlayerCharacter::SetWallMovementState_Implementation(EWallMovementState NewWallMovementState)
 {
 	WallMovementState = NewWallMovementState;
+	OnRep_WallMovementState();
+}
+
+void ATPPPlayerCharacter::OnRep_WallMovementState()
+{
+
 }
 
 void ATPPPlayerCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)

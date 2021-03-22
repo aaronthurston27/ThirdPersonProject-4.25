@@ -125,5 +125,19 @@ protected:
 
 	UPROPERTY(Transient)
 	float CachedMaxAirSpeed = MaxWalkSpeed;
+
+public:
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetOrientRotationToMovement(const bool bShouldOrientToMovement);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void SetOrientRotationToMovement(const bool bShouldOrientToMovement);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetUseControllerDesiredRotation(const bool bShouldUseDesiredRotation);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void SetUseControllerDesiredRotation(const bool bShouldUseDesiredRotation);
 	
 };

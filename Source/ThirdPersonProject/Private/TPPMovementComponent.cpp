@@ -227,6 +227,28 @@ float UTPPMovementComponent::GetMaxSpeed() const
 
 }
 
+void UTPPMovementComponent::ServerSetOrientRotationToMovement_Implementation(const bool bShouldOrientToMovement)
+{
+	bOrientRotationToMovement = bShouldOrientToMovement;
+	SetOrientRotationToMovement(bShouldOrientToMovement);
+}
+
+void UTPPMovementComponent::SetOrientRotationToMovement_Implementation(const bool bShouldOrientToMovement)
+{
+	bOrientRotationToMovement = bShouldOrientToMovement;
+}
+
+void UTPPMovementComponent::ServerSetUseControllerDesiredRotation_Implementation(const bool bShouldUseDesiredRotation)
+{
+	bUseControllerDesiredRotation = bShouldUseDesiredRotation;
+	SetUseControllerDesiredRotation(bShouldUseDesiredRotation);
+}
+
+void UTPPMovementComponent::SetUseControllerDesiredRotation_Implementation(const bool bShouldUseDesiredRotation)
+{
+	bUseControllerDesiredRotation = bShouldUseDesiredRotation;
+}
+
 float UTPPMovementComponent::GetMaxBrakingDeceleration() const
 {
 	switch (MovementMode)

@@ -34,8 +34,8 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 
 	CharacterMovementComponent = OwningCharacter->GetTPPMovementComponent();
 	CharacterMovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
-	CharacterMovementComponent->bOrientRotationToMovement = false;
-	CharacterMovementComponent->bUseControllerDesiredRotation = false;
+	CharacterMovementComponent->ServerSetOrientRotationToMovement(false);
+	CharacterMovementComponent->ServerSetUseControllerDesiredRotation(false);
 
 	OwningCharacter->UnCrouch(false);
 
@@ -44,14 +44,14 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 	{
 		const FRotator RollRotation = PlayerController->GetControllerRelativeMovementRotation();
 		CachedRollDirection = RollRotation.Vector();
-		OwningCharacter->SetActorRelativeRotation(RollRotation);
+		OwningCharacter->ServerSetCharacterRotation(RollRotation);
 	}
 
 	if (AnimMontage)
 	{
-		SetAnimRootMotionMode(ERootMotionMode::IgnoreRootMotion);
+		OwningCharacter->ServerSetAnimRootMotionMode(ERootMotionMode::IgnoreRootMotion);
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
-		PlayAnimMontage(AnimMontage);
+		OwningCharacter->ServerPlaySpecialMoveMontage(AnimMontage);
 	}
 }
 
@@ -71,10 +71,10 @@ void UTPP_SPM_DodgeRoll::EndSpecialMove_Implementation()
 	if (OwningCharacter)
 	{
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::None);
-		SetAnimRootMotionMode(ERootMotionMode::RootMotionFromMontagesOnly);
+		OwningCharacter->ServerSetAnimRootMotionMode(ERootMotionMode::RootMotionFromMontagesOnly);
 	}
 
-	CharacterMovementComponent->bOrientRotationToMovement = true;
+	CharacterMovementComponent->ServerSetOrientRotationToMovement(true);
 	CharacterMovementComponent = nullptr;
 
 	Super::EndSpecialMove_Implementation();

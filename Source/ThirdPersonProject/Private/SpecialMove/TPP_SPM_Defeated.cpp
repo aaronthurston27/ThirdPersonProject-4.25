@@ -23,7 +23,7 @@ void UTPP_SPM_Defeated::BeginSpecialMove_Implementation()
 	if (DeathAnim)
 	{
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
-		PlayAnimMontage(DeathAnim, true);
+		OwningCharacter->PlayAnimMontage(DeathAnim, true);
 	}
 }
 
