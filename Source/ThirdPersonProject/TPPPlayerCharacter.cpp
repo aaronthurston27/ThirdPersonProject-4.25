@@ -151,7 +151,7 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 			{
 				ServerStopAiming();
 			}
-			else if (bIsAiming)
+			else if (bIsAiming && (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesCharacterRotation))
 			{
 				ServerSetCharacterRotation(GetActorRotation());
 			}
@@ -505,7 +505,18 @@ void ATPPPlayerCharacter::OnSpecialMoveEnded(UTPPSpecialMove* SpecialMove)
 	{
 		if (bOldSpecialMoveEnded && DoesPlayerWantToAim() && CanPlayerBeginAiming())
 		{
-			ServerBeginAiming();
+			if (!bIsAiming)
+			{
+				ServerBeginAiming();
+			}
+			else if (SpecialMove->bDisablesCharacterRotation)
+			{
+				// If the special move interrupts the needed movement rotation settings for aiming, restore the settings.
+				// Usually in a standalone game, this would be handled by OnRep_IsAiming. But, (I think), since the variable hasn't changed, it won't be called?
+				UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+				MovementComp->ServerSetOrientRotationToMovement(false);
+				MovementComp->ServerSetUseControllerDesiredRotation(true);
+			}
 		}
 	}
 }
