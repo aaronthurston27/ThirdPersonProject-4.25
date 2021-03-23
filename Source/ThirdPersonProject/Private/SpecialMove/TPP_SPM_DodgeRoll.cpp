@@ -21,13 +21,6 @@ UTPP_SPM_DodgeRoll::UTPP_SPM_DodgeRoll(const FObjectInitializer& ObjectInitializ
 	RollRampDownSpeed = 150.f;
 }
 
-void UTPP_SPM_DodgeRoll::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(UTPP_SPM_DodgeRoll, CachedRollDirection);
-	DOREPLIFETIME(UTPP_SPM_DodgeRoll, CharacterMovementComponent);
-}
-
 void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 {
 	Super::BeginSpecialMove_Implementation();
@@ -53,17 +46,18 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
 		OwningCharacter->ServerPlaySpecialMoveMontage(AnimMontage);
 	}
+
+	FRootMotionSource_ConstantForce RootMotionSource = FRootMotionSource_ConstantForce();
+	RootMotionSource.InstanceName = RootMotionSourceName;
+	RootMotionSource.AccumulateMode = ERootMotionAccumulateMode::Override;
+	RootMotionSource.Priority = 5;
+	RootMotionSource.Force = CachedRollDirection * RollSpeed;
+	CharacterMovementComponent->ServerAddRootMotionSource(RootMotionSource);
 }
 
 void UTPP_SPM_DodgeRoll::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	const FVector RollVelocity = FVector(CachedRollDirection * RollSpeed);
-	if (CharacterMovementComponent)
-	{
-		CharacterMovementComponent->Velocity = FVector(RollVelocity.X, RollVelocity.Y, CharacterMovementComponent->Velocity.Z);
-	}
-
 }
 
 void UTPP_SPM_DodgeRoll::EndSpecialMove_Implementation()
@@ -84,8 +78,9 @@ void UTPP_SPM_DodgeRoll::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted
 {
 	if (AnimMontage == Montage)
 	{
+		CharacterMovementComponent->ServerEndRootMotionSource(RootMotionSourceName);
 		ATPPPlayerController* PlayerController = OwningCharacter->GetTPPPlayerController();
-		if (PlayerController && OwningCharacter->GetTPPMovementComponent()->IsMovingOnGround())
+		if (PlayerController && CharacterMovementComponent->IsMovingOnGround())
 		{
 			const FVector CurrentDesiredMovementDirection = PlayerController->GetDesiredMovementDirection();
 
@@ -101,7 +96,7 @@ void UTPP_SPM_DodgeRoll::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted
 				const FVector RelativeControllerDesiredDirection = PlayerController->GetControllerRelativeMovementRotation().Vector();
 				EndVelocity = RelativeControllerDesiredDirection * RollSpeed * (RelativeControllerDesiredDirection | CachedRollDirection);
 			}
-			CharacterMovementComponent->Velocity = EndVelocity;
+			CharacterMovementComponent->ServerOverrideCharacterVelocity(EndVelocity);
 		}
 		EndSpecialMove();
 	}

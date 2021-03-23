@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "TPPSpecialMove.h"
-#include "Net/UnrealNetwork.h"
 #include "TPP_SPM_DodgeRoll.generated.h"
 
 class UTPPMovementComponent;
@@ -31,11 +30,14 @@ public:
 
 protected:
 
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Transient)
 	FVector CachedRollDirection;
 
-	UPROPERTY(Transient, Replicated)
+	UPROPERTY(Transient)
 	UTPPMovementComponent* CharacterMovementComponent;
+
+	UPROPERTY(EditDefaultsOnly)
+	FName RootMotionSourceName = FName(TEXT("Dodge Roll"));
 
 public:
 
@@ -50,7 +52,4 @@ public:
 protected:
 
 	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted) override;
-
-	// Required network scaffolding
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

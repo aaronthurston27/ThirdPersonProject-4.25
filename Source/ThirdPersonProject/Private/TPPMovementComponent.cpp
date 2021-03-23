@@ -262,3 +262,19 @@ float UTPPMovementComponent::GetMaxBrakingDeceleration() const
 
 	return Super::GetMaxBrakingDeceleration();
 }
+
+void UTPPMovementComponent::ServerAddRootMotionSource_Implementation(const FRootMotionSource_ConstantForce& RootMotionSource)
+{
+	TSharedPtr<FRootMotionSource_ConstantForce> RootMotionSourcePtr = MakeShared<FRootMotionSource_ConstantForce>(RootMotionSource);
+	ApplyRootMotionSource(RootMotionSourcePtr);
+}
+
+void UTPPMovementComponent::ServerEndRootMotionSource_Implementation(const FName& SourceName)
+{
+	RemoveRootMotionSource(SourceName);
+}
+
+void UTPPMovementComponent::ServerOverrideCharacterVelocity_Implementation(const FVector& NewVelocity)
+{
+	Velocity = NewVelocity;
+}

@@ -139,5 +139,14 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void SetUseControllerDesiredRotation(const bool bShouldUseDesiredRotation);
+
+	UFUNCTION(Server, Reliable)
+	void ServerAddRootMotionSource(const FRootMotionSource_ConstantForce& RootMotionSource);
+
+	UFUNCTION(Server, Reliable)
+	void ServerEndRootMotionSource(const FName& SourceName);
+
+	UFUNCTION(Server, Reliable)
+	void ServerOverrideCharacterVelocity(const FVector& NewVelocity);
 	
 };

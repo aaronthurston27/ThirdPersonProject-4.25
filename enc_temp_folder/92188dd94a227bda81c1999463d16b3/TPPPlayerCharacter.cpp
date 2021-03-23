@@ -141,7 +141,7 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 
 	if (IsCharacterAlive())
 	{
-		if (IsLocallyControlled())
+		if (GetLocalRole() == ENetRole::ROLE_AutonomousProxy)
 		{
 			if (bWantsToAim && !bIsAiming && CanPlayerBeginAiming())
 			{
