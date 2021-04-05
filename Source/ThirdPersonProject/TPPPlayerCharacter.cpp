@@ -1013,7 +1013,7 @@ void ATPPPlayerCharacter::ServerTryBeginWallMovement_Implementation()
 					if (bCanClimbLedge)
 					{
 						WallMoveProps.WallTraceImpactResult = WallImpactResult;
-						WallMoveProps.WallAttachPoint = TargetAttachPoint;
+						WallMoveProps.WallAttachPoint = TargetAttachPoint + WallLedgeGrabOffset;
 						WallMoveProps.WallClimbExitPoint = ClimbExitPoint;
 						SetWallMovementState(EWallMovementState::WallLedgeClimb, WallMoveProps);
 					}
@@ -1026,12 +1026,18 @@ void ATPPPlayerCharacter::ServerTryBeginWallMovement_Implementation()
 					SetWallMovementState(EWallMovementState::WallLedgeHang, WallMoveProps);
 				}
 				// Just start a regular wall run if wall is to high to climb or grab ledge
-				else if (!bIsWallRunCooldownActive)
+				else if (!bIsWallRunCooldownActive && WallRunClass)
 				{
 					WallMoveProps.WallTraceImpactResult = WallImpactResult;
 					WallMoveProps.WallAttachPoint = TargetAttachPoint;
-					WallMoveProps.WallLedgeHeight = WallLedgeHeight;
-					//SetWallMovementState(EWallMovementState::WallRunUp, WallMoveProps);
+
+					UTPP_SPM_WallRun* WallRunCDO = Cast<UTPP_SPM_WallRun>(WallRunClass.GetDefaultObject());
+					const bool bDurationBasedRun = WallRunCDO->bDurationBased;
+					const float MaxDistance = bDurationBasedRun ? WallRunCDO->WallRunVerticalSpeed * WallRunCDO->Duration : WallRunCDO->WallRunMaxVerticalDistance;
+					// Added 15.0f to the ledge ledge grab offset to account for the wall attach trace starting at the players foot instead of the hips (center).
+					const float DestinationZ = FMath::Min(WallLedgeHeight - LedgeGrabMaxHeight + 15.0f, MaxDistance);
+					WallMoveProps.WallRunDestination = TargetAttachPoint + FVector::UpVector * DestinationZ;
+					SetWallMovementState(EWallMovementState::WallRunUp, WallMoveProps);
 					bIsWallRunCooldownActive = true;
 				}
 			}
@@ -1041,7 +1047,6 @@ void ATPPPlayerCharacter::ServerTryBeginWallMovement_Implementation()
 
 void ATPPPlayerCharacter::DoLedgeHang_Implementation()
 {
-	
 	ATPPPlayerController* PC = GetTPPPlayerController();
 	const FVector DesiredMovementDirection = PC ? PC->GetDesiredMovementDirection() : FVector::ZeroVector;
 	if (PC && !DesiredMovementDirection.IsNearlyZero())
@@ -1078,7 +1083,27 @@ void ATPPPlayerCharacter::DoLedgeClimb_Implementation()
 
 void ATPPPlayerCharacter::DoWallRun_Implementation()
 {
+	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
+	MovementComp->Velocity = FVector(0.0f, 0.0f, WallRunVerticalSpeed);
 
+	float CurrentZ = GetActorLocation().Z;
+	if (CurrentZ >= CurrentWallMovementProperties.WallRunDestination.Z)
+	{
+		MovementComp->SetMovementMode(EMovementMode::MOVE_Falling);
+
+		FHitResult ImpactResult;
+		FVector AttachPoint = FVector::ZeroVector;
+		float LedgeHeight = 0.0f;
+		const bool bCanGrabLedge = CanAttachToWall(ImpactResult, AttachPoint, LedgeHeight);
+
+		if (bCanGrabLedge && LedgeHeight > AutoLedgeClimbMaxHeight && LedgeHeight <= LedgeGrabMaxHeight)
+		{
+			FTPPWallMovementProps MoveProps = CurrentWallMovementProperties;
+			MoveProps.WallAttachPoint = AttachPoint + WallLedgeGrabOffset;
+			MoveProps.WallRunDestination = FVector::ZeroVector;
+			SetWallMovementState(EWallMovementState::WallLedgeHang, MoveProps);
+		}
+	}
 }
 
 bool ATPPPlayerCharacter::CanAttachToWall(FHitResult& WallImpactResult, FVector& AttachPoint, float& WallLedgeHeight) const
@@ -1119,7 +1144,7 @@ bool ATPPPlayerCharacter::CanAttachToWall(FHitResult& WallImpactResult, FVector&
 		CapsuleShape.SetCapsule(PlayerCapsule->GetUnscaledCapsuleRadius(), PlayerCapsule->GetUnscaledCapsuleHalfHeight());
 		QueryParams.AddIgnoredActor(TraceActor);
 
-		// The capsule doesn't have to perfectly interset with the wall, so subtract the radius so that the capsule is just touching the wall. 
+		// The capsule doesn't have to perfectly intersect with the wall, so subtract the radius so that the capsule is just touching the wall. 
 		const FVector SweepEndLocation = TraceResult.ImpactPoint - (WallClingDesiredDirection * (PlayerCapsule->GetUnscaledCapsuleRadius() - 2.0f));
 
 		World->SweepMultiByProfile(HitResults, StartLocation, SweepEndLocation, GetActorRotation().Quaternion(), PlayerCapsule->GetCollisionProfileName(), CapsuleShape, QueryParams);
@@ -1192,6 +1217,15 @@ bool ATPPPlayerCharacter::CanClimbUpLedge(const FHitResult& WallHitResult, const
 void ATPPPlayerCharacter::SetWallMovementState_Implementation(EWallMovementState NewWallMovementState, const FTPPWallMovementProps& WallMoveProps)
 {
 	UTPPMovementComponent* MoveComp = GetTPPMovementComponent();
+
+	if (NewWallMovementState != EWallMovementState::None)
+	{
+		const FRotator Rotation = (-1.0f * WallMoveProps.WallTraceImpactResult.ImpactNormal).Rotation();
+		SetActorRotation(Rotation);
+		SetActorLocation(WallMoveProps.WallAttachPoint);
+		SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
+	}
+
 	switch (NewWallMovementState)
 	{
 		case EWallMovementState::None:
@@ -1202,10 +1236,9 @@ void ATPPPlayerCharacter::SetWallMovementState_Implementation(EWallMovementState
 			break;
 		case EWallMovementState::WallLedgeHang:
 			MoveComp->SetMovementMode(EMovementMode::MOVE_None);
-
-			const FRotator Rotation = (-1.0f * WallMoveProps.WallTraceImpactResult.ImpactNormal).Rotation();
-			SetActorRotation(Rotation);
-			SetActorLocation(WallMoveProps.WallAttachPoint + WallLedgeGrabOffset);
+			break;
+		case EWallMovementState::WallRunUp:
+			MoveComp->SetMovementMode(EMovementMode::MOVE_Flying);
 			break;
 	}
 
@@ -1217,7 +1250,6 @@ void ATPPPlayerCharacter::SetWallMovementState_Implementation(EWallMovementState
 
 void ATPPPlayerCharacter::OnRep_WallMovementState()
 {
-
 	if (IsLocallyControlled())
 	{
 		if (WallMovementState != EWallMovementState::None && CurrentSpecialMove)
@@ -1260,7 +1292,6 @@ void ATPPPlayerCharacter::OnRep_WallMovementState()
 			UTPP_SPM_WallRun* WallRunSPM = NewObject<UTPP_SPM_WallRun>(this, WallRunClass);
 			if (WallRunSPM)
 			{
-				WallRunSPM->SetWallRunProperties(CurrentWallMovementProperties.WallTraceImpactResult, CurrentWallMovementProperties.WallAttachPoint, CurrentWallMovementProperties.WallLedgeHeight);
 				ExecuteSpecialMove(WallRunSPM);
 			}
 			break;

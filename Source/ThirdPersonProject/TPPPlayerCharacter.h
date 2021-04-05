@@ -63,9 +63,8 @@ struct FTPPWallMovementProps
 	UPROPERTY()
 	FVector WallClimbExitPoint = FVector::ZeroVector;
 
-	/** Wall ledge height */
 	UPROPERTY()
-	float WallLedgeHeight = 0.0f;
+	FVector WallRunDestination = FVector::ZeroVector;
 };
 
 UENUM(BlueprintType)
@@ -543,6 +542,9 @@ public:
 	/** Minimum dot product of desired movement direction and wall normal to climg the ledge that is held onto. */
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
 	float HangToClimbInputDot = .8f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	float WallRunVerticalSpeed = 110.f;
 
 	/** Ledge climb special move to use when hanging from a ledge. */
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")

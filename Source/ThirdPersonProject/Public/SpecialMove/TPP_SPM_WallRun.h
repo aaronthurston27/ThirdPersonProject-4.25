@@ -25,24 +25,9 @@ public:
 	float WallRunVerticalSpeed = 110.f;
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UTPP_SPM_LedgeClimb> WallRunToLedgeClimbClass;
-
-	UPROPERTY(EditDefaultsOnly)
 	float InputDelay = .8f;
 
 protected:
-
-	UPROPERTY(Transient)
-	FHitResult TargetWallImpactResult;
-
-	UPROPERTY(Transient)
-	FVector TargetAttachPoint;
-
-	UPROPERTY(Transient)
-	float WallLedgeHeight = 0.0f;
-
-	UPROPERTY(Transient)
-	FVector WallRunDestinationPoint = FVector::ZeroVector;
 
 	UPROPERTY(Transient)
 	FVector CachedDirectionInput = FVector::ZeroVector;
@@ -59,8 +44,6 @@ public:
 	virtual void EndSpecialMove_Implementation() override;
 
 	virtual void Tick(float DeltaTime) override;
-
-	void SetWallRunProperties(const FHitResult& WallTraceHitResult, const FVector& AttachPoint, const float LedgeHeight);
 
 protected:
 
