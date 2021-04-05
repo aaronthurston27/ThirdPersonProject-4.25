@@ -50,7 +50,7 @@ public:
 protected:
 
 	// Direction the player intends to move based on keys held.
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	FVector DesiredMovementDirection;
 
 	UPROPERTY(Transient)
@@ -66,6 +66,9 @@ protected:
 
 	UFUNCTION(Server, Unreliable)
 	void UpdateReplicatedControlRotation(const FRotator& NewRotation);
+
+	UFUNCTION(Server, Reliable)
+	void UpdateDesiredMovementDirection(const FVector& DesiredDirection);
 
 protected:
 

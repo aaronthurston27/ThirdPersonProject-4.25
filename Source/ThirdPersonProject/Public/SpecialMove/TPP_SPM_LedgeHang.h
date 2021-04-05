@@ -22,31 +22,7 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float LedgeHangActionDelay = 1.0f;
 
-	/** Minimum dot product of desired movement direction and wall normal to end hang */
-	UPROPERTY(EditDefaultsOnly)
-	float EndHangInputDot = .8f;
-
-	/** Minimum dot product of desired movement direction and wall normal to climg the ledge that is held onto. */
-	UPROPERTY(EditDefaultsOnly)
-	float HangToClimbInputDot = .7f;
-
-	/** Ledge climb class to use when going from hanging to climbing */
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UTPP_SPM_LedgeClimb> LedgeClimbClass;
-
 protected:
-
-	UPROPERTY(Transient)
-	FHitResult ImpactResult;
-
-	UPROPERTY(Transient)
-	FVector TargetAttachPoint;
-
-	UPROPERTY(Transient)
-	bool bIsAligningToWall = false;
-
-	UPROPERTY(Transient)
-	FVector CachedLedgeDelta = FVector::ZeroVector;
 
 	UPROPERTY(Transient)
 	float ElapsedTime = 0.0f;
@@ -61,6 +37,4 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void EndSpecialMove_Implementation() override;
-
-	void SetLedgeHangProperties(const FHitResult& WallTraceHitResult, const FVector& AttachPoint);
 };

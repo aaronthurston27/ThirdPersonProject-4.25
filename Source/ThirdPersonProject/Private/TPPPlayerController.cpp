@@ -57,6 +57,7 @@ void ATPPPlayerController::SetupInputComponent()
 void ATPPPlayerController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	UpdateDesiredMovementDirection(DesiredMovementDirection);
 }
 
 void ATPPPlayerController::TickKeyHoldTimers(float DeltaTime)
@@ -131,6 +132,10 @@ void ATPPPlayerController::UpdateReplicatedControlRotation_Implementation(const 
 	ReplicatedControlRotation = NewRotation;
 }
 
+void ATPPPlayerController::UpdateDesiredMovementDirection_Implementation(const FVector& DesiredDirection)
+{
+	DesiredMovementDirection = DesiredDirection;
+}
 
 void ATPPPlayerController::AddYawInput(float value)
 {
@@ -262,10 +267,9 @@ void ATPPPlayerController::OnPausePressed()
 FRotator ATPPPlayerController::GetControllerRelativeMovementRotation() const
 {
 	const FRotator DesiredDirection = GetDesiredMovementDirection().ToOrientationRotator();
-	const FRotator ControlRot = GetControlRotation();
 
 	// Add the desired movement rotation to the player controller rotation instead of world space.
-	return FRotator(0.0f, DesiredDirection.Yaw + ControlRot.Yaw, 0.0f);
+	return FRotator(0.0f, DesiredDirection.Yaw + ReplicatedControlRotation.Yaw, 0.0f);
 }
 
 FVector ATPPPlayerController::GetControllerRelativeDesiredMovementDirection() const

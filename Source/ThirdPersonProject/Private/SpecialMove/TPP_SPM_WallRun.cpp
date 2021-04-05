@@ -117,7 +117,7 @@ void UTPP_SPM_WallRun::OnWallRunDestinationReached()
 		UTPP_SPM_LedgeHang* LedgeHangSPM = NewObject <UTPP_SPM_LedgeHang>(this, OwningCharacter->LedgeHangClass);
 		if (LedgeHangSPM)
 		{
-			LedgeHangSPM->SetLedgeHangProperties(ImpactResult, AttachPoint);
+			//LedgeHangSPM->SetLedgeHangProperties(ImpactResult, AttachPoint);
 			OwningCharacter->ExecuteSpecialMove(LedgeHangSPM, true);
 			return;
 		}

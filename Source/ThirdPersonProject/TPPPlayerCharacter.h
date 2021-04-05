@@ -40,7 +40,32 @@ enum class EWallMovementState : uint8
 	WallRunRight = 3,
 	/** Running upwards along wall */
 	WallRunUp = 4,
+	/** Climbing up ledge */
+	WallLedgeClimb,
 	MAX UMETA(Hidden)
+};
+
+/** Struct defining properties for wall movement */
+USTRUCT(Blueprintable)
+struct FTPPWallMovementProps
+{
+	GENERATED_BODY()
+
+	/** Wall cling impact trace result */
+	UPROPERTY()
+	FHitResult WallTraceImpactResult = FHitResult();
+
+	/** Wall attach point **/
+	UPROPERTY()
+	FVector WallAttachPoint = FVector::ZeroVector;
+
+	/** Wall climb exit point */
+	UPROPERTY()
+	FVector WallClimbExitPoint = FVector::ZeroVector;
+
+	/** Wall ledge height */
+	UPROPERTY()
+	float WallLedgeHeight = 0.0f;
 };
 
 UENUM(BlueprintType)
@@ -391,7 +416,7 @@ public:
 
 	void UpdateAimRotationDelta_Implementation();
 
-	UFUNCTION(Server, UnReliable)
+	UFUNCTION(Server, Reliable)
 	void ServerSetCharacterRotation(const FRotator& NewRotation);
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -527,6 +552,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
 	TSubclassOf<UTPP_SPM_LedgeClimb> AutoLedgeClimbClass;
 
+	/** Ledge climb class to use when going from hanging to climbing */
+	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
+	TSubclassOf<UTPP_SPM_LedgeClimb> LedgeClimbClass;
+
 	/** Wall run special move to use attaching to wall with a high ledge */
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Movement|Wall")
 	TSubclassOf<UTPP_SPM_WallRun> WallRunClass;
@@ -546,25 +575,33 @@ protected:
 	EWallMovementState WallMovementState = EWallMovementState::None;
 
 	/** True if player has wall climbed and is on cooldown until theey land */
-	UPROPERTY(Transient, BlueprintReadOnly)
+	UPROPERTY(Transient, BlueprintReadOnly, Replicated)
 	bool bIsWallRunCooldownActive = false;
 
-	/** Cached wall cling impact trace result */
-	UPROPERTY(Transient)
-	FHitResult WallTraceImpactResult;
-
-	/** Cached wall climg attach point */
-	UPROPERTY(Transient)
-	FVector WallAttachPoint;
+	UPROPERTY(Transient, Replicated)
+	FTPPWallMovementProps CurrentWallMovementProperties;
 
 public:
 
 	EWallMovementState GetWallMovementState() const { return WallMovementState; }
 
 	UFUNCTION(Server, Reliable)
-	void SetWallMovementState(EWallMovementState NewMovementState);
+	void ServerTryBeginWallMovement();
 
-	void GetCurrentWallClimbProperties(FHitResult& TraceImpactResult, FVector& AttachPoint) const { TraceImpactResult = WallTraceImpactResult; AttachPoint = WallAttachPoint; }
+	UFUNCTION(Server, Reliable)
+	void DoLedgeHang();
+
+	UFUNCTION(Server, Reliable)
+	void DoWallRun();
+
+	UFUNCTION(Server, Reliable)
+	void DoLedgeClimb();
+
+	UFUNCTION(Server, Reliable)
+	void SetWallMovementState(EWallMovementState NewMovementState, const FTPPWallMovementProps& NewMovementProps = FTPPWallMovementProps());
+
+	UFUNCTION(Server, Reliable)
+	void ServerAttachToWall(const FVector& WallAttachPoint);
 
 protected:
 
