@@ -1221,7 +1221,7 @@ void ATPPPlayerCharacter::SetWallMovementState_Implementation(EWallMovementState
 	if (NewWallMovementState != EWallMovementState::None)
 	{
 		const FRotator Rotation = (-1.0f * WallMoveProps.WallTraceImpactResult.ImpactNormal).Rotation();
-		SetActorRotation(Rotation);
+		ServerSetCharacterRotation(Rotation);
 		SetActorLocation(WallMoveProps.WallAttachPoint);
 		SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
 	}
