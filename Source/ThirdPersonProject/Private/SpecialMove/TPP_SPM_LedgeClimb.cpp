@@ -17,72 +17,15 @@ UTPP_SPM_LedgeClimb::UTPP_SPM_LedgeClimb(const FObjectInitializer& ObjectInitial
 	bDisablesCharacterRotation = true;
 }
 
-void UTPP_SPM_LedgeClimb::SetClimbProperties(const FHitResult& WallImpactResult, const FVector& AttachPoint, const FVector& ExitPoint)
-{
-	TargetWallImpactResult = WallImpactResult;
-	TargetAttachPoint = AttachPoint;
-	ClimbExitPoint = ExitPoint;
-}
-
 void UTPP_SPM_LedgeClimb::BeginSpecialMove_Implementation()
 {
 	Super::BeginSpecialMove_Implementation();
 
-	if (!ClimbMontage || TargetAttachPoint.IsNearlyZero())
-	{
-		EndSpecialMove();
-		return;
-	}
-
-	const FRotator ToWallRotation = (-1.0f * TargetWallImpactResult.ImpactNormal).Rotation();
-	OwningCharacter->SetActorRotation(ToWallRotation);
-
-	const EWallMovementState CurrentWallMovementState = OwningCharacter->GetWallMovementState();
-	StartingClimbPosition = TargetAttachPoint + (CurrentWallMovementState == EWallMovementState::WallLedgeHang ? OwningCharacter->WallLedgeGrabOffset : FVector::ZeroVector);
-	OwningCharacter->SetActorLocation(StartingClimbPosition);
-	OwningCharacter->SetWallMovementState(EWallMovementState::None);
-
 	if (ClimbMontage)
 	{
-		UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
-		MovementComp->SetMovementMode(EMovementMode::MOVE_None);
-
 		OwningCharacter->ServerSetAnimRootMotionMode(ERootMotionMode::IgnoreRootMotion);
-		OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
-		OwningCharacter->PlayAnimMontage(ClimbMontage, true);
-
-		AnimLength = ClimbMontage->GetPlayLength() / ClimbMontage->RateScale;
-		LateralAnimLength = 0.0f;
+		OwningCharacter->ServerPlaySpecialMoveMontage(ClimbMontage, true);
 	}
-}
-
-void UTPP_SPM_LedgeClimb::Tick(float DeltaTime)
-{
-	if (AnimLength > 0.0f)
-	{
-		const float AnimTimeRatio = ElapsedTime / AnimLength;
-		const float NewZ = FMath::Lerp(StartingClimbPosition.Z, ClimbExitPoint.Z, AnimTimeRatio);
-		float NewX = StartingClimbPosition.X;
-		float NewY = StartingClimbPosition.Y;
-		if (NewZ >= TargetAttachPoint.Z)
-		{
-			if (LateralAnimLength == 0.0f)
-			{
-				LateralAnimLength = AnimLength - ElapsedTime;
-			}
-
-			const float LateralElapsedTimeRatio = LateralLerpElapsedTime / LateralAnimLength;
-			NewX = FMath::Lerp(StartingClimbPosition.X, ClimbExitPoint.X, LateralElapsedTimeRatio);
-			NewY = FMath::Lerp(StartingClimbPosition.Y, ClimbExitPoint.Y, LateralElapsedTimeRatio);
-
-			LateralLerpElapsedTime += DeltaTime;
-		}
-
-		const FVector FinalPosition = FVector(NewX, NewY, NewZ);
-		OwningCharacter->SetActorLocation(FinalPosition);
-	}
-
-	ElapsedTime += DeltaTime;
 }
 
 void UTPP_SPM_LedgeClimb::EndSpecialMove_Implementation()
@@ -90,15 +33,10 @@ void UTPP_SPM_LedgeClimb::EndSpecialMove_Implementation()
 	OwningCharacter->ServerSetAnimRootMotionMode(ERootMotionMode::RootMotionFromMontagesOnly);
 	OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::None);
 
-	UTPPMovementComponent* MovementComp = OwningCharacter->GetTPPMovementComponent();
-	MovementComp->SetMovementMode(EMovementMode::MOVE_Walking);
-
-	OwningCharacter->SetWallMovementState(EWallMovementState::None);
-
 	Super::EndSpecialMove_Implementation();
 }
 
 void UTPP_SPM_LedgeClimb::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	EndSpecialMove();
+	OwningCharacter->SetWallMovementState(EWallMovementState::None);
 }

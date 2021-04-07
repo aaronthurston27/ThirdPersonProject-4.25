@@ -22,19 +22,16 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	float LedgeHangActionDelay = 1.0f;
 
-protected:
-
-	UPROPERTY(Transient)
-	float ElapsedTime = 0.0f;
-
-
-public:
-
 	UTPP_SPM_LedgeHang(const FObjectInitializer& ObjectInitializer);
 
 	virtual void BeginSpecialMove_Implementation() override;
 
+	virtual void EndSpecialMove_Implementation() override;
+
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void EndSpecialMove_Implementation() override;
+protected:
+
+	UPROPERTY(Transient)
+	float DelayTimer = 0.0f;
 };

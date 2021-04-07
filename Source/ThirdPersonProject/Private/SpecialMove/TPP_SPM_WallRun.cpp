@@ -54,8 +54,6 @@ void UTPP_SPM_WallRun::Tick(float DeltaTime)
 		{
 			TimeSinceInputChanged = 0.0f;
 		}
-
-		OwningCharacter->DoWallRun();
 	}
 }
 

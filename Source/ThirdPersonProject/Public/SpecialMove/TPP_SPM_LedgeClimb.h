@@ -51,11 +51,7 @@ public:
 
 	virtual void BeginSpecialMove_Implementation() override;
 
-	virtual void Tick(float DeltaTime) override;
-
 	virtual void EndSpecialMove_Implementation() override;
-
-	void SetClimbProperties(const FHitResult& WallImpactResult, const FVector& AttachPoint, const FVector& ExitPoint);
 
 protected:
 

@@ -51,7 +51,10 @@ void UTPP_SPM_DodgeRoll::BeginSpecialMove_Implementation()
 void UTPP_SPM_DodgeRoll::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	CharacterMovementComponent->ServerOverrideCharacterVelocity(CachedRollDirection * RollSpeed);
+	const FVector CurrentVelocity = OwningCharacter->GetTPPMovementComponent()->Velocity;
+	FVector NewVelocity = CachedRollDirection * RollSpeed;
+	NewVelocity.Z = CurrentVelocity.Z;
+	CharacterMovementComponent->ServerOverrideCharacterVelocity(NewVelocity);
 }
 
 void UTPP_SPM_DodgeRoll::EndSpecialMove_Implementation()

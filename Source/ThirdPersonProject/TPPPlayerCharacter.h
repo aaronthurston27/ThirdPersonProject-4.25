@@ -31,7 +31,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ATPPWeaponBase*, 
 UENUM(BlueprintType)
 enum class EWallMovementState : uint8
 {
-	None,
+	None = 0,
 	/** Player is clinging to wall */
 	WallLedgeHang = 1,
 	/** Running along wall to the players left */
@@ -41,7 +41,7 @@ enum class EWallMovementState : uint8
 	/** Running upwards along wall */
 	WallRunUp = 4,
 	/** Climbing up ledge */
-	WallLedgeClimb,
+	WallLedgeClimb = 5,
 	MAX UMETA(Hidden)
 };
 
@@ -59,12 +59,28 @@ struct FTPPWallMovementProps
 	UPROPERTY()
 	FVector WallAttachPoint = FVector::ZeroVector;
 
+	/** Wall run destination */
+	UPROPERTY()
+	FVector WallRunDestination = FVector::ZeroVector;
+
 	/** Wall climb exit point */
 	UPROPERTY()
 	FVector WallClimbExitPoint = FVector::ZeroVector;
 
-	UPROPERTY()
-	FVector WallRunDestination = FVector::ZeroVector;
+	UPROPERTY(Transient)
+	float ClimbElapsedTime = 0.0f;
+
+	UPROPERTY(Transient)
+	float ClimbLateralLerpElapsedTime = 0.0f;
+
+	UPROPERTY(Transient)
+	float ClimbAnimLength = 0.0f;
+
+	UPROPERTY(Transient)
+	FVector ClimbLateralThresholdPoint = FVector::ZeroVector;
+
+	UPROPERTY(Transient)
+	float ClimbLateralAnimLength = 0.0f;
 };
 
 UENUM(BlueprintType)
@@ -599,6 +615,10 @@ public:
 	UFUNCTION(Server, Reliable)
 	void DoLedgeClimb();
 
+	/** Called on clients to replicate updated location during ledge climb. Used to keep clients in sync and reduce jitter */
+	UFUNCTION(NetMulticast, Reliable)
+	void ClientLedgeClimbUpdate(const FVector& NewLocation);
+
 	UFUNCTION(Server, Reliable)
 	void SetWallMovementState(EWallMovementState NewMovementState, const FTPPWallMovementProps& NewMovementProps = FTPPWallMovementProps());
 
@@ -610,6 +630,6 @@ protected:
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
 
 	UFUNCTION()
-	void OnRep_WallMovementState();
+	void OnRep_WallMovementState(EWallMovementState PreviousState);
 };
 

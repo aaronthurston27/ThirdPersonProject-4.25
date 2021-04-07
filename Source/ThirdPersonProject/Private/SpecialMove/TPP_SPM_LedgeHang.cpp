@@ -22,15 +22,21 @@ void UTPP_SPM_LedgeHang::BeginSpecialMove_Implementation()
 	Super::BeginSpecialMove_Implementation();
 
 	OwningCharacter->SetAnimationBlendSlot(EAnimationBlendSlot::FullBody);
+	DelayTimer = LedgeHangActionDelay;
 }
 
 void UTPP_SPM_LedgeHang::Tick(float DeltaTime)
 {
-	if (ElapsedTime >= LedgeHangActionDelay && OwningCharacter)
+	Super::Tick(DeltaTime);
+	if (DelayTimer > 0.0f)
+	{
+		DelayTimer -= DeltaTime;
+	}
+
+	if (DelayTimer <= 0.0f)
 	{
 		OwningCharacter->DoLedgeHang();
 	}
-	ElapsedTime += DeltaTime;
 }
 
 void UTPP_SPM_LedgeHang::EndSpecialMove_Implementation()

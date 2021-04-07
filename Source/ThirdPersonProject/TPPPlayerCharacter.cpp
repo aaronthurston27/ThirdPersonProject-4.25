@@ -176,7 +176,7 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 			UpdateAimRotationDelta();
 			UpdateControllerRelativeMovementSpeed();
 
-			if (GetCharacterMovement()->IsFalling() && !CurrentSpecialMove && WallMovementState == EWallMovementState::None)
+			if (!GetCharacterMovement()->IsMovingOnGround())
 			{
 				ServerTryBeginWallMovement();
 			}
@@ -1010,18 +1010,25 @@ void ATPPPlayerCharacter::ServerTryBeginWallMovement_Implementation()
 				{
 					FVector ClimbExitPoint;
 					const bool bCanClimbLedge = CanClimbUpLedge(WallImpactResult, TargetAttachPoint, ClimbExitPoint);
-					if (bCanClimbLedge)
+					if (bCanClimbLedge && AutoLedgeClimbClass)
 					{
 						WallMoveProps.WallTraceImpactResult = WallImpactResult;
-						WallMoveProps.WallAttachPoint = TargetAttachPoint + WallLedgeGrabOffset;
+						WallMoveProps.WallAttachPoint = TargetAttachPoint;
 						WallMoveProps.WallClimbExitPoint = ClimbExitPoint;
-						SetWallMovementState(EWallMovementState::WallLedgeClimb, WallMoveProps);
+						WallMoveProps.ClimbLateralThresholdPoint = TargetAttachPoint;
+
+						UTPP_SPM_LedgeClimb* LedgeClimbCDO = Cast<UTPP_SPM_LedgeClimb>(AutoLedgeClimbClass.GetDefaultObject());
+						if (LedgeClimbCDO)
+						{
+							WallMoveProps.ClimbAnimLength = LedgeClimbCDO->ClimbMontage->GetPlayLength() / LedgeClimbCDO->ClimbMontage->RateScale;
+							SetWallMovementState(EWallMovementState::WallLedgeClimb, WallMoveProps);
+						}
 					}
 				}
 				else if (WallLedgeHeight > AutoLedgeClimbMaxHeight && WallLedgeHeight <= LedgeGrabMaxHeight)
 				{
 					WallMoveProps.WallTraceImpactResult = WallImpactResult;
-					WallMoveProps.WallAttachPoint = TargetAttachPoint;
+					WallMoveProps.WallAttachPoint = TargetAttachPoint + WallLedgeGrabOffset;
 
 					SetWallMovementState(EWallMovementState::WallLedgeHang, WallMoveProps);
 				}
@@ -1042,6 +1049,19 @@ void ATPPPlayerCharacter::ServerTryBeginWallMovement_Implementation()
 				}
 			}
 		}
+		else
+		{
+			switch (WallMovementState)
+			{
+			case EWallMovementState::WallLedgeClimb:
+				DoLedgeClimb();
+				break;
+			// Ledge hang should be handled by special move logic in owning character
+			case EWallMovementState::WallRunUp:
+				DoWallRun();
+				break;
+			}
+		}
 	}
 }
 
@@ -1056,15 +1076,19 @@ void ATPPPlayerCharacter::DoLedgeHang_Implementation()
 		if (-DesiredDirectionWallDot >= HangToClimbInputDot)
 		{
 			FVector ClimbExitPoint;
-			FHitResult ImpactResult;
-			FVector TargetAttachPoint;
-			const bool bCanClimbCurrentLedge = CanClimbUpLedge(ImpactResult, TargetAttachPoint, ClimbExitPoint);
-			if (bCanClimbCurrentLedge)
+			const bool bCanClimbCurrentLedge = CanClimbUpLedge(CurrentWallMovementProperties.WallTraceImpactResult, CurrentWallMovementProperties.WallAttachPoint - WallLedgeGrabOffset, ClimbExitPoint);
+			if (bCanClimbCurrentLedge && LedgeClimbClass)
 			{
-				FTPPWallMovementProps WallMoveProps;
-				WallMoveProps.WallClimbExitPoint = ClimbExitPoint;
-				WallMoveProps.WallTraceImpactResult = ImpactResult;
-				WallMoveProps.WallAttachPoint = TargetAttachPoint;
+				CurrentWallMovementProperties.WallClimbExitPoint = ClimbExitPoint;
+				CurrentWallMovementProperties.ClimbLateralThresholdPoint = CurrentWallMovementProperties.WallAttachPoint - WallLedgeGrabOffset;
+
+				UTPP_SPM_LedgeClimb* LedgeClimbCDO = Cast<UTPP_SPM_LedgeClimb>(LedgeClimbClass.GetDefaultObject());
+				if (LedgeClimbCDO)
+				{
+					CurrentWallMovementProperties.ClimbAnimLength = LedgeClimbCDO->ClimbMontage->GetPlayLength() / LedgeClimbCDO->ClimbMontage->RateScale;
+					SetWallMovementState(EWallMovementState::WallLedgeClimb, CurrentWallMovementProperties);
+				}
+
 				//SetWallMovementState(EWallMovementState::WallLedgeClimb, WallMoveProps);
 			}
 		}
@@ -1078,7 +1102,43 @@ void ATPPPlayerCharacter::DoLedgeHang_Implementation()
 
 void ATPPPlayerCharacter::DoLedgeClimb_Implementation()
 {
+	const float DeltaTime = GetWorld()->GetDeltaSeconds();
+	if (CurrentWallMovementProperties.ClimbAnimLength > 0.0f)
+	{
+		const float AnimTimeRatio = CurrentWallMovementProperties.ClimbElapsedTime / CurrentWallMovementProperties.ClimbAnimLength;
+		const float NewZ = FMath::Lerp(CurrentWallMovementProperties.WallAttachPoint.Z, CurrentWallMovementProperties.WallClimbExitPoint.Z, AnimTimeRatio);
+		float NewX = CurrentWallMovementProperties.WallAttachPoint.X;
+		float NewY = CurrentWallMovementProperties.WallAttachPoint.Y;
+		if (NewZ >= CurrentWallMovementProperties.ClimbLateralThresholdPoint.Z)
+		{
+			if (CurrentWallMovementProperties.ClimbLateralAnimLength == 0.0f)
+			{
+				CurrentWallMovementProperties.ClimbLateralAnimLength = CurrentWallMovementProperties.ClimbAnimLength - CurrentWallMovementProperties.ClimbElapsedTime;
+			}
 
+			const float LateralElapsedTimeRatio = CurrentWallMovementProperties.ClimbLateralLerpElapsedTime / CurrentWallMovementProperties.ClimbLateralAnimLength;
+			NewX = FMath::Lerp(CurrentWallMovementProperties.WallAttachPoint.X, CurrentWallMovementProperties.WallClimbExitPoint.X, LateralElapsedTimeRatio);
+			NewY = FMath::Lerp(CurrentWallMovementProperties.WallAttachPoint.Y, CurrentWallMovementProperties.WallClimbExitPoint.Y, LateralElapsedTimeRatio);
+
+			CurrentWallMovementProperties.ClimbLateralLerpElapsedTime += DeltaTime;
+		}
+
+		const FVector FinalPosition = FVector(NewX, NewY, NewZ);
+		SetActorLocation(FinalPosition);
+		ClientLedgeClimbUpdate(GetActorLocation());
+	}
+	else
+	{
+		SetWallMovementState(EWallMovementState::None);
+	}
+
+	CurrentWallMovementProperties.ClimbElapsedTime += DeltaTime;
+
+}
+
+void ATPPPlayerCharacter::ClientLedgeClimbUpdate_Implementation(const FVector& NewLocation)
+{
+	SetActorLocation(NewLocation);
 }
 
 void ATPPPlayerCharacter::DoWallRun_Implementation()
@@ -1100,7 +1160,6 @@ void ATPPPlayerCharacter::DoWallRun_Implementation()
 		{
 			FTPPWallMovementProps MoveProps = CurrentWallMovementProperties;
 			MoveProps.WallAttachPoint = AttachPoint + WallLedgeGrabOffset;
-			MoveProps.WallRunDestination = FVector::ZeroVector;
 			SetWallMovementState(EWallMovementState::WallLedgeHang, MoveProps);
 		}
 	}
@@ -1217,6 +1276,7 @@ bool ATPPPlayerCharacter::CanClimbUpLedge(const FHitResult& WallHitResult, const
 void ATPPPlayerCharacter::SetWallMovementState_Implementation(EWallMovementState NewWallMovementState, const FTPPWallMovementProps& WallMoveProps)
 {
 	UTPPMovementComponent* MoveComp = GetTPPMovementComponent();
+	const EWallMovementState PrevState = WallMovementState;
 
 	if (NewWallMovementState != EWallMovementState::None)
 	{
@@ -1229,12 +1289,17 @@ void ATPPPlayerCharacter::SetWallMovementState_Implementation(EWallMovementState
 	switch (NewWallMovementState)
 	{
 		case EWallMovementState::None:
-			if (WallMovementState != EWallMovementState::None)
+			if (WallMovementState == EWallMovementState::WallLedgeClimb)
+			{
+				MoveComp->SetMovementMode(EMovementMode::MOVE_Walking);
+			}
+			else
 			{
 				MoveComp->SetMovementMode(EMovementMode::MOVE_Falling);
 			}
 			break;
 		case EWallMovementState::WallLedgeHang:
+		case EWallMovementState::WallLedgeClimb:
 			MoveComp->SetMovementMode(EMovementMode::MOVE_None);
 			break;
 		case EWallMovementState::WallRunUp:
@@ -1245,10 +1310,10 @@ void ATPPPlayerCharacter::SetWallMovementState_Implementation(EWallMovementState
 	WallMovementState = NewWallMovementState;
 	CurrentWallMovementProperties = WallMoveProps;
 
-	OnRep_WallMovementState();
+	OnRep_WallMovementState(PrevState);
 }
 
-void ATPPPlayerCharacter::OnRep_WallMovementState()
+void ATPPPlayerCharacter::OnRep_WallMovementState(EWallMovementState PreviousState)
 {
 	if (IsLocallyControlled())
 	{
@@ -1269,13 +1334,11 @@ void ATPPPlayerCharacter::OnRep_WallMovementState()
 		}
 		case EWallMovementState::WallLedgeClimb:
 		{
-			/*
-			UTPP_SPM_LedgeClimb* LedgeClimbSPM = NewObject<UTPP_SPM_LedgeClimb>(this, AutoLedgeClimbClass);
+			UTPP_SPM_LedgeClimb* LedgeClimbSPM = NewObject<UTPP_SPM_LedgeClimb>(this, PreviousState == EWallMovementState::WallLedgeHang ? LedgeClimbClass : AutoLedgeClimbClass);
 			if (LedgeClimbSPM)
 			{
 				ExecuteSpecialMove(LedgeClimbSPM);
 			}
-			*/
 			break;
 		}
 		case EWallMovementState::WallLedgeHang:
