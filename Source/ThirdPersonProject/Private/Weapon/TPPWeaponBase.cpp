@@ -33,6 +33,7 @@ void ATPPWeaponBase::BeginPlay()
 
 void ATPPWeaponBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ATPPWeaponBase, LoadedAmmo);
 	DOREPLIFETIME(ATPPWeaponBase, CurrentAmmoPool);
 	DOREPLIFETIME(ATPPWeaponBase, CharacterOwner);
@@ -74,6 +75,10 @@ void ATPPWeaponBase::OnRep_CharacterOwner()
 	{
 		WeaponMesh->SetCollisionProfileName(FName(TEXT("No Collision")));
 		WeaponMesh->SetSimulatePhysics(false);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Hmm"));
 	}
 }
 

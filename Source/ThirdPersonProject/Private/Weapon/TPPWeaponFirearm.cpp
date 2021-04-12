@@ -38,6 +38,7 @@ void ATPPWeaponFirearm::Tick(float DeltaTime)
 
 void ATPPWeaponFirearm::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ATPPWeaponFirearm, CurrentFiringMode);
 	DOREPLIFETIME(ATPPWeaponFirearm, TimeSinceLastShot);
 	DOREPLIFETIME(ATPPWeaponFirearm, BurstCount);
