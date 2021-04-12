@@ -19,11 +19,11 @@
 #include "SpecialMove/TPP_SPM_WallRun.h"
 #include "TPPPlayerCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ATPPWeaponBase*, WeaponEquipped);
+
 class ATPPPlayerController;
 class UTPPMovementComponent;
 class TPPHUD;
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ATPPWeaponBase*, WeaponEquipped);
 
 #pragma region Structs_And_Enums
 
@@ -367,8 +367,8 @@ public:
 protected:
 
 	/** Currently equipped weapon */
-	UPROPERTY(Transient, Replicated)
-	ATPPWeaponBase* CurrentWeapon = nullptr;
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_EquippedWeapon)
+	ATPPWeaponBase* EquippedWeapon = nullptr;
 
 	/** True if the player intends to aim down the sights when able */
 	UPROPERTY(Transient)
@@ -390,12 +390,12 @@ public:
 	FOnWeaponEquipped OnWeaponEquipped;
 
 	/** Equips a weapon to the player. */
-	UFUNCTION(BlueprintCallable)
-	void EquipWeapon(ATPPWeaponBase* WeaponEquipped);
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void ServerEquipWeapon(ATPPWeaponBase* WeaponEquipped);
 
 	/** Returns the currently equipped weapon */
 	UFUNCTION(BlueprintPure)
-	ATPPWeaponBase* GetCurrentEquippedWeapon() const { return CurrentWeapon; }
+	ATPPWeaponBase* GetCurrentEquippedWeapon() const { return EquippedWeapon; }
 
 	/** Tries to fire the currently equipped weapon */
 	void TryToFireWeapon();
@@ -449,6 +449,9 @@ protected:
 
 	UFUNCTION()
 	void OnRep_IsAiming();
+
+	UFUNCTION()
+	void OnRep_EquippedWeapon();
 
 public:
 

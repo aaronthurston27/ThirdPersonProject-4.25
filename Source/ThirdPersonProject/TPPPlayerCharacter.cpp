@@ -124,6 +124,8 @@ void ATPPPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 	DOREPLIFETIME(ATPPPlayerCharacter, WallMovementState);
 	DOREPLIFETIME(ATPPPlayerCharacter, CurrentWallMovementProperties);
+
+	DOREPLIFETIME(ATPPPlayerCharacter, EquippedWeapon);
 }
 
 bool ATPPPlayerCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -551,24 +553,31 @@ void ATPPPlayerCharacter::OnRep_AnimationBlendSlot()
 
 }
 
-void ATPPPlayerCharacter::EquipWeapon(ATPPWeaponBase* NewEquippedWeapon)
+void ATPPPlayerCharacter::ServerEquipWeapon_Implementation(ATPPWeaponBase* NewEquippedWeapon)
 {
 	if (NewEquippedWeapon)
 	{
-		NewEquippedWeapon->SetWeaponOwner(this);
-		NewEquippedWeapon->Equip();
-		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, false);
-		NewEquippedWeapon->WeaponMesh->AttachToComponent(GetMesh(), AttachmentRules, WeaponAttachmentSocketName);
-		NewEquippedWeapon->AddActorWorldRotation(FRotator(0.0f, 90.0f, 0.0f));
-	}
+		NewEquippedWeapon->ServerEquip(this);
 
-	CurrentWeapon = NewEquippedWeapon;
-	OnWeaponEquipped.Broadcast(CurrentWeapon);
+		EquippedWeapon = NewEquippedWeapon;
+		OnRep_EquippedWeapon();
+	}
+}
+
+void ATPPPlayerCharacter::OnRep_EquippedWeapon()
+{
+	if (EquippedWeapon)
+	{
+		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, false);
+		EquippedWeapon->WeaponMesh->AttachToComponent(GetMesh(), AttachmentRules, WeaponAttachmentSocketName);
+		EquippedWeapon->AddActorWorldRotation(FRotator(0.0f, 90.0f, 0.0f));
+	}
+	OnWeaponEquipped.Broadcast(EquippedWeapon);
 }
 
 void ATPPPlayerCharacter::TryToFireWeapon()
 {
-	if (!CurrentWeapon)
+	if (!EquippedWeapon)
 	{
 		return;
 	}
@@ -583,7 +592,7 @@ void ATPPPlayerCharacter::TryToFireWeapon()
 		ServerStopSprint();
 	}
 
-	CurrentWeapon->FireWeapon();
+	EquippedWeapon->FireWeapon();
 }
 
 void ATPPPlayerCharacter::SetPlayerWantsToAim(bool bIsTryingToAim)
@@ -594,7 +603,7 @@ void ATPPPlayerCharacter::SetPlayerWantsToAim(bool bIsTryingToAim)
 bool ATPPPlayerCharacter::CanPlayerBeginAiming() const
 {
 	UTPPMovementComponent* MovementComp = GetTPPMovementComponent();
-	return CurrentWeapon && (MovementComp && !MovementComp->IsSliding()) && (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesAiming);
+	return EquippedWeapon && (MovementComp && !MovementComp->IsSliding()) && (!CurrentSpecialMove || !CurrentSpecialMove->bDisablesAiming);
 }
 
 void ATPPPlayerCharacter::ServerBeginAiming_Implementation()
@@ -654,7 +663,7 @@ void ATPPPlayerCharacter::OnRep_IsAiming()
 
 void ATPPPlayerCharacter::TryToReloadWeapon()
 {
-	ATPPWeaponFirearm* WeaponFirearm = Cast<ATPPWeaponFirearm>(CurrentWeapon);
+	ATPPWeaponFirearm* WeaponFirearm = Cast<ATPPWeaponFirearm>(EquippedWeapon);
 	if (!WeaponFirearm)
 	{
 		return;
@@ -781,9 +790,10 @@ bool ATPPPlayerCharacter::IsCharacterAlive() const
 void ATPPPlayerCharacter::OnDeath()
 {
 	HealthComponent->PrimaryComponentTick.bCanEverTick = false;
-	if (CurrentWeapon)
+	if (EquippedWeapon)
 	{
-		CurrentWeapon->Drop(true);
+		EquippedWeapon->ServerUnequip();
+		EquippedWeapon->ServerDrop(true);
 		OnWeaponEquipped.Broadcast(nullptr);
 	}
 

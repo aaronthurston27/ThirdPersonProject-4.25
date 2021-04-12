@@ -101,11 +101,11 @@ public:
 protected:
 
 	/** Ammo loaded and ready to be fired. */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_AmmoCount)
 	int32 LoadedAmmo = 100;
 
 	/** Ammo held in the pool reserve. Added to current ammo when reloading */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_AmmoCount)
 	int32 CurrentAmmoPool = 0;
 
 	/** True if this weapon is ready to be fired */
@@ -115,8 +115,8 @@ protected:
 public:
 
 	/** Modifes ammo count of weapon */
-	UFUNCTION(BlueprintCallable)
-	virtual void ModifyWeaponAmmo(const int32 ChamberAmmoChange = 0, const int32 PooledAmmoChange = 0);
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	virtual void ServerModifyWeaponAmmo(const int32 ChamberAmmoChange = 0, const int32 PooledAmmoChange = 0);
 	
 public:	
 
@@ -126,24 +126,28 @@ public:
 
 protected:
 
+	// Required network scaffolding
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+protected:
+
 	/** Current owner of this weapon */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_CharacterOwner)
 	ATPPPlayerCharacter* CharacterOwner = nullptr;
 
 public:
 
-	/** Sets the owner of this weapon */
-	UFUNCTION(BlueprintCallable)
-	void SetWeaponOwner(ATPPPlayerCharacter* NewOwner);
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	virtual void ServerEquip(ATPPPlayerCharacter* NewWeaponOwner);
 
-	UFUNCTION(BlueprintCallable)
-	virtual void Equip();
-
-	UFUNCTION(BlueprintCallable)
-	virtual void Unequip();
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	virtual void ServerUnequip();
 	
-	UFUNCTION(BlueprintCallable)
-	virtual void Drop(bool bShouldBecomePickup = false);
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	virtual void ServerDrop(bool bShouldBecomePickup = false);
+
+	UFUNCTION()
+	virtual void OnRep_CharacterOwner();
 
 public:
 
@@ -218,4 +222,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetLoadedAmmoCount() const { return LoadedAmmo; }
+
+protected:
+
+	UFUNCTION()
+	void OnRep_AmmoCount();
 };

@@ -40,6 +40,11 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+protected:
+
+	// Required network scaffolding
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 public:
 
 	/** Weapon firing mode */
@@ -105,20 +110,20 @@ public:
 protected:
 
 	/** Current firing mode */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	EWeaponFireMode CurrentFiringMode;
 
 	/** Time since weapon was last fired * */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	float TimeSinceLastShot = 0.0f;
 
 	/** Recoil shot index. Used to access recoil pattern array */
-	UPROPERTY(Transient, VisibleAnywhere)
+	UPROPERTY(Transient, VisibleAnywhere, Replicated)
 	int32 BurstCount = 0;
 
 public:
 
-	virtual void Equip() override;
+	virtual void ServerEquip_Implementation(ATPPPlayerCharacter* NewWeaponOwner) override;
 
 public:
 
@@ -154,7 +159,7 @@ public:
 protected:
 
 	/** Cached weapon angle calculated based on movement parameters. */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	float CurrentWeaponSpreadAngle;
 
 	/** Calculates weapon spread based on movement parameters */
@@ -165,7 +170,7 @@ protected:
 protected:
 
 	/** Timer for resetting accumlated weapon recoil */
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, Replicated)
 	FTimerHandle WeaponRecoilResetTimer;
 
 	/** Resets recoil when weapon has stopped firing after period of time */

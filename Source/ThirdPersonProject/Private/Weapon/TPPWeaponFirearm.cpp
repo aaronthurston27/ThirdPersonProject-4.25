@@ -12,6 +12,7 @@
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 ATPPWeaponFirearm::ATPPWeaponFirearm()
 {
@@ -25,8 +26,6 @@ ATPPWeaponFirearm::ATPPWeaponFirearm()
 void ATPPWeaponFirearm::BeginPlay()
 {
 	Super::BeginPlay();
-	LoadedAmmo = MaxLoadedAmmo;
-	CurrentAmmoPool = MaxAmmoInPool;
 	SetIsReloading(false);
 }
 
@@ -35,6 +34,15 @@ void ATPPWeaponFirearm::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateWeaponSpreadRadius();
+}
+
+void ATPPWeaponFirearm::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	DOREPLIFETIME(ATPPWeaponFirearm, CurrentFiringMode);
+	DOREPLIFETIME(ATPPWeaponFirearm, TimeSinceLastShot);
+	DOREPLIFETIME(ATPPWeaponFirearm, BurstCount);
+	DOREPLIFETIME(ATPPWeaponFirearm, CurrentWeaponSpreadAngle);
+	DOREPLIFETIME(ATPPWeaponFirearm, WeaponRecoilResetTimer);
 }
 
 void ATPPWeaponFirearm::UpdateWeaponSpreadRadius()
@@ -164,7 +172,7 @@ void ATPPWeaponFirearm::HitscanFire()
 	}
 
 	const int32 AmmoToConsume = FMath::Min(AmmoConsumedPerShot, LoadedAmmo);
-	ModifyWeaponAmmo(-AmmoConsumedPerShot, 0);
+	ServerModifyWeaponAmmo(-AmmoConsumedPerShot, 0);
 
 	const float TimeInSeconds = World->GetTimeSeconds();
 
@@ -239,7 +247,7 @@ void ATPPWeaponFirearm::StartWeaponReload()
 void ATPPWeaponFirearm::ReloadActual()
 {
 	const int32 AmmoToChamber = FMath::Min(CurrentAmmoPool, MaxLoadedAmmo) - LoadedAmmo;
-	ModifyWeaponAmmo(AmmoToChamber, -AmmoToChamber);
+	ServerModifyWeaponAmmo(AmmoToChamber, -AmmoToChamber);
 }
 
 void ATPPWeaponFirearm::InterruptReload()
@@ -266,15 +274,18 @@ void ATPPWeaponFirearm::OnWeaponRecoilReset()
 	}
 }
 
-void ATPPWeaponFirearm::Equip()
+void ATPPWeaponFirearm::ServerEquip_Implementation(ATPPPlayerCharacter* NewWeaponOwner)
 {
-	Super::Equip();
-	
-	UAnimInstance* AnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
-	if (AnimInstance)
+	Super::ServerEquip_Implementation(NewWeaponOwner);
+
+	if (CharacterOwner)
 	{
-		AnimInstance->OnMontageEnded.AddDynamic(this, &ATPPWeaponFirearm::OnMontageEnded);
+		UAnimInstance* AnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
+		if (AnimInstance)
+		{
+			AnimInstance->OnMontageEnded.AddDynamic(this, &ATPPWeaponFirearm::OnMontageEnded);
+		}
+		PrimaryActorTick.bCanEverTick = true;
 	}
-	PrimaryActorTick.bCanEverTick = true;
 }
 

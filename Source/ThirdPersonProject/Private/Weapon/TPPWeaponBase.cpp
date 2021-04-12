@@ -8,6 +8,7 @@
 #include "TPPHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "TPPDamageType.h"
+#include "Net/UnrealNetwork.h"
 #include "Weapon/TPPWeaponBase.h"
 
 // Sets default values
@@ -19,30 +20,43 @@ ATPPWeaponBase::ATPPWeaponBase()
 	SetRootComponent(WeaponMesh);
 
 	BaseWeaponDamage = 8.0f;
+	bReplicates = true;
 }
 
 void ATPPWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
+	LoadedAmmo = MaxLoadedAmmo;
+	CurrentAmmoPool = MaxAmmoInPool;
 	SetWeaponReady(true);
 }
 
-void ATPPWeaponBase::SetWeaponOwner(ATPPPlayerCharacter* NewWeaponOwner)
+void ATPPWeaponBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	CharacterOwner = NewWeaponOwner;
+	DOREPLIFETIME(ATPPWeaponBase, LoadedAmmo);
+	DOREPLIFETIME(ATPPWeaponBase, CurrentAmmoPool);
+	DOREPLIFETIME(ATPPWeaponBase, CharacterOwner);
 }
 
-void ATPPWeaponBase::Equip()
+void ATPPWeaponBase::ServerEquip_Implementation(ATPPPlayerCharacter* NewWeaponOwner)
 {
-	WeaponMesh->SetCollisionProfileName(FName(TEXT("No Collision")));
-	WeaponMesh->SetSimulatePhysics(false);
+	if (NewWeaponOwner)
+	{
+		CharacterOwner = NewWeaponOwner;
+		WeaponMesh->SetCollisionProfileName(FName(TEXT("No Collision")));
+		WeaponMesh->SetSimulatePhysics(false);
+
+		AddActorWorldRotation(FRotator(0.0f, 90.0f, 0.0f));
+
+		OnRep_CharacterOwner();
+	}
 }
 
-void ATPPWeaponBase::Unequip()
+void ATPPWeaponBase::ServerUnequip_Implementation()
 {
 }
 
-void ATPPWeaponBase::Drop(bool bShouldBecomePickup)
+void ATPPWeaponBase::ServerDrop_Implementation(bool bShouldBecomePickup)
 {
 	WeaponMesh->SetCollisionProfileName(FName(TEXT("WeaponPickup")));
 	WeaponMesh->SetSimulatePhysics(true);
@@ -51,21 +65,32 @@ void ATPPWeaponBase::Drop(bool bShouldBecomePickup)
 	SetIsReloading(false);
 	SetWeaponReady(false);
 
-	SetWeaponOwner(nullptr);
-
 	PrimaryActorTick.bCanEverTick = false;
 }
 
-void ATPPWeaponBase::ModifyWeaponAmmo(const int32 ChamberAmmoChange, const int32 PooledAmmoChange)
+void ATPPWeaponBase::OnRep_CharacterOwner()
+{
+	if (CharacterOwner)
+	{
+		WeaponMesh->SetCollisionProfileName(FName(TEXT("No Collision")));
+		WeaponMesh->SetSimulatePhysics(false);
+	}
+}
+
+void ATPPWeaponBase::ServerModifyWeaponAmmo_Implementation(const int32 ChamberAmmoChange, const int32 PooledAmmoChange)
 {
 	LoadedAmmo = FMath::Clamp(LoadedAmmo + ChamberAmmoChange, 0, MaxLoadedAmmo);
 	CurrentAmmoPool = FMath::Clamp(CurrentAmmoPool + PooledAmmoChange, 0, MaxAmmoInPool);
 
+	OnRep_AmmoCount();
+}
+
+void ATPPWeaponBase::OnRep_AmmoCount()
+{
 	if (OnWeaponAmmoUpdated.IsBound())
 	{
 		OnWeaponAmmoUpdated.Broadcast();
 	}
-
 }
 
 void ATPPWeaponBase::SetWeaponReady(bool bWeaponReady)
@@ -107,7 +132,7 @@ void ATPPWeaponBase::StartWeaponReload()
 void ATPPWeaponBase::ReloadActual()
 {
 	const int32 AmmoToChamber = FMath::Min(CurrentAmmoPool, MaxLoadedAmmo);
-	ModifyWeaponAmmo(AmmoToChamber, -AmmoToChamber);
+	ServerModifyWeaponAmmo(AmmoToChamber, -AmmoToChamber);
 
 	if (OnWeaponAmmoUpdated.IsBound())
 	{
