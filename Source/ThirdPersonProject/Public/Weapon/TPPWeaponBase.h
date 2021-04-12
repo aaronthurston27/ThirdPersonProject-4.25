@@ -149,6 +149,13 @@ public:
 	UFUNCTION()
 	virtual void OnRep_CharacterOwner();
 
+protected:
+
+	UFUNCTION(NetMulticast, Reliable)
+	void ClientWeaponEquipped();
+
+	virtual void ClientWeaponEquipped_Implementation();
+
 public:
 
 	UPROPERTY(BlueprintAssignable)

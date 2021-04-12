@@ -125,6 +125,10 @@ public:
 
 	virtual void ServerEquip_Implementation(ATPPPlayerCharacter* NewWeaponOwner) override;
 
+protected:
+
+	virtual void ClientWeaponEquipped_Implementation() override;
+
 public:
 
 	virtual bool CanFireWeapon_Implementation() const override;

@@ -290,3 +290,9 @@ void ATPPWeaponFirearm::ServerEquip_Implementation(ATPPPlayerCharacter* NewWeapo
 	}
 }
 
+void ATPPWeaponFirearm::ClientWeaponEquipped_Implementation()
+{
+	Super::ClientWeaponEquipped_Implementation();
+	AddActorWorldRotation(FRotator(0.0f, 90.0f, 0.0f));
+}
+

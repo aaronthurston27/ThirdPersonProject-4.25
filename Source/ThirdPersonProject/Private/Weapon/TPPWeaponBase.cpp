@@ -50,11 +50,21 @@ void ATPPWeaponBase::ServerEquip_Implementation(ATPPPlayerCharacter* NewWeaponOw
 		AddActorWorldRotation(FRotator(0.0f, 90.0f, 0.0f));
 
 		OnRep_CharacterOwner();
+		ClientWeaponEquipped();
 	}
 }
 
 void ATPPWeaponBase::ServerUnequip_Implementation()
 {
+}
+
+void ATPPWeaponBase::ClientWeaponEquipped_Implementation()
+{
+	if (CharacterOwner)
+	{
+		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, false);
+		WeaponMesh->AttachToComponent(CharacterOwner->GetMesh(), AttachmentRules, CharacterOwner->WeaponAttachmentSocketName);
+	}
 }
 
 void ATPPWeaponBase::ServerDrop_Implementation(bool bShouldBecomePickup)

@@ -566,12 +566,6 @@ void ATPPPlayerCharacter::ServerEquipWeapon_Implementation(ATPPWeaponBase* NewEq
 
 void ATPPPlayerCharacter::OnRep_EquippedWeapon()
 {
-	if (EquippedWeapon)
-	{
-		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, false);
-		EquippedWeapon->WeaponMesh->AttachToComponent(GetMesh(), AttachmentRules, WeaponAttachmentSocketName);
-		EquippedWeapon->AddActorWorldRotation(FRotator(0.0f, 90.0f, 0.0f));
-	}
 	OnWeaponEquipped.Broadcast(EquippedWeapon);
 }
 
