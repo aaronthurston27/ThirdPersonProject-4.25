@@ -499,7 +499,7 @@ public:
 protected:
 
 	/** Set to true if the player has wall kicked while in the air. */
-	UPROPERTY(Transient, BlueprintReadOnly)
+	UPROPERTY(Transient, BlueprintReadOnly, Replicated)
 	bool bHasWallKicked = false;
 
 	/** Wallkick cooldown timer handle */
@@ -514,9 +514,11 @@ protected:
 
 	bool CanPlayerWallKick(FHitResult& OutKickoffHitResult) const;
 
-public:
+	UFUNCTION(Server, Reliable)
+	void ServerDoWallKick();
 
-	void DoWallKick(const FHitResult& WallKickHitResult);
+	UFUNCTION(NetMulticast, Reliable)
+	void OnWallKicked(const FVector& NewVelocity, const FRotator& NewRotation);
 
 public:
 

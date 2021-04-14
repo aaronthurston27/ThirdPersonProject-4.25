@@ -85,6 +85,7 @@ void ATPPPlayerCharacter::BeginPlay()
 		OnRep_CurrentAbility();
 
 		ServerStopAiming();
+		SetWallMovementState(EWallMovementState::None);
 	}
 
 	ATPPPlayerController* PlayerController = GetTPPPlayerController();
@@ -94,14 +95,15 @@ void ATPPPlayerCharacter::BeginPlay()
 		if (HUD)
 		{
 			HUD->InitializeHUD(this);
+			if (EquippedWeapon)
+			{
+				OnWeaponEquipped.Broadcast(EquippedWeapon);
+			}
 		}
+
+		HealthComponent->HealthDepleted.AddDynamic(this, &ATPPPlayerCharacter::OnPlayerHealthDepleted);
 	}
 
-	OnRep_CurrentAbility();
-
-	HealthComponent->HealthDepleted.AddDynamic(this, &ATPPPlayerCharacter::OnPlayerHealthDepleted);
-
-	SetWallMovementState(EWallMovementState::None);
 }
 
 void ATPPPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -332,12 +334,7 @@ void ATPPPlayerCharacter::AttemptToJump()
 		const bool bCanExecuteWallKick = WallMovementState == EWallMovementState::WallLedgeHang || WallMovementState == EWallMovementState::WallRunUp;
 		if (bCanExecuteWallKick)
 		{
-			if (CurrentSpecialMove)
-			{
-				CurrentSpecialMove->EndSpecialMove();
-			}
-
-			DoWallKick(CurrentWallMovementProperties.WallTraceImpactResult);
+			ServerDoWallKick();
 		}
 	}
 }
@@ -944,22 +941,19 @@ bool ATPPPlayerCharacter::CanPlayerWallKick(FHitResult& OutKickoffHitResult) con
 	return false;
 }
 
-void ATPPPlayerCharacter::DoWallKick(const FHitResult& WallKickHitResult)
+void ATPPPlayerCharacter::ServerDoWallKick_Implementation()
 {
+	const FHitResult WallKickHitResult = CurrentWallMovementProperties.WallTraceImpactResult;
 	if (WallKickHitResult.ImpactNormal.IsNearlyZero() || !WallKickHitResult.Actor.IsValid())
 	{
 		return;
 	}
 
-	if (CurrentSpecialMove)
-	{
-		CurrentSpecialMove->EndSpecialMove();
-	}
+	SetWallMovementState(EWallMovementState::None);
 
 	// Set z to 1 for scaling by min kick off velocity so that we have some vertical gain.
 	const FVector WallKickOffDirection = WallKickHitResult.ImpactNormal + FVector::UpVector;
-
-	UCharacterMovementComponent* MovementComp = GetCharacterMovement();
+	const UCharacterMovementComponent* MovementComp = GetCharacterMovement();
 	if (MovementComp)
 	{
 		// Set the new velocity.
@@ -967,27 +961,45 @@ void ATPPPlayerCharacter::DoWallKick(const FHitResult& WallKickHitResult)
 		const FVector NewVelocity = FVector(MovementComp->Velocity.X + WallKickVelocity.X,
 			MovementComp->Velocity.Y + WallKickVelocity.Y,
 			WallKickVelocity.Z);
-		MovementComp->Velocity = NewVelocity;
-
-		bHasWallKicked = true;
 
 		// Don't rotate the character mesh if we are aiming.
+		FRotator NewRotation = GetActorRotation();
 		if (!bIsAiming)
 		{
 			const FVector DirectionNormalizedVec = NewVelocity.GetSafeNormal2D();
 			const FRotator Rotator = FRotator(0.0f, DirectionNormalizedVec.ToOrientationRotator().Yaw, 0.0f);
-			SetActorRotation(Rotator);
-
-			MovementComp->RotationRate = FRotator::ZeroRotator;
+			NewRotation = Rotator;
 		}
 
-		GetWorldTimerManager().SetTimer(WallKickCooldownTimerHandle, this, &ATPPPlayerCharacter::OnWallKickTimerExpired, WallKickCooldownTime, false);
+		bHasWallKicked = true;
+		OnWallKicked(NewVelocity, NewRotation);
 	}
+}
+
+void ATPPPlayerCharacter::OnWallKicked_Implementation(const FVector& NewVelocity, const FRotator& NewRotation)
+{
+	if (CurrentSpecialMove)
+	{
+		CurrentSpecialMove->EndSpecialMove();
+	}
+
+	UCharacterMovementComponent* MovementComp = GetCharacterMovement();
+	MovementComp->Velocity = NewVelocity;
+	if (!bIsAiming)
+	{
+		SetActorRotation(NewRotation);
+		MovementComp->RotationRate = FRotator::ZeroRotator;
+	}
+
+	GetWorldTimerManager().SetTimer(WallKickCooldownTimerHandle, this, &ATPPPlayerCharacter::OnWallKickTimerExpired, WallKickCooldownTime, false);
 }
 
 void ATPPPlayerCharacter::OnWallKickTimerExpired()
 {
-	bHasWallKicked = false;
+	if (HasAuthority())
+	{
+		bHasWallKicked = false;
+	}
 	UTPPMovementComponent* MovementComponent = GetTPPMovementComponent();
 	if (MovementComponent && !bIsAiming && IsCharacterAlive())
 	{
