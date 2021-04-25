@@ -16,6 +16,14 @@ class THIRDPERSONPROJECT_API UTPPAimProperties : public UDataAsset
 
 public:
 
+	/** Server lag compensation yaw threshold. If a client calculated hit result is within the range of the server calculated hit result by this angle, register a hit */
+	UPROPERTY(EditDefaultsOnly)
+	float ServerHitDetectionCompensationYaw = 25.0f;
+
+	/** Server lag compensation pitch threshold. If a client calculated hit result is within the range of the server calculated hit result by this angle, register a hit */
+	UPROPERTY(EditDefaultsOnly)
+	float ServerHitDetectionCompensationPitch = 25.0f;
+
 	/** Max angle for innacuracy */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float InaccuracySpreadMaxAngle = 3.0f;
@@ -27,4 +35,8 @@ public:
 	/** Time needed to restore recoil back to zero */
 	UPROPERTY(EditDefaultsOnly)
 	float AimRecoilRestorationInterpAlpha = 0.45f;
+
+	/** Length for hitscan line traces */
+	UPROPERTY(EditDefaultsOnly)
+	float HitScanLength = 5000.f;
 };

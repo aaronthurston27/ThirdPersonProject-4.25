@@ -172,7 +172,7 @@ void ATPPWeaponBase::OnWeaponHit_Implementation(const FHitResult& HitResult, con
 	}
 }
 
-void ATPPWeaponBase::ApplyWeaponPointDamage(const FHitResult& HitResult, const FVector& StartingLocation)
+void ATPPWeaponBase::ApplyWeaponPointDamage_Implementation(const FHitResult& HitResult, const FVector& StartingLocation)
 {
 	if (HitResult.bBlockingHit && HitResult.Component != nullptr && CharacterOwner)
 	{
@@ -188,15 +188,25 @@ void ATPPWeaponBase::ApplyWeaponPointDamage(const FHitResult& HitResult, const F
 			const float DamageApplied = UGameplayStatics::ApplyPointDamage(CharacterHit, BaseDamage, StartingLocation.GetSafeNormal(), HitResult, CharacterOwner->GetController(), CharacterOwner, HitDamageClass);
 			OnWeaponHit(HitResult, DamageApplied);
 		}
-		else if (!CharacterHit)
-		{
-			UPrimitiveComponent* PrimitiveComp = HitResult.Component.Get();
-			UDecalComponent* SpawnedDecal = UTPPBlueprintFunctionLibrary::SpawnDecalWithParameters(PrimitiveComp, ImpactProperties.WeaponHitMaterial, 10.0f, HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), ImpactProperties.WeaponHitDecalSize);
-			if (SpawnedDecal)
-			{
-				SpawnedDecal->Activate();
-			}
-		}
+	}
+}
+
+void ATPPWeaponBase::SpawnWeaponImpactDecal(const FHitResult& ImpactResult)
+{
+	UPrimitiveComponent* PrimitiveComp = ImpactResult.Component.Get();
+	UDecalComponent* SpawnedDecal = UTPPBlueprintFunctionLibrary::SpawnDecalWithParameters(PrimitiveComp, ImpactProperties.WeaponHitMaterial, 10.0f, ImpactResult.ImpactPoint, ImpactResult.ImpactNormal.Rotation(), ImpactProperties.WeaponHitDecalSize);
+	if (SpawnedDecal)
+	{
+		SpawnedDecal->Activate();
+	}
+}
+
+void ATPPWeaponBase::PlayWeaponFireSound_Implementation()
+{
+	if (WeaponFireSound)
+	{
+		AudioComponent->SetSound(WeaponFireSound);
+		AudioComponent->Play();
 	}
 }
 

@@ -72,7 +72,7 @@ public:
 	TArray<FRotator> RecoilPatternEntries;
 
 	/** Time needed to decrease the recoil pattern index by one shot */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Firing|Recoil", meta = (ClampMin="0.001"))
 	float BurstRecoveryTime = .2f;
 
 	/** Time to apply complete recoil recovery over */
@@ -94,10 +94,6 @@ public:
 	/** Weapon reload montage to be played by owning character */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Animation")
 	UAnimMontage* WeaponReloadCharacterMontage;
-
-	/** Sound to play when firing */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Audio")
-	USoundWave* WeaponFireSound;
 
 	/** Weapon trail effect to spawn after firing */
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|FX")
@@ -135,6 +131,8 @@ public:
 
 	virtual void FireWeapon_Implementation() override;
 
+	virtual void CalculateHitscanFireVectors(FVector& StartingLocation, FVector& EndingLocation);
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure)
 	bool ShouldUseWeaponIk() const;
 
@@ -144,6 +142,14 @@ protected:
 
 	/** Line trace towards the player's camera and check for a hit. */
 	void HitscanFire();
+
+	/** Server method to call when firing hitscan weapon. Should account for delay between client and server. */
+	UFUNCTION(Server, Reliable)
+	void ServerHitscanFire(const FHitResult& ClientHitResult);
+
+	/** Multicast for firing a weapon. Should include server calculated hit result. */
+	UFUNCTION(NetMulticast, Reliable)
+	void ClientHitscanFired(const FHitResult& FinalHitResult);
 
 	/** Spawn a projectile from the weapon. */
 	void ProjectileFire();

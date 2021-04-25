@@ -98,6 +98,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Hit", BlueprintReadOnly)
 	FTPPWeaponImpactProperties ImpactProperties;
 
+	/** Sound to play when firing */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Audio")
+	USoundWave* WeaponFireSound;
+
 protected:
 
 	/** Ammo loaded and ready to be fired. */
@@ -182,6 +186,9 @@ protected:
 	UFUNCTION()
 	virtual void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayWeaponFireSound();
+
 protected:
 
 	UFUNCTION(BlueprintNativeEvent)
@@ -189,9 +196,12 @@ protected:
 
 	void OnWeaponHit_Implementation(const FHitResult& HitResult, const float DamageApplied);
 
+	UFUNCTION(Server, Reliable)
 	void ApplyWeaponPointDamage(const FHitResult& HitResult, const FVector& StartingLocation);
 
 	void ApplyWeaponBlastDamage(const FVector& BlastCenter);
+
+	void SpawnWeaponImpactDecal(const FHitResult& ImpactResult);
 
 public:
 

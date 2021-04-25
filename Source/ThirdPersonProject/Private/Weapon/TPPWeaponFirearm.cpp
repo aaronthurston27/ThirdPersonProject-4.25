@@ -144,16 +144,34 @@ FRotator ATPPWeaponFirearm::CalculateRecoil() const
 	return RecoilPatternEntries[FMath::Min(BurstCount,RecoilPatternEntries.Num() - 1)];
 }
 
+void ATPPWeaponFirearm::CalculateHitscanFireVectors(FVector& StartingLocation, FVector& EndingLocation)
+{
+	const UCameraComponent* PlayerCamera = CharacterOwner ? CharacterOwner->GetFollowCamera() : nullptr;
+	ATPPPlayerController* PlayerController = CharacterOwner ? CharacterOwner->GetTPPPlayerController() : nullptr;
+	const UTPPGameInstance* GameInstance = UTPPGameInstance::Get();
+	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
+	
+	if (!PlayerCamera || !AimProperties || !PlayerController || !AimProperties)
+	{
+
+	}
+
+	StartingLocation = PlayerController ? PlayerCamera->GetComponentLocation() : CharacterOwner->GetActorLocation();
+	const FVector FireDirection = PlayerController ? PlayerController->GetReplicatedControlRotation().Vector() : CharacterOwner->GetControlRotation().Vector();
+	FVector WeaponInaccuracyVector = FireDirection;
+	ModifyAimVectorFromSpread(WeaponInaccuracyVector);
+
+	EndingLocation = PlayerCamera->GetComponentLocation() + (WeaponInaccuracyVector * AimProperties->HitScanLength);
+}
+
 void ATPPWeaponFirearm::HitscanFire()
 {
-	static const float HitScanLength = 5000.f;
-
 	UWorld* World = GetWorld();
 	const UCameraComponent* PlayerCamera = CharacterOwner ? CharacterOwner->GetFollowCamera() : nullptr;
 	ATPPPlayerController* PlayerController = CharacterOwner ? CharacterOwner->GetTPPPlayerController() : nullptr;
 	const UTPPGameInstance* GameInstance = UTPPGameInstance::Get();
 	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
-	if (!World || !PlayerCamera || !AimProperties)
+	if (!World || !PlayerCamera || !AimProperties || !PlayerController)
 	{
 		return;
 	}
@@ -163,41 +181,27 @@ void ATPPWeaponFirearm::HitscanFire()
 	if (MontageToPlay)
 	{
 		CharacterOwner->SetAnimationBlendSlot(EAnimationBlendSlot::UpperBody);
-		CharacterOwner->PlayAnimMontage(MontageToPlay);
+		CharacterOwner->ServerPlaySpecialMoveMontage(MontageToPlay, true);
 	}
 
-	if (WeaponFireSound)
-	{
-		AudioComponent->SetSound(WeaponFireSound);
-		AudioComponent->Play();
-	}
+	PlayWeaponFireSound();
 
-	const int32 AmmoToConsume = FMath::Min(AmmoConsumedPerShot, LoadedAmmo);
-	ServerModifyWeaponAmmo(-AmmoConsumedPerShot, 0);
-
-	const float TimeInSeconds = World->GetTimeSeconds();
-
-	BurstCount -= (int32)((TimeInSeconds - TimeSinceLastShot) / BurstRecoveryTime);
-	BurstCount = FMath::Max(BurstCount, 0);
-	
 	const FRotator RecoilRotator = CalculateRecoil();
 	if (PlayerController)
 	{
 		PlayerController->AddCameraRecoil(RecoilRotator.Pitch);
 	}
 	BurstCount = FMath::Min(++BurstCount, RecoilPatternEntries.Num() - 1);
-	TimeSinceLastShot = TimeInSeconds;
+	TimeSinceLastShot = World->GetTimeSeconds();
 
 	GetWorldTimerManager().ClearTimer(WeaponRecoilResetTimer);
 	GetWorldTimerManager().SetTimer(WeaponRecoilResetTimer, this, &ATPPWeaponFirearm::OnWeaponRecoilReset, .15f, false);
 
-	const FVector StartingLocation = PlayerController ? PlayerCamera->GetComponentLocation() : CharacterOwner->GetActorLocation();
-	const FVector FireDirection = PlayerController ? PlayerCamera->GetForwardVector() : CharacterOwner->GetControlRotation().Vector();
-	FVector WeaponInaccuracyVector = FireDirection;
-	ModifyAimVectorFromSpread(WeaponInaccuracyVector);
+	FVector StartingLocation;
+	FVector EndLocation;
+	CalculateHitscanFireVectors(StartingLocation, EndLocation);
 
-	const FVector CameraEndLocation = PlayerCamera->GetComponentLocation() + (FireDirection * HitScanLength);
-	const FVector ActualEndLocation = PlayerCamera->GetComponentLocation() + (WeaponInaccuracyVector * HitScanLength);
+	//const FVector CameraEndLocation = PlayerCamera->GetComponentLocation() + (FireDirection * AimPropertiesHitScanLength);
 	//DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), CameraEndLocation, FColor::Blue, false, 10.5f, 0, 1.5f);
 	//DrawDebugLine(World, StartingLocation + FVector(10.f,0.f,0.f), ActualEndLocation, FColor::Red, false, 10.5f, 0, 1.5f);
 
@@ -206,24 +210,87 @@ void ATPPWeaponFirearm::HitscanFire()
 	QueryParams.AddIgnoredActor(CharacterOwner);
 	QueryParams.AddIgnoredActor(this);
 
-	World->LineTraceMultiByChannel(TraceResults, StartingLocation, ActualEndLocation, ECollisionChannel::ECC_GameTraceChannel1, QueryParams);
-	FVector ParticleTrailEndLocation = ActualEndLocation;
+	World->LineTraceMultiByChannel(TraceResults, StartingLocation, EndLocation, ECollisionChannel::ECC_GameTraceChannel1, QueryParams);
+	const FHitResult HitResultToUse = TraceResults.Num() > 0 ? TraceResults[0] : FHitResult();
+	ServerHitscanFire(HitResultToUse);
 
-	if (TraceResults.Num() > 0)
-	{
-		const FHitResult HitTrace = TraceResults[0];
-		ParticleTrailEndLocation = HitTrace.ImpactPoint;
-		//DrawDebugSphere(World, HitTrace.Location, 15.f, 2, FColor::Green, false, 3.5f, 0, 1.5f);
+	//DrawDebugSphere(World, HitTrace.Location, 15.f, 2, FColor::Green, false, 3.5f, 0, 1.5f);
 
-		ApplyWeaponPointDamage(HitTrace, StartingLocation);
-	}
-
+	const FVector ParticleTrailEndLocation = HitResultToUse.Actor.IsValid() ? HitResultToUse.ImpactPoint : EndLocation;
 	const FVector MuzzleLocation = WeaponMesh->GetSocketLocation("Muzzle");
-	UParticleSystemComponent * ParticleSystemComp = UGameplayStatics::SpawnEmitterAtLocation(World, WeaponTrailEffect, MuzzleLocation);
+	UParticleSystemComponent* ParticleSystemComp = UGameplayStatics::SpawnEmitterAtLocation(World, WeaponTrailEffect, MuzzleLocation);
 	if (ParticleSystemComp)
 	{
-		
 		ParticleSystemComp->SetVectorParameter(TrailTargetParam, ParticleTrailEndLocation);
+	}
+}
+
+void ATPPWeaponFirearm::ServerHitscanFire_Implementation(const FHitResult& ClientHitResult)
+{
+	UWorld* World = GetWorld();
+	const UTPPGameInstance* GameInstance = UTPPGameInstance::Get();
+	const UTPPAimProperties* AimProperties = GameInstance ? GameInstance->GetAimProperties() : nullptr;
+	if (!World || !AimProperties)
+	{
+		return;
+	}
+
+	const int32 AmmoToConsume = FMath::Min(AmmoConsumedPerShot, LoadedAmmo);
+	ServerModifyWeaponAmmo(-AmmoConsumedPerShot, 0);
+
+	BurstCount -= (int32)((World->GetTimeSeconds() - TimeSinceLastShot) / BurstRecoveryTime);
+	BurstCount = FMath::Max(BurstCount, 0);
+
+	/*
+
+	FVector StartingLocation;
+	FVector EndLocation;
+	CalculateHitscanFireVectors(StartingLocation, EndLocation);
+
+	TArray<FHitResult> TraceResults;
+	FCollisionQueryParams QueryParams(FName(TEXT("WeaponFire")));
+	QueryParams.AddIgnoredActor(CharacterOwner);
+	QueryParams.AddIgnoredActor(this);
+
+	World->LineTraceMultiByChannel(TraceResults, StartingLocation, EndLocation, ECollisionChannel::ECC_GameTraceChannel1, QueryParams);
+	const FHitResult HitResult = TraceResults.Num() > 0 ? TraceResults[0] : FHitResult();
+	if (HitResult.Actor != ClientHitResult.Actor)
+	{
+		ATPPPlayerCharacter* CharacterHit = Cast<ATPPPlayerCharacter>(HitResult.Actor.Get());
+		if (CharacterHit)
+		{
+			// Calculate difference in aim the client would have had to make to actually hit the (assumed) intended target.
+			const FVector ClientAimVector = (ClientHitResult.TraceEnd - ClientHitResult.TraceStart).Normalize();
+			const FVector ServerAimVector = (EndLocation - StartingLocation).Normalize();
+
+			const float PitchBetweenVectors = FMath::Asin((ServerAimVector - ClientAimVector).Z);
+			const float YawBetweenVectors = FMath::Acos((ServerAimVector * ClientAimVector));
+		}
+	}
+	*/
+
+	ClientHitscanFired(ClientHitResult);
+	ApplyWeaponPointDamage(ClientHitResult, ClientHitResult.TraceStart);
+}
+
+void ATPPWeaponFirearm::ClientHitscanFired_Implementation(const FHitResult& ClientHitResult)
+{
+	const ENetRole NetRole = CharacterOwner ? CharacterOwner->GetLocalRole() : ENetRole::ROLE_None;
+	if (NetRole == ENetRole::ROLE_SimulatedProxy)
+	{
+		const FVector ParticleTrailEndLocation = ClientHitResult.Actor.IsValid() ? ClientHitResult.ImpactPoint : ClientHitResult.TraceEnd;
+		const FVector MuzzleLocation = WeaponMesh->GetSocketLocation("Muzzle");
+		UParticleSystemComponent* ParticleSystemComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), WeaponTrailEffect, MuzzleLocation);
+		if (ParticleSystemComp)
+		{
+			ParticleSystemComp->SetVectorParameter(TrailTargetParam, ParticleTrailEndLocation);
+		}
+	}
+
+	ATPPPlayerCharacter* CharacterHit = Cast<ATPPPlayerCharacter>(ClientHitResult.Actor.Get());
+	if (NetRole != ENetRole::ROLE_None && NetRole != ENetRole::ROLE_Authority && !CharacterHit && ClientHitResult.Actor.IsValid())
+	{
+		SpawnWeaponImpactDecal(ClientHitResult);
 	}
 }
 
