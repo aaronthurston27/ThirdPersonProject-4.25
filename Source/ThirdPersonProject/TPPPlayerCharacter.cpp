@@ -52,8 +52,6 @@ ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitial
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	HealthComponent = CreateDefaultSubobject<UTPPHealthComponent>(TEXT("HealthComponent"));
-
 	DefaultRotationRate = 540.f;
 	SprintRotationRate = 220.f;
 	ADSRotationRate = 200.0f;
@@ -61,6 +59,10 @@ ATPPPlayerCharacter::ATPPPlayerCharacter(const FObjectInitializer& ObjectInitial
 	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
+
+	MaxHealth = 125.0f;
+	HealthRegenDelay = 6.0f;
+	HealthRegenTime = 2.1f;
 }
 
 void ATPPPlayerCharacter::BeginPlay()
@@ -86,6 +88,9 @@ void ATPPPlayerCharacter::BeginPlay()
 
 		ServerStopAiming();
 		SetWallMovementState(EWallMovementState::None);
+
+		bShouldRegenHealth = false;
+		CachedHealthRegenDelta = MaxHealth / HealthRegenTime;
 	}
 
 	ATPPPlayerController* PlayerController = GetTPPPlayerController();
@@ -100,8 +105,6 @@ void ATPPPlayerCharacter::BeginPlay()
 				OnWeaponEquipped.Broadcast(EquippedWeapon);
 			}
 		}
-
-		HealthComponent->HealthDepleted.AddDynamic(this, &ATPPPlayerCharacter::OnPlayerHealthDepleted);
 	}
 
 }
@@ -128,6 +131,8 @@ void ATPPPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	DOREPLIFETIME(ATPPPlayerCharacter, CurrentWallMovementProperties);
 
 	DOREPLIFETIME(ATPPPlayerCharacter, EquippedWeapon);
+
+	DOREPLIFETIME(ATPPPlayerCharacter, bShouldRegenHealth);
 }
 
 bool ATPPPlayerCharacter::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
@@ -183,6 +188,19 @@ void ATPPPlayerCharacter::Tick(float DeltaTime)
 			if (!GetCharacterMovement()->IsMovingOnGround())
 			{
 				ServerTryBeginWallMovement();
+			}
+		}
+
+		if (HasAuthority())
+		{
+			if (bShouldRegenHealth)
+			{
+				ATPPPlayerState* PS = GetTPPPlayerState();
+				if (PS)
+				{
+					ModifyHealth(CachedHealthRegenDelta * DeltaTime);
+					bShouldRegenHealth = PS->GetHealth() < MaxHealth;
+				}
 			}
 		}
 	}
@@ -713,12 +731,35 @@ void ATPPPlayerCharacter::Log(ELogLevel LoggingLevel, FString Message, ELogOutpu
 float ATPPPlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+	ATPPPlayerState* PS = GetTPPPlayerState();
 
-	if (!CanBeDamaged() || !IsCharacterAlive())
+	if (!CanBeDamaged() || !IsCharacterAlive() || !PS)
 	{
 		return 0.0f;
 	}
 
+	const float HealthDamaged = FMath::Min(Damage, PS->GetHealth());
+	PS->SetPlayerHealth(PS->GetHealth() - HealthDamaged);
+
+	bShouldRegenHealth = false;
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	TimerManager.ClearTimer(HealthRegenTimerHandle);
+
+	if (!PS->IsPlayerCharacterAlive())
+	{
+		
+	}
+	else
+	{
+		TimerManager.SetTimer(HealthRegenTimerHandle, this, &ATPPPlayerCharacter::OnHealthRegenTimerExpired, HealthRegenDelay, false);
+	}
+
+	ClientOnDamageTaken(HealthDamaged, DamageEvent, EventInstigator, DamageCauser);
+	return HealthDamaged;
+}
+
+void ATPPPlayerCharacter::ClientOnDamageTaken_Implementation(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
 	bool bWasHitInHead = false;
 	if (EventInstigator && DamageCauser)
 	{
@@ -730,23 +771,35 @@ float ATPPPlayerCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEv
 		}
 	}
 
-	float HealthDamaged = 0.0f;
-
-	if (HealthComponent)
+	if (Damage > 0 && IsCharacterAlive() && !CurrentSpecialMove)
 	{
-		HealthDamaged =  HealthComponent->DamageHealth(Damage, DamageEvent, DamageCauser);
-
-		if (HealthDamaged > 0 && HealthComponent->GetHealth() > 0 && !CurrentSpecialMove)
+		UAnimMontage* HitReactMontage = bWasHitInHead ? HitReactions.HeadHitReactMontage : HitReactions.UpperBodyHitReactMontage;
+		if (HitReactMontage)
 		{
-			UAnimMontage* HitReactMontage = bWasHitInHead ? HitReactions.HeadHitReactMontage : HitReactions.UpperBodyHitReactMontage;
-			if (HitReactMontage)
-			{
-				PlayAnimMontage(HitReactMontage);
-			}
+			PlaySpecialMoveAnimMontage(HitReactMontage);
 		}
 	}
+}
 
-	return HealthDamaged;
+void ATPPPlayerCharacter::ModifyHealth_Implementation(float HealthToGain)
+{
+	ATPPPlayerState* PS = GetTPPPlayerState();
+	if (PS)
+	{
+		const float NewHealth = FMath::Max(0.0f, FMath::Min(MaxHealth, PS->GetHealth() + HealthToGain));
+		PS->SetPlayerHealth(NewHealth);
+	}
+}
+
+float ATPPPlayerCharacter::GetPlayerHealth() const
+{
+	ATPPPlayerState* PS = Cast<ATPPPlayerState>(GetPlayerState());
+	return PS ? PS->GetHealth() : 0.0f;
+}
+
+void ATPPPlayerCharacter::OnHealthRegenTimerExpired()
+{
+	bShouldRegenHealth = true;
 }
 
 void ATPPPlayerCharacter::OnPlayerHealthDepleted()
@@ -775,12 +828,12 @@ void ATPPPlayerCharacter::BecomeDefeated()
 
 bool ATPPPlayerCharacter::IsCharacterAlive() const
 {
-	return HealthComponent ? HealthComponent->GetHealth() > 0 : false;
+	ATPPPlayerState* PS = Cast<ATPPPlayerState>(GetPlayerState());
+	return PS ? PS->IsPlayerCharacterAlive() : false;
 }
 
 void ATPPPlayerCharacter::OnDeath()
 {
-	HealthComponent->PrimaryComponentTick.bCanEverTick = false;
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->ServerUnequip();
@@ -1393,4 +1446,9 @@ void ATPPPlayerCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, 
 	{
 		bIsWallRunCooldownActive = false;
 	}
+}
+
+void ATPPPlayerCharacter::OnRep_PlayerState()
+{
+
 }

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "TPPGameInstance.h"
+#include "Game/TPPGameInstance.h"
 #include "TPPAimProperties.h"
 #include "TPPBlueprintFunctionLibrary.generated.h"
 

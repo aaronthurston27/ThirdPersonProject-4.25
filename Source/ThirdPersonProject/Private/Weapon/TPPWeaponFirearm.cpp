@@ -5,7 +5,7 @@
 #include "SpecialMove/TPPSpecialMove.h"
 #include "Camera/CameraComponent.h"
 #include "TPPMovementComponent.h"
-#include "TPPGameInstance.h"
+#include "Game/TPPGameInstance.h"
 #include "TPPAimProperties.h"
 #include "TPPPlayerController.h"
 #include "DrawDebugHelpers.h"

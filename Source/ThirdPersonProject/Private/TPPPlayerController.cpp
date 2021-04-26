@@ -4,7 +4,7 @@
 #include "Weapon/TPPWeaponBase.h"
 #include "Weapon/TPPWeaponFirearm.h"
 #include "TPPAimProperties.h"
-#include "TPPGameInstance.h"
+#include "Game/TPPGameInstance.h"
 #include "ThirdPersonProject/TPPPlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
 

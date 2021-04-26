@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Game/TPPPlayerState.h"
 #include "TPPPlayerController.generated.h"
 
 class ATPPPlayerCharacter;
@@ -201,4 +202,7 @@ public:
 
 	FRotator GetTargetCameraRecoil() const { return TargetCameraRecoil; }
 
+public:
+
+	ATPPPlayerState* GetTPPPlayerState() { return Cast<ATPPPlayerState>(PlayerState); }
 };

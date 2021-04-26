@@ -11,15 +11,18 @@
 #include "Engine/DataTable.h"
 #include "TPPAbilityBase.h"
 #include "Weapon/TPPWeaponBase.h"
-#include "TPPHealthComponent.h"
 #include "SpecialMove/TPPSpecialMove.h"
 #include "SpecialMove/TPP_SPM_Defeated.h"
 #include "SpecialMove/TPP_SPM_LedgeClimb.h"
 #include "SpecialMove/TPP_SPM_LedgeHang.h"
 #include "SpecialMove/TPP_SPM_WallRun.h"
+#include "Game/TPPPlayerState.h"
 #include "TPPPlayerCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ATPPWeaponBase*, WeaponEquipped);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthDamaged, float, HealthLost, const FDamageEvent&, DamageEvent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthRestored, float, HealthGained);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHealthDepleted);
 
 class ATPPPlayerController;
 class UTPPMovementComponent;
@@ -161,17 +164,6 @@ class ATPPPlayerCharacter : public ACharacter
 
 	UPROPERTY(Transient, ReplicatedUsing=OnRep_AnimationBlendSlot)
 	EAnimationBlendSlot CurrentAnimationBlendSlot;
-
-protected:
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health")
-	UTPPHealthComponent* HealthComponent;
-
-public:
-
-	/** Returns the player's health component */
-	UFUNCTION(BlueprintPure)
-	UTPPHealthComponent* GetHealthComponent() const { return HealthComponent; }
 		
 public:
 	ATPPPlayerCharacter(const FObjectInitializer& ObjectInitializer);
@@ -478,6 +470,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UTPP_SPM_Defeated> DeathSpecialMove;
 
+	UFUNCTION(NetMulticast, Reliable)
+	void ClientOnDamageTaken(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser);
+
 	/** Called when the player runs out of health */
 	UFUNCTION()
 	void OnPlayerHealthDepleted();
@@ -636,5 +631,74 @@ protected:
 
 	UFUNCTION()
 	void OnRep_WallMovementState(EWallMovementState PreviousState);
+
+public:
+
+	/** Max health this player can have */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health")
+	float MaxHealth;
+
+	/** True if this component can regenerate health */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health")
+	bool bCanRegenerateHealth = true;
+
+	/** Time delay before health begins regenerating */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health", meta = (EditCondition = "bCanRegenerateHealth"))
+	float HealthRegenDelay;
+
+	/** Time to regenerate health to max. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Health", meta = (EditCondition = "bCanRegenerateHealth"))
+	float HealthRegenTime;
+
+protected:
+
+	/** True if regen can begin */
+	UPROPERTY(Transient, Replicated)
+	bool bShouldRegenHealth = false;
+
+	/** Cached health regen rate */
+	UPROPERTY(Transient)
+	float CachedHealthRegenDelta = 0.0f;
+
+	/** Timer handle for starting health regen */
+	UPROPERTY(Transient)
+	FTimerHandle HealthRegenTimerHandle;
+
+	/** Called when health regen timer expires and component can begin regenerating */
+	UFUNCTION()
+	void OnHealthRegenTimerExpired();
+
+public:
+
+	/** Health damaged delegate */
+	UPROPERTY(BlueprintAssignable)
+	FOnHealthDamaged DamageReceived;
+
+	/** Health restored delegated */
+	UPROPERTY(BlueprintAssignable)
+	FOnHealthRestored HealthRestored;
+
+	/** Health depleted delegate */
+	UPROPERTY(BlueprintAssignable)
+	FOnHealthDepleted HealthDepleted;
+
+	/** Returns true if health regen is active */
+	UFUNCTION(BlueprintPure)
+	bool IsRegeneratingHealth() const { return bShouldRegenHealth; }
+
+	/** Modify Health in player state */
+	UFUNCTION(Server, Reliable)
+	void ModifyHealth(float HealthToGain);
+
+	/** Returns health of the player */
+	UFUNCTION(BlueprintPure)
+	float GetPlayerHealth() const;
+
+public:
+
+	ATPPPlayerState* GetTPPPlayerState() { return Controller ? Cast<ATPPPlayerState>(GetPlayerState()) : nullptr; }
+
+	void OnRep_PlayerState() override;
+
 };
 
