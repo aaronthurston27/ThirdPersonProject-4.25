@@ -191,7 +191,7 @@ protected:
 
 protected:
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(Client, Reliable)
 	void OnWeaponHit(const FHitResult& HitResult, const float DamageApplied);
 
 	void OnWeaponHit_Implementation(const FHitResult& HitResult, const float DamageApplied);

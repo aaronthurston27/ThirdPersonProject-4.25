@@ -242,17 +242,26 @@ void ATPPPlayerController::HandleWeaponFireAxis(float Value)
 
 void ATPPPlayerController::OnAimWeaponPressed()
 {
-	CachedOwnerCharacter->SetPlayerWantsToAim(true);
+	if (CachedOwnerCharacter)
+	{
+		CachedOwnerCharacter->SetPlayerWantsToAim(true);
+	}
 }
 
 void ATPPPlayerController::OnAimWeaponReleased()
 {
-	CachedOwnerCharacter->SetPlayerWantsToAim(false);
+	if (CachedOwnerCharacter)
+	{
+		CachedOwnerCharacter->SetPlayerWantsToAim(false);
+	}
 }
 
 void ATPPPlayerController::OnReloadPressed()
 {
-	CachedOwnerCharacter->TryToReloadWeapon();
+	if (CachedOwnerCharacter)
+	{
+		CachedOwnerCharacter->TryToReloadWeapon();
+	}
 }
 
 void ATPPPlayerController::OnPausePressed()

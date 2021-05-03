@@ -241,7 +241,7 @@ void ATPPWeaponFirearm::ServerHitscanFire_Implementation(const FHitResult& Clien
 	BurstCount -= (int32)((World->GetTimeSeconds() - TimeSinceLastShot) / BurstRecoveryTime);
 	BurstCount = FMath::Max(BurstCount, 0);
 
-	/*
+	/* TODO: Lag compensation
 
 	FVector StartingLocation;
 	FVector EndLocation;

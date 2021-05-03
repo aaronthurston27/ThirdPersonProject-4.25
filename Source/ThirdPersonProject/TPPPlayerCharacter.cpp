@@ -779,6 +779,8 @@ void ATPPPlayerCharacter::ClientOnDamageTaken_Implementation(float Damage, FDama
 			PlaySpecialMoveAnimMontage(HitReactMontage);
 		}
 	}
+
+	DamageReceived.Broadcast(Damage, DamageEvent);
 }
 
 void ATPPPlayerCharacter::ModifyHealth_Implementation(float HealthToGain)
